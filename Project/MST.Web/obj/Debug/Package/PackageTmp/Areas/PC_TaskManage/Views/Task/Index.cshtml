@@ -1,0 +1,329 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_TaskManage/Task/GetGridJson",
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '任务编码', name: 'TaskNo', width: 110, align: 'left' },
+                { label: '出入库类型', name: 'TaskInOutType', width: 80, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.TaskInOutTypeName; } },
+                { label: '任务类型', name: 'TaskType', width: 80, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.TaskTypeName; } },
+                { label: "容器条码", name: "BarCode", width: 120, align: 'left' },
+                { label: "起始地址编码", name: "SrcLocationCode", width: 100, align: 'left' },
+                { label: "目标地址编码", name: "TagLocationCode", width: 100, align: 'left' },
+                { label: '任务状态', name: 'State', width: 60, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                {
+                    label: '是否可执行', name: 'IsCanExec', width: 70, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                { label: "对接时间", name: "SendWCSTime", width: 150, align: 'left' },
+                { label: '单据类型', name: 'OrderType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.OrderTypeName; } },
+                { label: '单据编码', name: 'OrderCode', width: 150, align: 'left' },
+                { label: '单据项次', name: 'SEQ', width: 60, align: 'left' },
+                {
+                    label: '任务详情', name: '', width: 50, align: 'left', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        return cellvalue == "TaskType_GetItemOut" ? "<div  onclick=\"btn_taskDetail(\'" + rowObject.F_Id + "\')\" title='任务详情' class='fa fa-list' style='color:#336699;cursor:pointer;'></div>" : "";
+                    }
+                },
+            ],
+            pager: "#gridPager",
+            sortname: 'TaskNo desc',
+            viewrecords: true,
+            multiselect: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增任务",
+            url: "/PC_TaskManage/Task/Form",
+            width: "650px",
+            height: "520px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //编辑，单选
+    function btn_edit() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length > 1) {
+            $.modalMsg("只可选择一条数据", "warning");
+            return;
+        }
+        var keyValue = rows[0];
+        $.modalOpen({
+            id: "Form",
+            title: "修改任务",
+            url: "/PC_TaskManage/Task/Form?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_delete() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length == 0) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var keyValue = "";
+        $.each(rows, function (i, n) {
+            keyValue = keyValue == "" ? n : (keyValue + "," + n);
+        });
+        $.deleteForm({
+            url: "/PC_TaskManage/Task/DeleteForm",
+            param: { keyValue: keyValue },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    //详情，单选
+    function btn_details() {
+        //var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length > 1) {
+            $.modalMsg("只可选择一条数据", "warning");
+            return;
+        }
+        var keyValue = rows[0];
+        $.modalOpen({
+            id: "Details",
+            title: "查看任务",
+            url: "/PC_TaskManage/Task/Details?keyValue=" + keyValue,
+            width: "600px",
+            height: "530px",
+            btn: null,
+        });
+    }
+
+    function btn_taskDetail(taskID) {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "任务详情",
+            url: "/PC_TaskManage/TaskDetail/Index?keyvalue=" + taskID,
+            width: "1200px",
+            height: "680px",
+            btn: null,
+        });
+    }
+
+    //回收
+    function btn_return() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length == 0) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var keyValue = "";
+        $.each(rows, function (i, n) {
+            keyValue = keyValue == "" ? n : (keyValue + "," + n);
+        });
+        $.modalConfirm("确定回收该任务吗？", function (r) {
+            if (r) {
+                $.submitForm({
+                    url: "/PC_TaskManage/Task/TaskReturn_Hand",
+                    param: { keyValue: keyValue },
+                    success: function () {
+                        $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    },
+                    error: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                })
+            }
+        })
+    }
+
+    function btn_apply() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length == 0) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var keyValue = "";
+        $.each(rows, function (i, n) {
+            keyValue = keyValue == "" ? n : (keyValue + "," + n);
+        });
+        $.modalConfirm("确定请求该任务吗？", function (r) {
+            if (r) {
+                $.submitForm({
+                    url: "/PC_TaskManage/Task/TaskApply_Ui",
+                    param: { keyValue: keyValue },
+                    success: function () {
+                        $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    },
+                    error: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                })
+            }
+        })
+    }
+
+    function btn_down() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length == 0) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var keyValue = "";
+        $.each(rows, function (i, n) {
+            keyValue = keyValue == "" ? n : (keyValue + "," + n);
+        });
+        $.modalConfirm("确定下发该任务吗？", function (r) {
+            if (r) {
+                $.submitForm({
+                    url: "/PC_TaskManage/Task/TaskDown_Hand",
+                    param: { keyValue: keyValue },
+                    success: function () {
+                        $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    },
+                    error: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                });
+            }
+        })
+    }
+
+    function btn_over() {
+        var rows = $("#gridList").jqGrid('getGridParam', 'selarrrow');
+        if (rows.length == 0) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var keyValue = "";
+        $.each(rows, function (i, n) {
+            keyValue = keyValue == "" ? n : (keyValue + "," + n);
+        });
+        $.modalConfirm("确定完成该任务吗？", function (r) {
+            if (r) {
+                $.submitForm({
+                    url: "/PC_TaskManage/Task/TaskOver_Hand",
+                    param: { keyValue: keyValue },
+                    success: function () {
+                        $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    },
+                    error: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                })
+            }
+        })
+    }
+
+    //AGV暂停
+    function btn_pause() {
+        $.modalConfirm("确定暂停AGV任务吗？", function (r) {
+            if (r) {
+                $.ajaxWMS({
+                    url: "/PC_TaskManage/Task/PauseDev_Hand",
+                    data: {},
+                    dataType: "json",
+                    type: "POST",
+                    async: false,
+                    success: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                });
+            }
+        })
+    }
+
+    //AGV继续
+    function btn_continue() {
+        $.modalConfirm("确定继续AGV任务吗？", function (r) {
+            if (r) {
+                $.ajaxWMS({
+                    url: "/PC_TaskManage/Task/ContinueDev_Hand",
+                    data: {},
+                    dataType: "json",
+                    type: "POST",
+                    async: false,
+                    success: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                });
+            }
+        })
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+
+            <a id="NF-pause" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_pause()" href="javascript:void()">暂停</a>
+            <a id="NF-continue" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_continue()" href="javascript:void()">继续</a>
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()" href="javascript:void()"><i class="fa fa-plus"></i>新建任务</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改任务</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除任务</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看任务</a></li>
+                <li><a id="NF-Return" authorize="yes" onclick="btn_return()"><i class="fa fa-reply"></i>回收</a></li>
+                <li><a id="NF-Apply" authorize="yes" onclick="btn_apply()"><i class="fa fa-level-down"></i>WCS入库扫码</a></li>
+                <li><a id="NF-Down" authorize="yes" onclick="btn_down()"><i class="fa fa-level-down"></i>WCS出库下发</a></li>
+                <li><a id="NF-Over" authorize="yes" onclick="btn_over()"><i class="fa fa-certificate"></i>强制完成</a></li>
+                <li><a id="NF-Pause" authorize="yes" onclick="btn_Pause()"><i class="fa fa-certificate"></i>AGV暂停</a></li>
+                <li><a id="NF-Continue" authorize="yes" onclick="btn_Continue()"><i class="fa fa-certificate"></i>AGV继续</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="任务编码 / 容器条码 / 起始地址 / 目标地址 / 单据编码" style="width: 300px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

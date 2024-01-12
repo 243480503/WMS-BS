@@ -1,0 +1,260 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+</style>
+<script>
+    var OutBoundID = $.request("keyvalue");
+    $(function () {
+        gridList();
+    });
+
+    function gridList() {
+        var $gridList = $("#gridListChild");
+        $gridList.dataGrid({
+            url: "/PC_OutBoundManage/OutBoundDetail/GetGridJson?OutBoundID=" + OutBoundID,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '出库单ID', name: 'OutBoundID', hidden: true },
+                { label: '出库单编码', name: 'OutBoundCode', hidden: true },
+                { label: '项次', name: 'SEQ', width: 40, align: 'left', sorttype: 'float' },
+                { label: '物料编码', name: 'ItemCode', width: 60, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 170, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 170, align: 'left' },
+                { label: '规格', name: 'Spec', width: 110, align: 'left' },
+                { label: '批号', name: 'Lot', width: 70, align: 'left' },
+                { label: "需求数量", name: "Qty", width: 55, align: 'left' },
+                { label: "锁定数量", name: "WaveQty", width: 55, align: 'left' },
+                { label: "已出数量", name: "OutQty", width: 55, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 70, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                {
+                    label: "状态", name: "State", width: 50, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.StateName;
+                    } },
+                {
+                    label: '指定库存', name: '', width: 55, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.State == "New" || rowObject.State =="Waved") {
+                            detail = "<div onclick=\"btn_HandOut(\'" + rowObject.F_Id + "\')\" title='指定库存' class='fa fa-th' style='color:#336699;cursor:pointer;'></div>";
+                        }
+                        else {
+                            detail = "<div title='已执行' class='fa fa-th' style='font-size:13px;color:#aaa;cursor:not-allowed;'></div>";
+                        }
+                        return detail;
+                    },
+                },
+                {
+                    label: '出库详情', name: '', width: 55, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "<div  onclick=\"btn_Outdetail(\'" + rowObject.F_Id + "\')\" title='出库详情' class='fa fa-list' style='color:#336699;cursor:pointer;'></div>";
+                        return detail;
+                    },
+                },
+                {
+                    label: '出库地点', name: 'StationCode', width: 90, align: 'center',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.StationCode == "StationOut_Normal") { //出库站台正常
+                            return '<span class=\"label label-success\">' + rowObject.StationName + '</span>';
+                        } else if (rowObject.StationCode == "StationOut_BigItem") { //出库站台(大件)
+                            return '<span class=\"label label-info\">' + rowObject.StationName + '</span>';
+                        }
+                        else {
+                            return cellvalue;
+                        }
+                    }
+                },
+                { label: "容器类型", name: "ContainerKindName", width: 55, align: 'center', sortable: false },
+            ],
+            pager: "#gridPager",
+            sortname: 'SEQ asc',
+            viewrecords: true,
+            rowNum: 10
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    //$(window).bind('resize', function () {
+    //    $("#gridList").setGridWidth($(window).width());
+    //    $("#gridList").setGridHeight($(window).height() - 126);
+    //});
+
+    function btn_Outdetail(detailID) {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "出库详情",
+            url: "/PC_OutRecordManage/OutRecord/OutDetail?keyValue=" + detailID ,
+            width: "1480px",
+            height: "850px",
+        });
+    }
+
+    function btn_add() {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "新增明细",
+            url: "/PC_OutBoundManage/OutBoundDetail/TransferForm?OutBoundID=" + OutBoundID,
+            width: "1400px",
+            height: "800px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm(function () {
+                    $("#gridListChild").trigger("reloadGrid");
+                });
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "修改明细",
+            url: "/PC_OutBoundManage/OutBoundDetail/TransferForm?OutBoundID=" + OutBoundID+"&keyValue=" + keyValue,
+            width: "1350px",
+            height: "730px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm(function () {
+                    $("#gridListChild").trigger("reloadGrid");
+                });
+            }
+        });
+    }
+
+    function btn_delete() {
+        var rowid = $("#gridListChild").jqGridRowValue().F_Id;
+        if (rowid == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.deleteForm({
+            url: "/PC_OutBoundManage/OutBoundDetail/DeleteForm",
+            param: { keyValue: rowid },
+            success: function () {
+                $("#gridListChild").trigger("reloadGrid");
+            }
+        })
+    }
+
+    //function btn_details() {
+    //    var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+    //    $.modalFixHightOpen({
+    //        id: "Details",
+    //        title: "查看明细",
+    //        url: "/PC_OutBoundManage/OutBoundDetail/Details?keyValue=" + keyValue,
+    //        width: "1200px",
+    //        height: "680px",
+    //        btn: null,
+    //    });
+    //}
+
+
+    //指定库存(展示波次列表)
+    function btn_HandOut(detailID) {
+        $.modalFixHightOpen({
+            id: "Details",
+            title: "指定库存",
+            url: "/PC_OutRecordManage/OutRecord/index?keyValue=" + detailID,
+            width: "1480px",
+            height: "850px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //强制完成
+    function btn_OutOver() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        postdata["OutBoundDetailID"] = keyValue;
+        $.ajax({
+            url: "/PC_OutBoundManage/OutBoundDetail/OutOver",
+            data: postdata,
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridListChild").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar" >
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add-detail" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>明细维护</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit-OutOver" authorize="yes" onclick="btn_OutOver()"><i class="fa fa-pencil-square-o"></i>强制完成</a></li>
+                <li><a id="NF-edit-detail" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改明细</a></li>
+                <li><a id="NF-delete-detail" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除明细</a></li>
+                @*<li><a id="NF-Details-detail" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看明细</a></li>*@
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridListChild"></table>
+    <div id="gridPager"></div>
+</div>

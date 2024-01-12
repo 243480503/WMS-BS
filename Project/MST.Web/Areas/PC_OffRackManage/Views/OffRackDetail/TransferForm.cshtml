@@ -1,0 +1,252 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<style>
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .cbox.checkbox {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+
+    select[multiple], select[size] {
+        height: 20px;
+    }
+</style>
+
+<script src="~/Content/js/jqgrid/jqgrid.min.js"></script>
+<link href="~/Content/js/jqgrid/jqgrid.css" rel="stylesheet" />
+<script src="~/Content/js/jqgrid/grid.locale-cn.js"></script>
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+<link href="~/Content/js/datepicker/skin/whyGreen/datepicker.css" rel="stylesheet" />
+
+<script>
+    var selectRowLeft = [];
+    var keyValue = $.request("OffRackID");
+
+    $(function () {
+
+        $('#layout').layout({
+            north: { size: 400, resizable: false },
+            center: { size: 40, resizable: false },
+            south: { size: 240, resizable: false }
+        });
+
+        gridList_Bottom();
+
+        $("#layoutChild").layout();
+        gridList_Top();
+
+        //穿梭添加
+        $("#toright").bind("click", function () {
+            var leftSelectRows = $("#gridList_Big").jqGridTransferRowValue();
+            $.each(leftSelectRows, function (i, n) {
+                n.LocStateName = n.StateName;
+                n.ForbiddenStateName = n.ForbiddenStateName;
+                $("#gridList_Right").addRowData(n.F_Id, n, "last");
+                $("#gridList_Big").delRowData(n.F_Id);
+            });
+        });
+
+        //穿梭移除
+        $("#toleft").bind("click", function () {
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                n.StateName = n.LocStateName;
+                n.ForbiddenStateName = n.ForbiddenStateName;
+                $("#gridList_Big").addRowData(n.F_Id, n, "last");
+                $("#gridList_Right").delRowData(n.F_Id);
+            });
+        });
+
+        $("#btn_search").click(function () {
+            $("#gridList_Big").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $('#btn_search').trigger("click");
+    })
+
+
+    function gridList_Bottom() {
+        //右侧->
+        var $gridList_Right = $("#gridList_Right");
+        $gridList_Right.dataGrid({
+            url: "/PC_OffRackManage/OffRackDetail/GetGridJson?OffRackID=" + keyValue,
+            height: 200,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '下架单ID', name: 'OffRackID', hidden: true, align: 'left' },
+                { label: "下架货位ID", name: "LocationID", hidden: true, align: 'left' },
+                { label: "区域名称", name: "AreaName", width: 70, align: 'left' },
+                { label: "下架货位编码", name: "LocationCode", width: 150, align: 'left' },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' }
+                
+            ],
+            multiselect: true,
+            showcheck: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+                var rows = $gridList_Right.jqGrid("getRowData");
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList_Right.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+            },
+            customEdit: true,
+            sortname: 'SEQ asc',
+            viewrecords: true,
+            loadonce: true,
+            rowNum: 999999
+        });
+
+
+
+    }
+
+    function gridList_Top() {
+        //左侧 <-
+        var $gridList_Big = $("#gridList_Big");
+        $gridList_Big.dataGrid({
+            url: "/PC_OffRackManage/OffRackDetail/GetLocationList?OffRackID=" + keyValue,
+            height:300,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '区域ID', name: 'AreaID', hidden: true, align: 'left' },
+                { label: "区域名称", name: "AreaName", width: 70, align: 'left' },
+                { label: '货位编码', name: 'LocationCode', width: 100, align: 'left' },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: '货位类型', name: 'LocationType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.LocationTypeName; } },
+                { label: '货位状态', name: 'State', width: 70, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                { label: '禁用状态', name: 'ForbiddenState', width: 70, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.ForbiddenStateName; } },
+            ],
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            loadComplete: function () {
+                //排除已存在右侧的数据
+                var dataListMini = $gridList_Big.getRowData();
+                var dataListRight = $gridList_Right.getRowData();
+                $.each(dataListMini, function (i, n) {
+                    $.each(dataListRight, function (j, m) {
+                        if (n.F_Id == m.F_Id) {
+                            $gridList_Big.delRowData(n.F_Id);
+                        }
+                    });
+                });
+            },
+            sortname: 'AreaID asc,LocationCode asc',
+            viewrecords: true,
+            rowNum: 999999
+        });
+    }
+
+    //确定按钮
+    function submitForm(fun) {
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList_Right").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList_Right").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        //还原后重新获取数据
+        rows = $("#gridList_Right").jqGrid("getRowData");
+
+        var jsonStr = JSON.stringify(rows);
+        postdata["OffRackDetailEntityListStr"] = jsonStr;
+        $.submitForm({
+            url: "/PC_OffRackManage/OffRackDetail/SubmitFormList?OffRackID=" + keyValue,
+            param: postdata,
+            success: function () {
+                //$("#gridList", window.parent.frames[2].document).trigger("reloadGrid");
+                fun();
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-north" style="height:60%">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="货位编码" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+        <div>
+
+            <div class="ui-layout" id="layoutChild" style="height: 348px; width: 100%;">
+                <div class="ui-layout-center" style="height:60%">
+                    <table id="gridList_Big"></table>
+                    <div id="gridPager2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-center" style="height:40%">
+        <div class="topPanel">
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <button id="toright" type="button" class="btn  btn-primary"><i class="fa fa-angle-down"></i></button>
+                            <button id="toleft" type="button" class="btn  btn-primary"><i class="fa fa-angle-up"></i></button>
+                            <div class="input-group">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-south" style="height:35%">
+        <table id="gridList_Right"></table>
+        <div id="gridPager3"></div>
+    </div>
+</div>
+

@@ -1,0 +1,298 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+</style>
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        getOrderDetailInfo();
+        gridList();
+    })
+    var oldNum = 0;
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_InBoundManage/InBoundDetail/GetPrintBarCodeList?InBoundDetailID=" + keyValue,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '批号', name: 'Lot', width: 70, align: 'left' },
+                { label: '标签编码', name: 'BarCode', width: 100, align: 'left'},
+                {
+                    label: "是否使用", name: "IsUsed", width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    } },
+                {
+                    label: "是否手动", name: "IsHandPrint", width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    } },
+                {
+                    label: "数量", name: "Qty", width: 100, align: 'left', editable: true,
+                        editoptions: {
+                        size: 1,
+                        width: 30,
+                        type: "Number",
+                        class: "form-control required",
+                        dataEvents: [{
+                            type: 'change',
+                            fn: function (e) {
+                                
+                            }
+                        }, {
+                            type: 'focus',
+                            fn: function (e) {
+                                oldNum = parseFloat(this.value);
+                                $(this).select();
+                            }
+                        }, {
+                            type: "blur",
+                            fn: function (e) {
+                                var id = $("#gridList").jqGridRowValue().F_Id;
+                                $gridList.jqGrid('saveRow', id, null, "clientArray");
+                            }
+                        }]
+                    } }
+            ],
+            pager: "#gridPager",
+            sortname: 'BarCode asc',
+            viewrecords: true,
+            beforeSelectRow: function (rowid, e) {
+                var rows = $gridList.jqGrid("getRowData");
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+
+                var curRows = $gridList.jqGrid("getRowData", rowid);
+                if ($("#NF-add").css("display")!="none" && $(curRows.IsHandPrint).hasClass("fa-toggle-on") && $(curRows.IsUsed).hasClass("fa-toggle-on") == false) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            },
+            customEdit: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    //获取入库单明细信息
+    function getOrderDetailInfo() {
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/GetOrderDetailInfo?InBoundDetailID=" + keyValue,
+            data: {},
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data.IsSplitModel == "true") {
+                    $("#NF-add").show();
+                    $("#NF-split").text("切换为整箱");
+                }
+                else {
+                    $("#NF-add").hide();
+                    $("#NF-split").text("切换为散箱");
+                }
+            }
+        });
+    }
+
+    //切换散箱或整箱模式
+    function btn_split() {
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/ChangeSplitModel?InBoundDetailID=" + keyValue,
+            data: {},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.IsSplitModel == "true") {
+                    $("#NF-add").show();
+                    $("#NF-split").text("切换为整箱");
+                }
+                else {
+                    $("#NF-add").hide();
+                    $("#NF-split").text("切换为散箱");
+                }
+            }
+        });
+    }
+
+    //删除标签
+    function btn_delete() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/DelBarCode?markRecordID=" + keyValue,
+            data: {},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    //手动新增标签记录
+    function btn_add() {
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/AddBarCode",
+            data: { InBoundDetailID: keyValue},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    //function btn_PrintBarCode(rowid)
+    //{
+    //    var keyValue = rowid;
+    //    $("#gridList").jqGrid('saveRow', keyValue, null, "clientArray");
+    //    var qty = $("#gridList").jqGridRowValue().Qty;
+
+    //    $.ajaxWMS({
+    //        url: "/PC_InBoundManage/InBoundDetail/PrintBarCode",
+    //        data: { markRecordID: keyValue, qty: qty },
+    //        dataType: "json",
+    //        type: "POST",
+    //        async: false,
+    //        success: function (data) {
+    //            if (data.state == "success") {
+    //                $.modalMsg(data.message, data.state);
+    //                $("#gridList").trigger("reloadGrid");
+    //            }
+    //            else {
+    //                $.modalAlert(data.message, data.state);
+    //            }
+    //        }
+    //    });
+    //}
+
+
+    //确定按钮
+    function submitForm() {
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        //还原后重新获取数据
+        var list = new Array();
+        rows = $("#gridList").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            if (n.Qty == 0 || n.Qty == "") {
+                return;
+            }
+            var temp = {};
+            temp.Qty = n.Qty;
+            temp.F_Id = n.F_Id;
+            list.push(temp);
+        });
+
+        var jsonStr = JSON.stringify(list);
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/ChangeBarCodeQty",
+            data: { markRecordListStr: jsonStr },
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+</script>
+
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>手动生成</a>
+            <a id="NF-split" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_split()"><i class="fa fa-plus"></i>切换为散箱</a>
+            
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除明细</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 标签编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

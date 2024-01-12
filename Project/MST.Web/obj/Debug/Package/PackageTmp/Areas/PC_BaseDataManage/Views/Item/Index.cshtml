@@ -1,0 +1,262 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<script>
+    $(function () {
+        $('#layout').layout();
+        treeView();
+        $($("#kindTree>div>div>ul>li>div")[0]).trigger("click");
+        var id = $("#kindTree").getCurrentNode().id;
+        gridList(id);
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    });
+    function treeView() {
+        $("#kindTree").treeview({
+            url: "/PC_BaseDataManage/Item/GetTreeJson",
+            onnodeclick: function (item) {
+                $("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+    function gridList(id) {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            height: $(window).height() - 130,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '品类ID', name: 'ItemKindID', hidden: true },
+                { label: '品类名称', name: 'KindName', hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '规格', name: 'Spec', width: 110, align: 'left' },
+                { label: '预警数量', name: 'WarningQty', width: 55, align: 'left' },
+                { label: '计量单位', name: 'ItemUnitText', width: 55, align: 'center' },
+                { label: '容器类型', name: 'ContainerKindName', sortable: false, width: 60, align: 'center' },
+                //{ label: '存放区域', name: 'StoredAreaName', width: 80, align: 'center', sortable: false },
+                {
+                    label: '有效期时长', name: 'ValidityDayNum', width: 100, align: 'center',
+                    formatter: function (cellvalue) {
+                        if (cellvalue == 0 || cellvalue == null) return "永不过期";
+                        else return cellvalue;
+                    }
+                },
+                { label: '时长单位', name: 'ValidityUnitTypeName', width: 60, align: 'center' },
+                //{ label: "ERP仓位", name: "ERPWarehouseCode", width: 80, align: "center", formatter: function (cellvalue, options, rowObject) { return rowObject.ERPWarehouseName; } },
+                { label: "是否需质检", name: "IsNeedCheck", width: 70, align: "center", formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: "是否关键物料", hidden: true, name: "IsSpecial", width: 70, align: "center", formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: "是否需贴标", name: "IsItemMark", width: 70, align: "center", formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: "强制批号控制", name: "IsMustLot", width: 85, align: "center", formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: "系统数据", name: "IsBase", width: 60, align: "center", formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: '生产厂家', name: 'Factory', width: 250, align: 'left' },
+                { label: '创建时间', name: 'F_CreatorTime', width: 70, align: 'left', formatter: "date", formatoptions: { srcformat: 'Y-m-d', newformat: 'Y-m-d' } },
+                { label: "已删除", name: "F_DeleteMark", width: 60, align: "center", formatter: function (cellvalue) { return cellvalue == true ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } }
+            ],
+            pager: "#gridPager",
+            sortname: 'ItemCode asc',
+            viewrecords: true,
+            url: "/PC_BaseDataManage/Item/GetGridJson",
+            postData: { kindId: id, delType: "2", keyword: "" },
+        });
+
+        //查询按钮
+        $("#btn_search").click(function () {
+            var delType = $("#result_horizon a.active").attr('data-value');
+            $gridList.jqGrid('setGridParam', {
+                url: "/PC_BaseDataManage/Item/GetGridJson",
+                postData: { kindId: $("#kindTree").getCurrentNode().id, delType: delType, keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    //新建物料
+    function btn_add() {
+        var kindId = $("#kindTree").getCurrentNode().id;
+        if ((!kindId) || kindId == "0") {
+            $.modalMsg("未选择品类", "error");
+            return;
+        }
+        var kindName = $("#kindTree").getCurrentNode().text;
+
+        $.modalOpen({
+            id: "Form",
+            title: kindName + " > 新建物料",
+            url: "/PC_BaseDataManage/Item/Form?kindId=" + kindId + "&kindName=" + escape(kindName),
+            width: "750px",
+            height: "550px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //导入Execl
+    function btn_ImpExcel() {
+        $.modalOpen({
+            id: "FormUpload",
+            title: "物料导入",
+            url: "/PC_BaseDataManage/Item/ItemUpload",
+            width: "550px",
+            height: "370px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //下载Execl
+    function downloadFile(url) {
+        $(this).unbind("click");
+        $("body").append($("<iframe/>").css("display", "none").attr("src", url));
+    }
+
+    //修改物料
+    function btn_edit() {
+        var kindName = $("#gridList").jqGridRowValue().KindName;
+        var kindId = $("#gridList").jqGridRowValue().ItemKindID;
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == undefined) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: kindName + " > 修改物料",
+            url: "/PC_BaseDataManage/Item/Form?kindId=" + kindId + "&keyValue=" + keyValue,
+            width: "750px",
+            height: "550px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //删除/启用 物料
+    function btn_delete() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == undefined) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        var delMark = $("#gridList").jqGridRowValue().F_DeleteMark;
+        var docMark = $(delMark).hasClass("fa-toggle-on");
+        if (docMark == true) { //当前为已删除，操作为启用
+            btn_edit();
+        }
+        else { //当前为启用，操作为删除
+            $.deleteForm({
+                url: "/PC_BaseDataManage/Item/DeleteForm",
+                param: { keyValue: keyValue },
+                success: function () {
+                    $("#gridList").resetSelection();
+                    $("#gridList").trigger("reloadGrid");
+                }
+            })
+        }
+    }
+
+    //查看物料明细
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == undefined) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        $.modalOpen({
+            id: "Details",
+            title: "查看明细",
+            url: "/PC_BaseDataManage/Item/Details?keyValue=" + keyValue,
+            width: "750px",
+            height: "550px",
+            btn: null
+        });
+    }
+
+    //品类管理
+    function btn_itemstype() {
+        $.modalOpen({
+            id: "ItemsType",
+            title: "品类管理",
+            url: "/PC_BaseDataManage/ItemKind/Index",
+            width: "800px",
+            height: "550px",
+            btn: null
+        });
+    }
+</script>
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-west">
+        <div id="kindTree"></div>
+    </div>
+    <div class="ui-layout-center">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+
+                </div>
+                <div class="btn-group">
+                    <a id="NF-Imp" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_ImpExcel()"><i class="fa fa-level-down"></i>导入</a>
+                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                    <ul class="dropdown-menu pull-right">
+                        <li><a id="NF-tepdown" authorize="yes" onclick="downloadFile('../../Resource/ExcelFilesDown/ItemExcel/物料信息.xlsx')" href="javascript:void()">模板下载</a></li>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建物料</a>
+                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                    <ul class="dropdown-menu pull-right">
+                        <li><a id="NF-itemstype" authorize="yes" onclick="btn_itemstype()">品类管理</a></li>
+                    </ul>
+                </div>
+                <div class="operate">
+                    <ul class="nav nav-pills">
+                        <li class="first">已选中<span>1</span>项</li>
+                        <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改物料</a></li>
+                        <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除/启用</a></li>
+                        <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看物料</a></li>
+                    </ul>
+                    <a href="javascript:;" class="close"></a>
+                </div>
+                <script>$('.toolbar').authorizeButton()</script>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="物料名称 / 物料编码" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                            <div id="result_horizon" class="btn-group">
+                                <a class="btn btn-default " data-value="1">全部</a>
+                                <a class="btn btn-default active" data-value="2">已启用</a>
+                                <a class="btn btn-default" data-value="3">已删除</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="gridPanel">
+            <table id="gridList"></table>
+            <div id="gridPager"></div>
+        </div>
+    </div>
+</div>

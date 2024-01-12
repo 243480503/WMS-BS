@@ -1,0 +1,633 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link href="~/Content/css/framework-font.css" rel="stylesheet" />
+    <link href="~/Content/css/framework-ui.css" rel="stylesheet" />
+    <script src="~/Content/js/jquery/jquery-2.1.1.min.js"></script>
+    <link href="~/Content/css/framework-theme.css" rel="stylesheet" />
+    <link href="~/Content/js/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Content/js/bootstrap/bootstrap.js"></script>
+    <link href="~/Content/css/framework-theme.css" rel="stylesheet" />
+    <script src="~/Content/js/charts/Chart.js"></script>
+    <script src="~/Content/js/dialog/dialog.js"></script>
+    <script src="~/Content/js/framework-ui.js"></script>
+    <script src="~/Content/js/framework-clientdata.js"></script>
+
+    <script>
+        var chartdata = null;
+        $(function () {
+            //获取消息数量
+            $.ajaxWMS({
+                url: "/Home/GetWallData",
+                data: {},
+                dataType: "json",
+                type: "GET",
+                async: false,
+                success: function (data) {
+                    if (data != null) {
+                        chartdata = data;
+                        $("#inCount").text(data.InBoundCount);
+                        $("#outCount").text(data.OutBoundCount);
+                        $("#countCount").text(data.CountCount);
+                        $("#qaCount").text(data.QACount);
+                        $("#taskCount").text(data.TaskCount);
+                        GetSalaryChart(data.MonthInOut); //月出入库统计
+                        //GetLeaveChart(data.TaskHis); //历史任务统计(可直接取消注释后使用)
+                        GetLocChart(data.LocInfo); //货位统计
+                    }
+                }
+            });
+
+            //获取列表数据
+            GetListData();
+
+            window.onresize = function () {
+                $("#salarychart").remove();
+                $("#salarychart_Panle").append('<canvas id="salarychart" style="height: 285px; width: 100%; padding-right: 10px;"></canvas>');
+
+                $("#leavechart").remove();
+                $("#leavechart_Panle").prepend('<canvas id="leavechart" style="height: 160px; width: 100%;"></canvas>');
+
+                GetSalaryChart(chartdata.MonthInOut); //月出入库统计
+                //GetLeaveChart(chartdata.TaskHis); //历史任务统计(可直接取消注释后使用)
+                GetLocChart(chartdata.LocInfo); //货位统计
+            };
+
+
+        });
+
+        function GetSalaryChart(MonthInOut) {
+            var InBoundList = [];
+            var OutBoundList = [];
+            var GetSampleList = [];
+            var BackSampleList = [];
+            var CountInList = [];
+            var CountOutList = [];
+            var MonthList = [];
+
+            $.each(MonthInOut.InBound, function (i, n) {
+                InBoundList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.OutBound, function (i, n) {
+                OutBoundList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.GetSample, function (i, n) {
+                GetSampleList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.BackSample, function (i, n) {
+                BackSampleList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.CountIn, function (i, n) {
+                CountInList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.CountOut, function (i, n) {
+                CountOutList.push(n.SumQty);
+            });
+
+            $.each(MonthInOut.Month, function (i, n) {
+                MonthList.push(n.Month + "月");
+            });
+
+            var lineChartData = {
+                labels: MonthList,
+                datasets: [
+                    {
+                        label: "InBound",
+                        fillColor: "rgba(252,134,117,0.2)",
+                        strokeColor: "rgba(252,134,117,1)",
+                        pointColor: "rgba(252,134,117,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(252,134,117,1)",
+                        data: InBoundList
+                    },
+                    {
+                        label: "OutBound",
+                        fillColor: "rgba(107,175,189,0.2)",
+                        strokeColor: "rgba(107,175,189,1)",
+                        pointColor: "rgba(107,175,189,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(107,175,189,1)",
+                        data: OutBoundList
+                    },
+                    {
+                        label: "GetSample",
+                        fillColor: "rgba(243,206,133,0.2)",
+                        strokeColor: "rgba(243,206,133,1)",
+                        pointColor: "rgba(243,206,133,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(243,206,133,1)",
+                        data: GetSampleList
+                    },
+                    {
+                        label: "BackSample",
+                        fillColor: "rgba(255,228,174,0.2)",
+                        strokeColor: "rgba(255,228,174,1)",
+                        pointColor: "rgba(255,228,174,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(255,228,174,1)",
+                        data: BackSampleList
+                    },
+                    {
+                        label: "CountIn",
+                        fillColor: "rgba(148,159,177,0.2)",
+                        strokeColor: "rgba(148,159,177,1)",
+                        pointColor: "rgba(148,159,177,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(148,159,177,1)",
+                        data: CountInList
+                    },
+                    {
+                        label: "CountOut",
+                        fillColor: "rgba(185,196,213,0.2)",
+                        strokeColor: "rgba(185,196,213,1)",
+                        pointColor: "rgba(185,196,213,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(185,196,213,1)",
+                        data: CountOutList
+                    }
+                ]
+            }
+            var ctx = document.getElementById("salarychart").getContext("2d");
+            window.myLine = new Chart(ctx, {
+                options: {
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += Math.round(tooltipItem.yLabel * 100) / 100;
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }).Line(lineChartData, {
+                responsive: false,
+                bezierCurve: false
+            });
+        }
+
+        function GetLeaveChart(TaskHis) {
+            var a_value = TaskHis.TaskHisIn;
+            var b_value = TaskHis.TaskHisOut;
+            var c_value = TaskHis.TaskHisQA;
+            var d_value = TaskHis.TaskHisCount;
+            var doughnutData = [
+                {
+                    value: a_value,
+                    color: "#F7464A",
+                    highlight: "#FF5A5E",
+                    label: "入库"
+                },
+                {
+                    value: b_value,
+                    color: "#46BFBD",
+                    highlight: "#5AD3D1",
+                    label: "出库"
+                },
+                {
+                    value: c_value,
+                    color: "#FDB45C",
+                    highlight: "#FFC870",
+                    label: "质检"
+                },
+                {
+                    value: d_value,
+                    color: "#949FB1",
+                    highlight: "#A8B3C5",
+                    label: "盘点"
+                }
+            ];
+            var ctx = document.getElementById("leavechart").getContext("2d");
+            window.myDoughnut = new Chart(ctx).Doughnut(doughnutData, { responsive: false });
+
+            $("#a_value").html(a_value);
+            $("#b_value").html(b_value);
+            $("#c_value").html(c_value);
+            $("#d_value").html(d_value);
+        }
+
+        function GetLocChart(LocInfo) {
+            var a_value = LocInfo.EmptyBigCount;//空货位(大)
+            var b_value = LocInfo.NotEmptyBigCount;//已占用(大)
+            var c_value = LocInfo.EmptyCount;  //空货位(中)
+            var d_value = LocInfo.NotEmptyCount;//已占用(中)
+            var e_value = LocInfo.EmptySmallCount; //空货位(小)
+            var f_value = LocInfo.NotEmptySmallCount; //已占用(小)
+            var doughnutData = [
+                {
+                    value: a_value,
+                    color: "#F7464A", 
+                    highlight: "#FF5A5E",
+                    label: "空货位(大)"
+                },
+                {
+                    value: b_value,
+                    color: "#46BFBD",
+                    highlight: "#5AD3D1",
+                    label: "已占用(大)"
+                },
+                {
+                    value: c_value,
+                    color: "#FDB45C",
+                    highlight: "#FFC870",
+                    label: "空货位(中)"
+                },
+                {
+                    value: d_value,
+                    color: "#949FB1",
+                    highlight: "#A8B3C5",
+                    label: "已占用(中)"
+                },
+                {
+                    value: e_value,
+                    color: "#b8de70",
+                    highlight: "#ABCE68",
+                    label: "空货位(小)"
+                },
+                {
+                    value: f_value,
+                    color: "#a7c7fb",
+                    highlight: "#91b7f5",
+                    label: "已占用(小)"
+                }
+            ];
+            var ctx = document.getElementById("chart_loc").getContext("2d");
+            window.myDoughnut = new Chart(ctx).Doughnut(doughnutData, { responsive: true });
+
+            $("#a_locvalue").html(a_value + "(个)");
+            $("#b_locvalue").html(b_value + "(个)");
+            $("#c_locvalue").html(c_value + "(个)");
+            $("#d_locvalue").html(d_value + "(个)");
+            $("#e_locvalue").html(e_value + "(个)");
+            $("#f_locvalue").html(f_value + "(个)");
+        }
+
+        //获取列表数据
+        function GetListData() {
+            $.ajaxWMS({
+                url: "/Home/GetListData",
+                data: {},
+                dataType: "json",
+                type: "Get",
+                async: false,
+                success: function (data) {
+                    if (data.orderAllList.length > 0) {
+                        $.each(data.orderAllList, function (i, n) {
+                            $("#OrderList").append(' <li><span style="cursor:pointer">[' + n.OrderTypeName + ']        ' + n.OrderCode + '      [' + n.StateName + ']</span><span class="time">' + n.CreateDate + '</span></li>');
+                        });
+                    }
+                    else {
+                        $("#OrderList").append(' <li><span style="cursor:pointer">无单据</span></li>');
+                    }
+
+                    if (data.taskList.length > 0) {
+                        $.each(data.taskList, function (i, n) {
+                            $("#TaskList").append(' <li><span style="cursor:pointer">' + n.TaskNo + '      [' + n.StateName + ']</span><span class="time">' + n.F_CreatorTime + '</span></li>');
+                        });
+                    } else {
+                        $("#TaskList").append(' <li><span style="cursor:pointer">当前无任务</span></li>');
+                    }
+
+                    if (data.msgList.length > 0) {
+                        $.each(data.msgList, function (i, n) {
+                            var msg = n.Msg == null ? " " : n.Msg;
+                            if (msg.length > 30) {
+                                msg = msg.substring(0,25)+"...";
+                            }
+                            $("#MsgList").append(' <li><span style="cursor:pointer" title="' + n.Msg + '">' + msg + '</span><span class="time">' + n.F_CreatorTime + '</span></li>');
+                        }); 
+                    } else {
+                        $("#TaskList").append(' <li><span style="cursor:pointer">无消息</span></li>');
+                    }
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="areascontent">
+        <div class="rows" style="margin-bottom: 1%; border: 1px solid #e6e6e6; overflow: hidden; padding-left: 1px;">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-line-chart fa-lg" style="padding-right: 5px;"></i>已完成业务统计
+                    <div style="float: right; position: relative; top: -4px; right: 0px;">
+                        <a class="btn btn-primary" onclick="$.reload()" style="color: #777; background-color: #fff; border: 0px; ">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stats-item" style="background-color: #fc8675;">
+                            <h2 id="inCount" class="m-top-none">0</h2>
+                            <h5>总入库单</h5>
+                            <div class="stat-icon">
+                                <i class="fa fa-indent fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stats-item" style="background-color: #6bafbd;">
+                            <h2 id="outCount" class="m-top-none">0</h2>
+                            <h5>总出库单</h5>
+                            <div class="stat-icon">
+                                <i class="fa fa-outdent fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stats-item" style="background-color: #f3ce85;">
+                            <h2 id="qaCount" class="m-top-none">0</h2>
+                            <h5>总质检单</h5>
+                            <div class="stat-icon">
+                                <i class="fa fa-flask fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stats-item" style="background-color: #949FB1;">
+                            <h2 id="countCount" class="m-top-none">0</h2>
+                            <h5>总盘点单</h5>
+                            <div class="stat-icon">
+                                <i class="fa fa-cubes fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stats-item" style="background-color: #65cea7; margin-right: 0px;">
+                            <h2 id="taskCount" class="m-top-none">0</h2>
+                            <h5>总任务数</h5>
+                            <div class="stat-icon">
+                                <i class="fa fa-play fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="rows" style="margin-bottom: 1%; overflow: hidden;">
+            <div id="salarychart_box" style="float: left; width: 69%;">
+                <div style="height: 350px; border: 1px solid #e6e6e6; background-color: #fff;">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-area-chart fa-lg" style="padding-right: 5px;"></i>出入库统计(单位:PCS)
+                            <div style="float: right">
+                               
+                                <span style="font-weight: 500;"><i class="fa fa-square" style="color: #FC8675; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>入库</span>
+                                <span style="margin-left: 10px; font-weight: 500;"><i class="fa fa-square" style="color: #6BAFBD; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>出库</span>
+                                <span style="margin-left: 10px; font-weight: 500;"><i class="fa fa-square" style="color: #F3CE85; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>取样</span>
+                                <span style="margin-left: 10px; font-weight: 500;"><i class="fa fa-square" style="color: #FFE4AE; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>还样</span>
+                                <span style="margin-left: 10px; font-weight: 500;"><i class="fa fa-square" style="color: #949FB1; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>盘盈</span>
+                                <span style="margin-left: 10px; font-weight: 500;"><i class="fa fa-square" style="color: #B9C4D5; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>盘亏</span>
+                            </div>
+                        </div>
+                        <div id="salarychart_Panle" class="panel-body" style="padding-bottom: 0px;">
+                            <canvas id="salarychart" style="height: 285px; width: 100%; padding-right: 10px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="leavechart_box" style="float: right; width: 30%; display:none">
+                <!--隐藏的图表，该功能正常，视情况可直接使用-->
+                <div style="height: 350px; border: 1px solid #e6e6e6; background-color: #fff;">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><i class="fa fa-pie-chart fa-lg" style="padding-right: 5px;"></i>历史任务统计</div>
+                        <div id="leavechart_Panle" class="panel-body" style="padding-top: 20px;">
+                            <canvas id="leavechart" style="height: 160px; width: 100%;"></canvas>
+                            <div style="text-align: center; padding-top: 20px;">
+                                <span><i class="fa fa-square" style="color: #FC8675; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px;"></i>入库</span>
+                                <span style="margin-left: 10px;"><i class="fa fa-square" style="color: #6BAFBD; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px;"></i>出库</span>
+                                <span style="margin-left: 10px;"><i class="fa fa-square" style="color: #F3CE85; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px;"></i>质检</span>
+                                <span style="margin-left: 10px;"><i class="fa fa-square" style="color: #949FB1; font-size: 20px; padding-right: 5px; vertical-align: middle; margin-top: -3px;"></i>盘点</span>
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 18px; height: 60px; border-top: 1px solid #e6e6e6;">
+                                <div style="width: 25%; text-align: center; float: left;">
+                                    <span id="a_value">10</span>
+                                    <p style="color: #a1a1a1">入库</p>
+                                </div>
+                                <div style="width: 25%; text-align: center; float: left;">
+                                    <span id="b_value">10</span>
+                                    <p style="color: #a1a1a1">出库</p>
+                                </div>
+                                <div style="width: 25%; text-align: center; float: left;">
+                                    <span id="c_value">10</span>
+                                    <p style="color: #a1a1a1">质检</p>
+                                </div>
+                                <div style="width: 25%; text-align: center; float: left;">
+                                    <span id="d_value">10</span>
+                                    <p style="color: #a1a1a1">盘点</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="float: right; width: 30%;">
+                <div style="height: 350px; border: 1px solid #e6e6e6; background-color: #fff;">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><i class="fa fa-pie-chart fa-lg" style="padding-right: 5px;"></i>货位统计(单位:个)</div>
+                        <div id="leavechart_Panle" class="panel-body" style="padding-top: 10px;">
+                            <canvas id="chart_loc" style="height: 150px; width: 100%;"></canvas>
+                            <div style="text-align: center; padding-top: 20px;">
+                                @*"#F7464A，#46BFBD，#FDB45C，#949FB1，#b8de70，#a7c7fb"*@
+                                <span><i class="fa fa-square" style="color: #F7464A; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>空货位(大)</span>
+                                <span style="margin-left: 1px;"><i class="fa fa-square" style="color: #46BFBD; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>已占用(大)</span>
+                                <span style="margin-left: 1px; "><i class="fa fa-square" style="color: #FDB45C; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>空货位(中)</span>
+                                <span style="margin-left: 1px; "><i class="fa fa-square" style="color: #949FB1; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>已占用(中)</span>
+                                <span style="margin-left: 1px; "><i class="fa fa-square" style="color: #b8de70; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>空货位(小)</span>
+                                <span style="margin-left: 1px; "><i class="fa fa-square" style="color: #a7c7fb; font-size: 18px; padding-right: 5px; vertical-align: middle; margin-top: -3px; "></i>已占用(小)</span>
+
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 18px; height: 60px; border-top: 1px solid #e6e6e6;">
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="a_locvalue">10</span>
+                                    <p style="color: #a1a1a1">空货位(大)</p>
+                                </div>
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="b_locvalue">10</span>
+                                    <p style="color: #a1a1a1">已占用(大)</p>
+                                </div>
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="c_locvalue">10</span>
+                                    <p style="color: #a1a1a1">空货位(中)</p>
+                                </div>
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="d_locvalue">10</span>
+                                    <p style="color: #a1a1a1">已占用(中)</p>
+                                </div>
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="e_locvalue">10</span>
+                                    <p style="color: #a1a1a1">空货位(小)</p>
+                                </div>
+                                <div style="width: 16%; text-align: center; float: left;">
+                                    <span id="f_locvalue">10</span>
+                                    <p style="color: #a1a1a1">已占用(小)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="rows" style="overflow: hidden;">
+            <div style="float: left; width: 34%; margin-right: 1%;">
+            <div style="height: 265px; border: 1px solid #e6e6e6; background-color: #fff;">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><i class="fa fa-list" style="padding-right: 5px;"></i>单据列表</div>
+                    <div class="panel-body">
+                        <ul id="OrderList">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="float: left; width: 34%; margin-right: 1%;">
+            <div style="height: 265px; border: 1px solid #e6e6e6; background-color: #fff;">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><i class="fa fa-rss fa-lg" style="padding-right: 5px;"></i>当前任务</div>
+                    <div class="panel-body">
+                        <ul id="TaskList">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div style="float: left; width: 30%;">
+                <div style="height: 265px; border: 1px solid #e6e6e6; background-color: #fff;">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><i class="fa fa-send fa-lg" style="padding-right: 5px;"></i>消息</div>
+                        <div class="panel-body">
+                            <ul id="MsgList">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #copyrightcontent {
+            height: 30px;
+            line-height: 29px;
+            overflow: hidden;
+            position: absolute;
+            top: 100%;
+            margin-top: -30px;
+            width: 100%;
+            background-color: #fff;
+            border: 1px solid #e6e6e6;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .dashboard-stats {
+            float: left;
+            width: 20%;
+        }
+
+        .dashboard-stats-item {
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            cursor: pointer;
+            height: 105px;
+            margin-right: 25px;
+            margin-bottom: 10px;
+            padding: 20px 20px;
+        }
+
+            .dashboard-stats-item .m-top-none {
+                margin-top: 2px;
+            }
+
+            .dashboard-stats-item h2 {
+                font-size: 35px;
+                font-family: inherit;
+                line-height: 1.1;
+                font-weight: 500;
+            }
+
+            .dashboard-stats-item h5 {
+                font-size: 14px;
+                font-family: inherit;
+                margin-top: 3px;
+                line-height: 1.1;
+            }
+
+            .dashboard-stats-item .stat-icon {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 30px;
+                opacity: .3;
+            }
+
+        .dashboard-stats i.fa.stats-icon {
+            width: 50px;
+            padding: 20px;
+            font-size: 50px;
+            text-align: center;
+            color: #fff;
+            height: 50px;
+            border-radius: 10px;
+        }
+
+        .panel-default {
+            border: none;
+            border-radius: 0px;
+            margin-bottom: 0px;
+            box-shadow: none;
+            -webkit-box-shadow: none;
+        }
+
+            .panel-default > .panel-heading {
+                color: #777;
+                background-color: #fff;
+                border-color: #e6e6e6;
+                padding: 10px 10px;
+            }
+
+            .panel-default > .panel-body {
+                padding: 10px;
+                padding-bottom: 0px;
+            }
+
+                .panel-default > .panel-body ul {
+                    overflow: hidden;
+                    padding: 0;
+                    margin: 0px;
+                    margin-top: -5px;
+                }
+
+                    .panel-default > .panel-body ul li {
+                        line-height: 27px;
+                        list-style-type: none;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                    }
+
+                        .panel-default > .panel-body ul li .time {
+                            color: #a1a1a1;
+                            float: right;
+                            padding-right: 5px;
+                        }
+    </style>
+</body>
+</html>

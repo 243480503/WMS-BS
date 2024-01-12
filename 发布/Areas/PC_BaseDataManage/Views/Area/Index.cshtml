@@ -1,0 +1,204 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+</style>
+
+<script>
+    $(function () {
+        gridList();
+    })
+    function gridList() {
+        $("#gridList").dataGrid({
+            treeGrid: true,
+            treeGridModel: "adjacency",
+            ExpandColumn: "F_EnCode",
+            url: "/PC_BaseDataManage/Area/GetTreeGridJson",
+            height: $(window).height() - 90,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '名称', name: 'AreaName', width: 100, align: 'left' },
+                { label: '编号', name: 'AreaCode', width: 100, align: 'left' },
+                {
+                    label: '区域类型', name: 'AreaType', width: 80, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.AreaTypeName;
+                    }
+                },
+                { label: '货位前缀', name: 'LocationPrefix', width: 60, align: 'left' },
+                {
+                    label: "主区域", name: "IsMain", width: 60, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "虚拟区域", name: "IsAreaVir", width: 60, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "ERP物理区域", name: "IsERPPy", width: 80, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "质检物理区域", name: "IsCheckPy", width: 80, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "巷道均分", name: "IsEvenTunnel", width: 60, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "巷道倒序", name: "IsTunnelDesc", width: 60, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "是否启用", name: "IsEnable", width: 60, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '系统数据', name: 'IsBase', width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                }
+            ],
+        });
+    }
+
+    //新增区域
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增区域",
+            url: "/PC_BaseDataManage/Area/Form",
+            width: "750px",
+            height: "580px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //编辑区域
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "AreaForm",
+            title: "修改区域",
+            url: "/PC_BaseDataManage/Area/Form?keyValue=" + keyValue,
+            width: "750px",
+            height: "580px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //修改区域
+    function btn_delete() {
+        $.deleteForm({
+            url: "/PC_BaseDataManage/Area/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $("#gridList").resetSelection();
+                $("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    //查看区域
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "AreaDetails",
+            title: "查看区域",
+            url: "/PC_BaseDataManage/Area/Details?keyValue=" + keyValue,
+            width: "750px",
+            height: "580px",
+            btn: null,
+        });
+    }
+
+    //巷道管理
+    function btn_DevRow() {
+        var areaID = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "TunnelDetails",
+            title: "巷道管理",
+            url: "/PC_BaseDataManage/DevRow/index?areaID=" + areaID,
+            width: "900px",
+            height: "660px",
+            btn: null,
+        });
+    }
+</script>
+
+<div class="topPanel" style="border: 0px;">
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="请输入要查询关键字" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" class="btn btn-primary" authorize="yes" onclick="btn_add()"><i class="fa fa-plus"></i>新建区域</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-area-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改区域</a></li>
+                <li><a id="NF-area-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除区域</a></li>
+                <li><a id="NF-area-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看区域</a></li>
+                <li><a id="NF-DevRow" authorize="yes" onclick="btn_DevRow()"><i class="fa fa-bars"></i>巷道管理</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+</div>

@@ -1,0 +1,325 @@
+﻿.Runner {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    border: solid 2px #5f7d9a;
+}
+
+.FirstRunnerBottom {
+    border-bottom: solid 1px #38638e;
+}
+
+.RunnerNoTop {
+    border-top: solid 1px #38638e;
+}
+
+.RunnerNoRight {
+    border-right-width: 0px;
+}
+
+.RunnerNoBottom {
+    border-bottom-width: 0px;
+}
+
+.RunnerNoLeft {
+    border-left: solid 1px #38638e;
+}
+
+.light_Rad { /*光电（圆角）*/
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #b7cfea;
+    position: absolute;
+}
+
+.light_F { /*顶升机光电（方角）*/
+    width: 8px;
+    height: 8px;
+    background-color: #b7cfea;
+    position: absolute;
+}
+
+.markBox {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    border: solid 2px #5f7d9a;
+    border-bottom-width: 0px;
+    border-top-left-radius: 40px;
+    border-top-right-radius: 40px;
+}
+
+
+
+.MoveRun_Left {
+    width: 13px;
+    height: 22px;
+    position: absolute;
+    left: 2px;
+    top: 48px;
+    font-size: 13px;
+    color: #375b7f;
+}
+
+.MoveRun_Right {
+    width: 13px;
+    height: 22px;
+    position: absolute;
+    left: 93px;
+    top: 48px;
+    font-size: 13px;
+    color: #375b7f;
+}
+
+
+.MoveRun_Bottom {
+    width: 22px;
+    height: 13px;
+    position: absolute;
+    left: 53px;
+    top: 90px;
+    font-size: 13px;
+    color: #375b7f;
+}
+
+#ScanImg {
+    width: 230px;
+    height: 160px;
+    position: absolute;
+    border: solid 1px #4d7aa7;
+    border-radius: 10px;
+    padding:5px;
+}
+
+#ImgPho {
+    width: 218px;
+    height: 148px;
+    border: solid 1px #4d7aa7;
+    border-radius: 10px;
+    cursor:pointer;
+}
+
+.container {
+    width: 70px;
+    height: 70px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #55626f;
+    border: solid 1px #4d7aa7;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 5px;
+    z-index: 9999;
+    color: #b7cfea;
+    word-break: break-all;
+}
+
+.conDetail {
+    color: #75bbff;
+}
+
+.RunnerBtn {
+    width: 5px;
+    height: 10px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #b7cfea;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.RunnerBtn_Out {
+    width: 5px;
+    height: 10px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #b7cfea;
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
+}
+
+.AGVBox {
+    width: 110px;
+    height: 110px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #285480;
+    border: solid 1px #5188bf;
+    cursor: pointer;
+    border-radius: 10px;
+    z-index: 9999;
+    padding-top: 27px;
+}
+
+.SmallBox {
+    width: 15px;
+    height: 15px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    text-align: center;
+    line-height: 15px;
+    color: #739cc3;
+}
+
+.AGVBoxText {
+    width: 100%;
+    height: 15px;
+    text-align: center;
+    line-height: 15px;
+    color: #d3dfea;
+}
+
+/*入库贴标光电*/
+#markBox_Mark {
+    width: 10px;
+    height: 10px;
+    background-color: #b7cfea;
+    position: absolute;
+    top: 90px;
+    left: 30px;
+    border-radius: 3px;
+}
+
+/*入库扫码光电*/
+.markBox_Scan {
+    width: 10px;
+    height: 10px;
+    background-color: #b7cfea;
+    position: absolute;
+    top: 90px;
+    left: 50px;
+    border-radius: 3px;
+}
+
+
+
+/*入库照相机*/
+.markBox_InPho {
+    width: 10px;
+    height: 10px;
+    background-color: #b7cfea;
+    position: absolute;
+    top: 90px;
+    left: 70px;
+    border-radius: 3px;
+}
+
+.LMRBox {
+    width: 110px;
+    height: 110px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #4a739c;
+    border: solid 1px #8e8958;
+    cursor: pointer;
+    border-radius: 10px;
+    z-index: 9999;
+}
+
+.AGVPostion {
+    width: 110px;
+    height: 110px;
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    background-color: #375b7f;
+    border: solid 1px #697e8e;
+    cursor: pointer;
+    border-radius: 10px;
+    padding-top: 27px;
+}
+
+.OrderInfo {
+    width: 360px;
+    height: 200px;
+    border: solid 1px #5188bf;
+    border-radius: 10px;
+    position: absolute;
+    background-color: #285480;
+    padding: 10px;
+    color: #75bbff;
+}
+
+.OrderTable {
+    width: 100%;
+}
+
+    .OrderTable > tbody > tr {
+        width: 100%;
+        height: 30px;
+    }
+
+        .OrderTable > tbody > tr > td:nth-child(odd) {
+            width: 20%;
+            height: 30px;
+            color: #d3dfea;
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        .OrderTable > tbody > tr > td:nth-child(even) {
+            width: 20%;
+            height: 30px;
+            color: #d3dfea;
+            text-align: left;
+        }
+
+
+.SendInfo {
+    width: 300px;
+    height: 689px;
+    border: solid 1px #5188bf;
+    border-radius: 10px;
+    position: absolute;
+    background-color: #285480;
+    padding: 10px;
+    overflow-y:auto;
+}
+
+.SendInfo::-webkit-scrollbar { /*滚动条整体样式*/
+    width: 10px; /*高宽分别对应横竖滚动条的尺寸*/
+    height: 1px;
+}
+
+    .SendInfo::-webkit-scrollbar-thumb { /*滚动条里面小方块*/
+        border-radius: 10px;
+        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        background: #315171;
+    }
+
+    .SendInfo::-webkit-scrollbar-track { /*滚动条里面轨道*/
+        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        background: #3d6186;
+    }
+.SendTable {
+    width: 100%;
+}
+
+    .SendTable > tbody > tr {
+        width: 100%;
+        height: 30px;
+    }
+
+        .SendTable > tbody > tr > td {
+            color: #75bbff;
+        }
+
+        .SendTable > tbody > tr:nth-child(odd) {
+            width: 25%;
+            height: 30px;
+            text-align: left;
+        }
+
+        .SendTable > tbody > tr:nth-child(even) {
+            width: 25%;
+            height: 30px;
+            text-align: left;
+        }

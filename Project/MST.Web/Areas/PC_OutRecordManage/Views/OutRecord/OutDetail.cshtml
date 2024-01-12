@@ -1,0 +1,98 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 40%;
+    }
+</style>
+<script>
+    var outBoundDetailID = $.request("keyValue");
+    $(function () {
+        gridList();
+    })
+
+    var oldNum = 0;
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_OutRecordManage/OutRecord/GetOutRecordGridJson?outBoundDetailID=" + outBoundDetailID,
+            height: $(window).height() - 120,
+            cellsubmit: "clientArray",
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 70, align: 'left' },
+                { label: "原数量", name: "OldQty", width: 50, align: 'left' },
+                { label: "应拣数量", name: "NeedQty", width: 50, align: 'left' },
+                { label: "已拣数量", name: "PickedQty", width: 50, align: 'left' },
+                { label: "回库数量", name: "AfterQty", width: 50, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 50, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 80, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: "货位编码", name: "SrcLocationCode", width: 100, align: 'left' },
+                //{ label: "目标地址", name: "TagLocationCode", width: 100, align: 'left' },
+                { label: "目标站台", name: "StationName", width: 100, align: 'left' },
+                { label: '标签条码', name: 'ItemBarCode', width: 100, align: 'left' },
+                { label: '容器大类', name: 'ContainerKindName', width: 70, align: 'left', sortable: false },
+                { label: "状态", name: "State", width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            customEdit: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+</script>
+<div class="topPanel">
+
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="容器条码 / 物料编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

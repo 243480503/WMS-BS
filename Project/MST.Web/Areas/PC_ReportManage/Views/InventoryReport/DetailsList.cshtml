@@ -1,0 +1,130 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+
+<script>
+    var keyValue = $.request("keyValue");
+
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_ReportManage/InventoryReport/GetDetailsGridJson?keyValue=" + keyValue,
+            height: $(window).height() - 128,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 100, align: 'left' },
+                { label: '实物数量', name: 'Qty', width: 50, align: 'left' },
+                { label: '待出库数量', name: 'OutQty', width: 50, align: 'left' },
+                { label: '取样数量', name: 'CheckQty', width: 50, align: 'left' },
+                { label: '计量单位', name: 'ItemUnitText', width: 60, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 80, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: '物料种类', name: 'KindName', width: 130, align: 'left' },
+                { label: '货位状态', name: 'LocationState', width: 50, align: 'left', sortable: false, formatter: function (cellvalue, options, rowObject) { return rowObject.LocationStateName; } },
+                { label: '质检状态', name: 'CheckState', width: 50, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.CheckStateName; } },
+                { label: '库存状态', name: 'State', width: 50, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                {
+                    label: '质检冻结状态', name: 'IsCheckFreeze', width: 50, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '盘点冻结状态', name: 'IsCountFreeze', width: 50, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: 'ERP仓', name: 'ERPWarehouseCode', width: 80, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.ERPWarehouseName == null) { return ""; }
+                        else { return rowObject.ERPWarehouseName; }
+                    }
+                },
+                { label: '供应商', name: 'SupplierName', width: 250, align: 'left' },
+                { label: '区域', name: 'AreaName', width: 80, align: 'left' },
+                { label: '货位编码', name: 'LocationNo', width: 100, align: 'left' },
+                { label: '容器类型', name: 'ContainerType', width: 200, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.ContainerTypeName; } },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: '贴标条码', name: 'ItemBarCode', width: 100, align: 'left' },
+                {
+                    label: '入库来源单号', name: 'InBoundID', width: 120, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.RefInBoundCode == null) { return ""; }
+                        else { return rowObject.RefInBoundCode; }
+                    }
+                },
+                { label: 'ERP入库单', name: 'ERPInDocCode', width: 120, align: 'left' },
+                { label: '生产日期', name: 'ProductDate', width: 80, align: 'left', formatter: "date", formatoptions: { srcformat: 'Y-m-d', newformat: 'Y-m-d' } },
+                {
+                    label: '是否特殊料', name: 'IsSpecial', width: 100, align: 'center', sortable: false,
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+            ],
+            pager: "#gridPager",
+            sortname: 'ItemCode asc,F_CreatorTime desc',
+            viewrecords: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), keyValue: keyValue},
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称 / 批号 / 容器条码 / 货位编码" style="width: 300px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

@@ -1,0 +1,507 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<style>
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .cbox.checkbox {
+        margin-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+
+    select[multiple], select[size] {
+        height: 20px;
+    }
+</style>
+<script src="~/Content/js/jqgrid/jqgrid.min.js"></script>
+<link href="~/Content/js/jqgrid/jqgrid.css" rel="stylesheet" />
+<script src="~/Content/js/jqgrid/grid.locale-cn.js"></script>
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+<link href="~/Content/js/datepicker/skin/whyGreen/datepicker.css" rel="stylesheet" />
+<script src="~/Content/js/select2/select2.min.js"></script>
+<link href="~/Content/js/select2/select2.min.css" rel="stylesheet" />
+
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="content-type" content="no-cache, must-revalidate" />
+<meta http-equiv="expires" content="Wed, 26 Feb 1997 08:21:57 GMT" />
+<script>
+    var selectRowLeft = [];
+    var keyValue = $.request("InBoundID");
+    $(function () {
+        $('#layout').layout({
+            north: { size: 400, resizable: false },
+            center: { size: 40, resizable: false },
+            south: { size: 240, resizable: false }
+        });
+
+        gridList_Bottom();
+
+        $("#layoutChild").layout();
+        gridList_Top('0');
+        treeView();
+        $($("#kindTree>div>div>ul>li>div")[0]).trigger("click");
+        //var id = $("#kindTree").getCurrentNode().id;
+        //gridList(id);
+
+        //穿梭添加(添加后不可删除，因为可能存在同物料不同批次的情况)
+        $("#toright").bind("click", function () {
+            var leftSelectRows = $("#gridList_Big").jqGridTransferRowValue();
+            $.each(leftSelectRows, function (i, n) {
+                n.ItemID = n.F_Id;
+                n.SEQ = GenSEQ();
+                n.IsMustQtySame = "true";
+                n.F_Id = "New_" + n.ItemID + "_" + n.SEQ;
+                $("#gridList_Right").addRowData(n.F_Id, n, "last");
+                $("#gridList_Big").jqGrid("resetSelection");
+            });
+        });
+
+        //穿梭移除
+        $("#toleft").bind("click", function () {
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                $("#gridList_Right").delRowData(n.F_Id);
+            });
+        });
+
+        $("#btn_search").click(function () {
+            var kindID = $("#kindTree").getCurrentNode().id;
+            $("#gridList_Big").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), kindID: kindID },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    })
+
+    //初始化树
+    function treeView() {
+        $("#kindTree").treeview({
+            url: "/PC_BaseDataManage/Item/GetTreeJson",
+            onnodeclick: function (item) {
+                //$("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+
+    //移除或新增 actionType：1 新增，2移除
+    function GenSEQ() {
+        var rightRows = $("#gridList_Right").jqGrid('getRowData');
+        var SEQArray = [];
+        var first = {};
+        first.SEQ = 0;
+        SEQArray.push(first);
+
+        $.each(rightRows, function (i, n) {
+            var cell = {};
+            cell.SEQ = parseInt(n.SEQ);
+            SEQArray.push(cell);
+        });
+
+        SEQArray = SEQArray.sort(function (a, b) { return a.SEQ - b.SEQ });
+
+        var lastSEQ = 0;
+        for (var i = 0; i < SEQArray.length - 1; i++) {
+            if (SEQArray[i].SEQ + 1 != SEQArray[i + 1].SEQ) {
+                lastSEQ = SEQArray[i].SEQ + 1;
+                return lastSEQ;
+            }
+        }
+        if (lastSEQ == 0) {
+            if (SEQArray.length == 0) {
+                lastSEQ = 1;
+            }
+            else {
+                lastSEQ = SEQArray[SEQArray.length - 1].SEQ + 1;
+            }
+        }
+        return lastSEQ;
+    }
+
+    //获取ERP仓库下拉框数据
+    function GetERPList() {
+        var mydata = "";
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/GetERPList",
+            data: {},
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data.length < 1) {
+                    return mydata;
+                }
+                $.each(data, function (i, n) {
+                    mydata = mydata + (n.ERPHouseCode + ":" + n.ERPHouseName + ";");
+                })
+                mydata = mydata.substr(0, mydata.length - 1);
+            }
+        });
+        return mydata;
+    }
+
+
+    function gridList_Bottom() {
+        var $gridList_Right = $("#gridList_Right");
+        $gridList_Right.dataGrid({
+            url: "/PC_InBoundManage/InBoundDetail/GetGridJson?InBoundID=" + keyValue,
+            height: 200,// $(window).height() - 78,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "单位数量", name: "UnitQty", hidden: true },
+                { label: '采购单ID', name: 'InBoundID', hidden: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: '是否强制批号', name: 'IsMustLot', hidden: true },
+                { label: '项次', name: 'SEQ', width: 40, align: 'left', sorttype: "float" },
+                { label: "物料编码", name: "ItemCode", width: 80, align: 'left' },
+                { label: "物料名称", name: "ItemName", width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 250, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 60, align: 'left' },
+                { label: "批号", name: "Lot", width: 70, align: 'left', editable: true, editoptions: { size: 1, width: 50 } },
+                {
+                    label: "失效日期", name: "OverdueDate", width: 80, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' },
+                    editable: true, editrues: { edithidden: true, required: true, date: true },
+                    editoptions: {
+                        size: 0.8,
+                        dataInit: function (e) {
+                            $(e).click(function () {
+                                WdatePicker();
+                            })
+                        }
+                    }
+                },
+                {
+                    label: "采购数量", name: "Qty", width: 100, align: 'left', editable: true, editoptions:
+                    {
+                        //type: "Number",
+                        size: 1,
+                        width: 50,
+                        dataEvents: [
+                            {
+                                type: "blur", data: this, fn: function (e) {
+                                    var id = $(e.target).parents("tr").attr("id");
+                                    var unitQty = parseFloat($gridList_Right.getRowData(id).UnitQty);
+
+                                    var val = $(e.target).val();
+                                    //if (val == "") {  //无输入
+                                    //    $(e.target).css("border-color", "");
+                                    //    $(e.target).attr("err", false);
+                                    //    return;
+                                    //}
+
+                                    if (!$.isNumeric(val)) { //不是数字
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+                                    var valNum = parseFloat(val);
+                                    if (valNum <= 0) {  // 非正数
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+                                    //if (valNum % unitQty  != 0) { //非倍数
+                                    //    $(e.target).css("border-color", "red");
+                                    //    $(e.target).attr("err", true);
+                                    //    return;
+                                    //}
+
+                                    $(e.target).css("border-color", "");
+                                    $(e.target).attr("err", false);
+                                }
+                            },
+                            {
+                                type: "focus", data: this, fn: function (e) {
+                                    var id = $(e.target).parents("tr").attr("id");
+                                    var unitQty = parseFloat($gridList_Right.getRowData(id).UnitQty);
+                                    $(e.target).attr("placeholder", "单位数量：" + unitQty);
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    label: "ERP仓库", name: "ERPWarehouseCode", width: 70, align: 'left', editable: true, edittype: 'select', formatter: 'select',
+                    editoptions: { size: 1, width: 1, type: "select", class: "form-control required", value: GetERPList() }
+                },
+                { label: '数量一致', name: 'IsMustQtySame', width: 60, align: 'center', editable: true, edittype: "checkbox", formatter: 'checkbox', formatoptions: { disabled: false }, editoptions: { value: "true:false" } },
+                { label: "容器大类", name: "ContainerKindName", width: 60, align: 'left' },
+            ],
+            afterEditCell: function (rowid, cellname, val, iRow, iCol) {
+                var cellId = iRow + "_" + cellname;
+                // 判断当前是否为失效日期
+                if (cellname == "OverdueDate") {
+                    $("#" + cellId).live("click", function () {
+                        WdatePicker({
+                            dateFmt: 'MM-dd', onpicked: function () {
+                                $gridList_Right.jqGrid('saveCell', iRow, iCol);
+                            }
+                        });
+                    })
+                } else {
+                    // 保存修改的jqgrid列表
+                    $("#" + iRow + "_" + cellname, "#gridList_Right").one("blur", function () {
+                        $gridList_Right.saveCell(iRow, iCol);
+                    })
+                }
+            },
+            //pager: "#gridPager3",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            multiselect: true,
+            showcheck: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+                //还原其它行的编辑状态
+                var rows = $gridList_Right.jqGrid("getRowData");
+
+                //检查验证.
+                var isHasErr = false;
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $("#" + n.F_Id + ">td>input[name=Qty]").each(function (j, k) {
+                            var iserr = $(k).attr("err");
+                            if (iserr == "true") {
+                                isHasErr = true;
+                            }
+                        });
+                    }
+                });
+
+                if (isHasErr) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList_Right.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+                //$gridList_Right.jqGrid('setSelection', rowid);
+            },
+            customEdit: true,
+            loadonce: true,
+            rowNum: 999999
+        });
+    }
+
+    function gridList_Top(id) {
+        var $gridList_Big = $("#gridList_Big");
+        $gridList_Big.dataGrid({
+            url: "/PC_InBoundManage/InBoundDetail/GetItemList",
+            postData: { kindID: id },
+            height: 300, //$(window).height() - 128,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "单位数量", name: "UnitQty", hidden: true },
+                { label: '入库单ID', name: 'InBoundID', hidden: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: 'ERP仓库', name: 'ERPWarehouseCode', hidden: true },
+                { label: '是否强制批号', name: 'IsMustLot', hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 250, align: 'left' },
+                { label: '规格', name: 'Spec', width: 150, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 100, align: 'left' },
+                { label: "容器大类", name: "ContainerKindName", width: 50, align: 'left' }
+            ],
+            //pager: "#gridPager2",
+            sortname: 'ItemCode asc',
+            viewrecords: true,
+            multiselect: true,
+            showcheck: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+
+            },
+            rowNum: 999999
+        });
+    }
+
+    //确定按钮
+    function submitForm(fun) {
+        //if (!$('#form1').formValid()) {
+        //    return false;
+        //}
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList_Right").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList_Right").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        //还原后重新获取数据
+        rows = $("#gridList_Right").jqGrid("getRowData");
+        var isQtyErr = false;
+        var isLotErr = false;
+        var isDateErr = false;
+        var isDateSErr = false;
+        $.each(rows, function (i, n) {
+            // 替换失效日期中的160特殊空格；
+            n.OverdueDate = n.OverdueDate.replace(new RegExp("\\u00A0+", "gm"), "")
+
+            // 强批号
+            if (n.IsMustLot == "true") {
+                if (n.Lot == "" || n.Lot == null) {
+                    $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                    $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=Lot]").css("border-color", "red");
+                    $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=Lot]").attr("focus", true);
+                    isLotErr = true;
+                    return false;
+                }
+                else if (n.OverdueDate == "") {
+                    $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                    $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").css("border-color", "red");
+                    $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").attr("focus", true);
+                    isDateErr = true;
+                    return false;
+                }
+                else if (n.OverdueDate != "") { // 判断日期格式
+                    var time = n.OverdueDate;
+                    var result = time.match(/^(\d{1,4})(-|\/)(\d{1,2})\2(\d{1,2})$/);
+                    if (result == null) {
+                        $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                        $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").css("border-color", "red");
+                        $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").attr("focus", true);
+                        isDateSErr = true;
+                        return false;
+                    }
+                    var d = new Date(result[1], result[3] - 1, result[4]);
+                    var b = d.getFullYear() == result[1] && (d.getMonth() + 1) == result[3] && d.getDate() == result[4];
+                    if (b == false || result[1] <= 1753) {
+                        $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                        $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").css("border-color", "red");
+                        $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=OverdueDate]").attr("focus", true);
+                        isDateSErr = true;
+                        return false;
+                    }
+                }
+            }
+
+            // 验证采购数量
+            if (n.Qty == "" || !$.isNumeric(n.Qty) || parseFloat(n.Qty) <= 0) {
+                // 为空 || 不是数字 || 非正数
+                $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=Qty]").css("border-color", "red");
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=Qty]").attr("focus", true); //自定义焦点
+                isQtyErr = true;
+                return false;
+            }
+        });
+
+        if (isQtyErr) {
+            $.modalMsg("采购数量无效", "warning");
+            return;
+        }
+        if (isLotErr) {
+            $.modalMsg("批号必填", "warning");
+            return;
+        }
+        if (isDateErr) {
+            $.modalMsg("失效日期必填", "warning");
+            return;
+        }
+        if (isDateSErr) {
+            $.modalMsg("失效日期无效", "warning");
+            return;
+        }
+
+        var jsonStr = JSON.stringify(rows);
+        postdata["InBoundDetailEntityListStr"] = jsonStr;
+        $.submitForm({
+            url: "/PC_InBoundManage/InBoundDetail/SubmitFormList?InBoundID=" + keyValue,
+            param: postdata,
+            success: function () {
+                fun();
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message.replaceAll('\n', '<br/>'), data.state);
+            }
+        })
+    }
+
+</script>
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-north" style="height:60%">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称 / 生产厂家" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+        <div>
+
+            <div class="ui-layout" id="layoutChild" style="height: 348px; width: 100%;">
+                <div class="ui-layout-west" style="height:60%">
+                    <div id="kindTree"></div>
+                </div>
+                <div class="ui-layout-center" style="height:60%">
+                    <table id="gridList_Big"></table>
+                    <div id="gridPager2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-center" style="height:40%">
+        <div class="topPanel">
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <button id="toright" type="button" class="btn  btn-primary"><i class="fa fa-angle-down"></i></button>
+                            <button id="toleft" type="button" class="btn  btn-primary"><i class="fa fa-angle-up"></i></button>
+                            <div class="input-group">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-south" style="height:35%">
+        <table id="gridList_Right"></table>
+        <div id="gridPager3"></div>
+    </div>
+</div>
+

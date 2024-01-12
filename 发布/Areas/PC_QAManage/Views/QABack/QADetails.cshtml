@@ -1,0 +1,118 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    var QAID = $.request("keyvalue");
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_QAManage/QABack/GetGridJsonDetails?QAID=" + QAID,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "质检单ID", name: "QAID", hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 60, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 200, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 200, align: 'left' },
+                //{ label: '供应商名称', name: 'SupplierName', width: 150, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 80, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 65, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: "破坏性质检", name: "IsBroken", width: 65, align: 'center', formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: "状态", name: "State", width: 60, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                { label: "还样数量", name: "SampleSumNum", width: 55, align: 'left' },
+                {
+                    label: '出库地点', name: 'StationCode', width: 100, align: 'center',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.StationCode == "StationOut_Normal") { //出库站台正常
+                            return '<span class=\"label label-success\">' + rowObject.StationName + '</span>';
+                        } else if (rowObject.StationCode == "StationOut_BigItem") { //出库站台(大件)
+                            return '<span class=\"label label-info\">' + rowObject.StationName + '</span>';
+                        }
+                        else {
+                            return cellvalue;
+                        }
+                    }
+                },
+                {
+                    label: '还样详情', name: '', width: 60, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "<div  onclick=\"btn_QADetail(\'" + rowObject.F_Id + "\', \'" + rowObject.QAID + "\')\" title='还样详情' class='fa fa-list' style='color:#336699;cursor:pointer;'></div>";
+                        return detail;
+                    },
+                },
+                {
+                    label: '结果来源', name: 'ResultState', width: 60, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.ResultState == "" || rowObject.ResultState == "New") return "";
+                        else return rowObject.ResultStateName;
+                    }
+                },
+                {
+                    label: '质检结果', name: 'QAResult', width: 60, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.QAResult == "" || rowObject.QAResult == "WaitCheck") return "";
+                        else return rowObject.QAResultName;
+                    }
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            rowNum: 15
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    //还样详情
+    function btn_QADetail(detailID, qAID) {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "还样详情",
+            url: "/PC_QARecordManage/QARecord/QADetail?qaDetailID=" + detailID + "&qAID=" + qAID,
+            width: "1480px",
+            height: "850px"
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料名称 / 物料编号" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

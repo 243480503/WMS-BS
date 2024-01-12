@@ -1,0 +1,366 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    var InBoundID = $.request("keyvalue");
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridListChild");
+        $gridList.dataGrid({
+            url: "/PC_InBoundManage/InBoundDetail/GetGridJson?InBoundID=" + InBoundID,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '采购单ID', name: 'InBoundID', hidden: true },
+                { label: '项次', name: 'SEQ', width: 40, align: 'left', sorttype: 'float' },
+                { label: '物料编码', name: 'ItemCode', width: 60, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 170, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 170, align: 'left' },
+                { label: '规格', name: 'Spec', width: 110, align: 'left' },
+                { label: '批号', name: 'Lot', width: 60, align: 'left' },
+                { label: "采购数量", name: "Qty", width: 55, align: 'left' },
+                { label: "已收", name: "CurQty", width: 55, align: 'left' },
+                { label: "已上架", name: "OverInQty", width: 55, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                //{ label: '生产日期', name: 'ProductDate', width: 70, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: '失效日期', name: 'OverdueDate', width: 60, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: "状态", name: "State", width: 45, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                { label: "质检状态", name: "CheckState", width: 50, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.CheckStateName; } },
+                {
+                    label: '数量一致', name: 'IsMustQtySame', hidden: true, width: 50, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '开始/暂停', name: '', width: 55, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.State == "Receiveing") {
+                            detail = "<div  onclick=\"btn_receiveOnOff_RowBtn(\'" + rowObject.F_Id + "\','Pause')\" title='点击暂停' class='fa fa-pause' style='color:#336699;cursor:pointer;'></div>";
+                        }
+                        else if (rowObject.State == "New" || rowObject.State == "Pause") {
+                            detail = "<div  onclick=\"btn_receiveOnOff_RowBtn(\'" + rowObject.F_Id + "\','Play')\" title='点击开始' class='fa fa-play' style='color:#336699;cursor:pointer;'></div>";
+                        }
+                        else if (rowObject.State == "Over") {
+                            detail = "<div  title='已结束' class='fa fa-stop-circle' style='font-size:13px;color:#aaa;cursor:not-allowed;'></div>";
+                        }
+                        return detail;
+                    },
+                },
+                {
+                    label: '收货详情', name: '', width: 55, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "<div  onclick=\"btn_Receivedetail(\'" + rowObject.F_Id + "\')\" title='收货详情' class='fa fa-list' style='color:#336699;cursor:pointer;'></div>";
+                        return detail;
+                    },
+                },
+                {
+                    label: '标签/条码', name: '', width: 60, align: 'left', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.ContainerKind == "Box") //纸箱不需要判断贴标是否打印，但要判断是否散箱模式
+                        {
+                            detail = "<div  onclick=\"btn_BarCodeListForm(\'" + rowObject.F_Id + "\')\" title='查看条码' class='fa fa-barcode' style='color:#336699;cursor:pointer;'></div><span>&nbsp;&nbsp;&nbsp;&nbsp;" + (rowObject.IsSplitModel=="true"?"[散箱]":"[整箱]")+"</span>";
+                        }
+                        else {
+                            if (rowObject.IsItemMark == "true") {
+                                detail = "<div  onclick=\"btn_PrintItemBarCode(\'" + rowObject.F_Id + "\')\" title='标签打印' class='fa fa-print' style='color:#336699;cursor:pointer;'></div>";
+                            }
+                            else {
+                                detail = "<div title='不需标签' class='fa fa-print' style='color:#aaa;cursor:not-allowed;'></div>";
+                            }
+                        }
+                        return detail;
+                    },
+                },
+                {
+                    label: '入库地点', name: 'StationID', width: 90, align: 'left',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.InPostionCode == "StationIn_Normal") { //入库站台正常
+                            return '<span class=\"label label-success\">' + rowObject.InPostionName + '</span>';
+                        } else if (rowObject.InPostionCode == "StationIn_BigItem") { //入库站台(大件)
+                            return '<span class=\"label label-info\">' + rowObject.InPostionName + '</span>';
+                        } else if (rowObject.InPostionCode == "" || rowObject.InPostionCode == null || rowObject.InPostionCode == "未设置") {
+                            return '<span class=\"label label-warning\">未设置</span>';
+                        } else {
+                            return cellvalue;
+                        }
+                    }
+                },
+                { label: "容器类型", name: "ContainerKindName", width: 55, align: 'center', sortable: false },
+            ],
+            pager: "#gridPager1",
+            sortname: 'SEQ asc',
+            viewrecords: true,
+            rowNum: 10
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    //收货详情
+    function btn_Receivedetail(inbounddetailID) {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "收货详情",
+            url: "/PC_ReceiveRecordManage/ReceiveRecord/Index?keyvalue=" + inbounddetailID ,
+            width: "1480px",
+            height: "850px",
+            callBack: function (iframeId) {
+                
+            }
+        });
+    }
+
+    function btn_add() {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "明细维护",
+            url: "/PC_InBoundManage/InBoundDetail/TransferForm?InBoundID=" + InBoundID,
+            width: "1400px",
+            height: "800px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm(function () {
+                    $("#gridListChild").trigger("reloadGrid");
+                });                
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "修改明细",
+            url: "/PC_InBoundManage/InBoundDetail/TransferForm?InBoundID=" + InBoundID,
+            width: "1400px",
+            height: "800px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm(function () {
+                    $("#gridListChild").trigger("reloadGrid");
+                });
+            }
+        });
+    }
+
+    function btn_delete() {
+        var rowid = $("#gridListChild").jqGridRowValue().F_Id;
+        if (rowid == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.deleteForm({
+            url: "/PC_InBoundManage/InBoundDetail/DeleteForm",
+            param: { keyValue: rowid },
+            success: function () {
+                $("#gridListChild").trigger("reloadGrid");
+            }
+        })
+    }
+
+    function btn_details() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalFixHightOpen({
+            id: "Details",
+            title: "查看明细",
+            url: "/PC_InBoundManage/InBoundDetail/Details?keyValue=" + keyValue,
+            width: "1200px",
+            height: "680px",
+            btn: null,
+        });
+    }
+
+    //标签打印（料箱或料架）
+    function btn_PrintItemBarCode(rowid) {
+        var keyValue = rowid;
+        $.modalFixHightOpen3Btn({
+            id: "Details",
+            title: "标签打印",
+            url: "/PC_InBoundManage/InBoundDetail/PrintItemBarCodeForm?keyValue=" + keyValue,
+            width: "850px",
+            height: "540px",
+            btnclass: ['btn btn-primary btnOk', 'btn btn-primary btnPrint', 'btn btn-danger btnClose'],
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+                return false;
+            },
+            btn: ['生成标签', '全部打印', '关闭'],
+            btn2: function (iframeId) {
+                top.frames[iframeId].PrintAllItem();
+            }
+        });
+    }
+
+    //查看标签列表(纸箱)
+    function btn_BarCodeListForm(rowid) {
+        var keyValue = rowid;
+        $.modalFixHightOpen({
+            id: "Details",
+            title: "标签打印",
+            url: "/PC_InBoundManage/InBoundDetail/BarCodeListForm?keyValue=" + keyValue,
+            width: "850px",
+            height: "520px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            },
+            btn: ['保存', '关闭']
+        });
+    }
+
+    function btn_receiveOnOff_RowBtn(rowid,action) {
+        $("#gridListChild").jqGrid('setSelection', rowid);
+        btn_receiveOnOff(action);
+    }
+
+    //开始收货
+    function btn_receiveOnOff(action) {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        postdata["inBoundDetailID"] = keyValue;
+        postdata["action"] = action;
+        $.ajax({
+            url: "/PC_InBoundManage/InBoundDetail/ReceivePlayPause",
+            data: postdata,
+            dataType: "json",
+            type:"POST",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridListChild").trigger("reloadGrid");
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+               
+            }
+        });
+    }
+
+    //强制完成入库
+    function btn_receiveOver() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        postdata["inBoundDetailID"] = keyValue;
+        $.ajax({
+            url: "/PC_InBoundManage/InBoundDetail/ReceiveOver",
+            data: postdata,
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.checkLogin(data);
+                    $.modalMsg(data.message, data.state);
+                    $("#gridListChild").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+
+    //变更质检状态
+    function btn_qaChange() {
+        var keyValue = $("#gridListChild").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        $.modalFixHightOpen({
+            id: "ChangeState",
+            title: "变更质检",
+            url: "/PC_InBoundManage/InBoundDetail/ChangeQA?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            },
+            btn: ['保存', '关闭']
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar" >
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add-detail" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>明细维护</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit-receiveOver" authorize="yes" onclick="btn_receiveOver()"><i class="fa fa-pencil-square-o"></i>结束入库</a></li>
+                <li><a id="NF-edit-detail" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改明细</a></li>
+                <li><a id="NF-qa-change" authorize="yes" onclick="btn_qaChange()"><i class="fa fa-bookmark-o"></i>变更质检</a></li>
+                <li><a id="NF-delete-detail" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除明细</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料名称 / 物料编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridListChild"></table>
+    <div id="gridPager1"></div>
+</div>

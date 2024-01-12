@@ -1,0 +1,432 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<style>
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .cbox.checkbox {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+
+    select[multiple], select[size] {
+        height: 20px;
+    }
+</style>
+<script src="~/Content/js/jqgrid/jqgrid.min.js"></script>
+<link href="~/Content/js/jqgrid/jqgrid.css" rel="stylesheet" />
+<script src="~/Content/js/jqgrid/grid.locale-cn.js"></script>
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+<link href="~/Content/js/datepicker/skin/whyGreen/datepicker.css" rel="stylesheet" />
+<script src="~/Content/js/select2/select2.min.js"></script>
+<link href="~/Content/js/select2/select2.min.css" rel="stylesheet" />
+
+<script>
+    var selectRowLeft = [];
+    var keyValue = $.request("moveID");
+    $(function () {
+        $('#layout').layout({
+            north: { size: 400, resizable: false },
+            center: { size: 40, resizable: false },
+            south: { size: 240, resizable: false }
+        });
+
+        gridList_Bottom();
+
+        $("#layoutChild").layout();
+        gridList_Top('0');
+        treeView();
+        $($("#kindTree>div>div>ul>li>div")[0]).trigger("click");
+
+        //穿梭添加
+        $("#toright").bind("click", function () {
+            var rows = $("#gridList_Right").jqGrid("getRowData");
+            var leftSelectRows = $("#gridList_Big").jqGridTransferRowValue();
+            if (rows.length + leftSelectRows.length>500) {
+                $.modalMsg("数据量大于500，请分批处理", "error");
+                return;
+            }
+            
+            $.loading(true, "耗时较长，请耐心等待");
+            addRow(leftSelectRows);
+            $.loading(false);
+
+        });
+
+        //穿梭移除
+        $("#toleft").bind("click", function () {
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                $("#gridList_Big").addRowData(n.F_Id, n, "last");
+                $("#gridList_Right").delRowData(n.F_Id);
+            });
+        });
+
+
+        $("#btn_search").click(function () {
+            var kindID = $("#kindTree").getCurrentNode().id;
+            $("#gridList_Big").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), kindID: kindID },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    })
+
+    function addRow(leftSelectRows) {
+        $.each(leftSelectRows, function (i, n) {
+            $("#gridList_Right").addRowData(n.F_Id, n, "last");
+            $("#gridList_Big").delRowData(n.F_Id);
+            var select = $("#gridList_Right tbody tr[id='" + n.F_Id + "'] select");
+            select.append("<option value='0' selected>自动</option>");
+            $(select).select2({
+                templateResult: function (option, container) { //只执行一次
+                    var text = templateResult(option, container, n);
+                    return text;
+                }
+            });
+
+            select.on('select2:open', function (e) {
+                BindSelectData($(this), n);
+            });
+        });
+    }
+
+
+    //展开货位下拉时，绑定数据，并去除已被选择的货位
+    function BindSelectData(clickObj, rowData) {
+        var curData = clickObj.select2("data")[0];
+
+        if (clickObj.attr("IsNoLoad") == true || clickObj.attr("IsNoLoad") == undefined) {
+            clickObj.find("option").remove();
+            var listLoc = GetLocList(rowData);
+            var list = [];
+            list.push({ id: "0", text: "自动" });
+            list = list.concat(listLoc);
+            $.each(list, function (j, k) {
+                clickObj.append($("<option value='" + k.id + "'>" + k.text + "</option>"));
+            });
+            clickObj.attr("IsNoLoad", false);
+            clickObj.val(curData.id);//.trigger("change");
+        }
+    }
+
+
+    function templateResult(option, container, leftRow) {
+        if (option.id != "0" && option.id != undefined) {
+            var curRowID = $(leftRow).parents("tr").attr("id");
+            var allRow = $("#gridList_Right tbody tr[id!='" + curRowID + "'] select");//排除当前行的所有行
+            $.each(allRow, function (j, k) {
+                var allreadyChange = $(k).val(); //已被选择过的货位ID
+                if (allreadyChange == option.id) {
+                    $(container).css("display", "none");
+                }
+            });
+        }
+        return option.text;
+    }
+
+    //初始化树
+    function treeView() {
+        $("#kindTree").treeview({
+            url: "/PC_BaseDataManage/Item/GetTreeJson",
+            onnodeclick: function (item) {
+                //$("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+
+
+    function gridList_Bottom() {
+        //右侧->
+        var $gridList_Right = $("#gridList_Right");
+        $gridList_Right.dataGrid({
+            url: "/PC_MoveManage/MoveRecord/GetItemSelectGridJson?moveID=" + keyValue,
+            height: 200,//$(window).height() - 78,
+            colModel: [
+                { label: "货位ID", name: "F_Id", hidden: true, key: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: "容器条码", name: "BarCode", hidden: true },
+                { label: "容器ID", name: "ContainerID", hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 100, align: 'left', sortable: false},
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left', sortable: false },
+                { label: '生产厂家', name: 'Factory', width: 240, align: 'left', sortable: false},
+                { label: '规格', name: 'Spec', width: 100, align: 'left', sortable: false},
+                { label: '批号', name: 'Lot', width: 100, align: 'left', sortable: false },
+                { label: "计量单位", name: "ItemUnitText", width: 60, align: 'left', sortable: false },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 100, align: 'left', sortable: false, formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    }
+                },
+                { label: "货位编码", name: "LocationNo", width: 150, align: 'left', sortable: false},
+                {
+                    label: '目标货位', name: 'TagLocationCode', align: 'left', sortable: false,
+                    //editable: true,
+                    //edittype: 'select',
+                    formatter: function (cellvalue, options, rowObject) {
+                        var html = "";
+                        var list = [];
+                        list.push({ id: "0", text: "自动" });
+                        if (rowObject.TagLocationID == undefined) {
+                            rowObject.TagLocationID = "0";
+                        }
+                        else {
+                            list.push({ id: rowObject.TagLocationID, text: rowObject.TagLocationCode });
+                        }
+                        $.each(list, function (i, n) {
+                            if (n.id == rowObject.TagLocationID) {
+                                html = html + "<option value='" + n.id + "' selected>" + n.text + "</option>";
+                            }
+                            else {
+                                html = html + "<option value='" + n.id + "'>" + n.text + "</option>";
+                            }
+
+                        });
+                        html = "<select>" + html + "</select>";
+                        return html;
+                    }
+                },
+                { label: 'isNewAdd', name: 'IsNewAdd', hidden: true, width: 80, formatter: function () { return "true" } }
+            ],
+            loadComplete: function (event, ui) {
+
+                $.each(event, function (i, n) {
+                    n.TagLocationID = (n.TagLocationID == "" || n.TagLocationID == undefined) ? "0" : n.TagLocationID;
+                    var curSelect = $("#gridList_Right tbody tr[id='" + n.F_Id + "'] select");
+                    $(curSelect).val(n.TagLocationID).select2({
+                        templateResult: function (option, container) { //只执行一次
+                            var text = templateResult(option, container, n);
+                            return text;
+                        }
+                    });
+                    curSelect.on('select2:open', function (e) {
+                        BindSelectData($(this), n);
+                    });
+                });
+            },
+            //pager: "#gridPager3",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+                var rows = $gridList_Right.jqGrid("getRowData");
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList_Right.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+
+            },
+            customEdit: true,
+            loadonce: true,
+            rowNum: 999999
+        });
+    }
+
+    function gridList_Top(id) {
+        //左侧 <-
+        var $gridList_Big = $("#gridList_Big");
+        $gridList_Big.dataGrid({
+            url: "/PC_MoveManage/MoveRecord/GetItemList?moveID=" + keyValue,
+            postData: { kindID: id },
+            height: 300,//$(window).height() - 128,
+            colModel: [
+                { label: "货位ID", name: "F_Id", hidden: true, key: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: "容器ID", name: "ContainerID", hidden: true },
+                { label: '目标货位', name: 'TagLocationCode', hidden: true },
+                { label: 'isNewAdd', name: 'IsNewAdd', hidden: true, formatter: function () { return "false" } },
+                { label: '物料编码', name: 'ItemCode', width: 70, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 265, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 235, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 80, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 65, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    }
+                },
+                { label: "容器条码", name: "BarCode", width: 100, align: 'left' },
+                { label: "货位编码", name: "LocationNo", width: 100, align: 'left' },
+            ],
+            //pager: "#gridPager2",
+            sortname: 'LocationNo asc',
+            viewrecords: true,
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            loadComplete: function () {
+                //排除已存在右侧的数据
+                var $gridList_Right = $("#gridList_Right");
+                var dataListMini = $gridList_Big.getRowData();
+                var dataListRight = $gridList_Right.getRowData();
+                $.each(dataListMini, function (i, n) {
+                    $.each(dataListRight, function (j, m) {
+                        if (n.F_Id == m.F_Id) {
+                            $gridList_Big.delRowData(n.F_Id);
+                        }
+                    });
+                });
+            },
+            rowNum: 999999
+        });
+    }
+
+    function GetLocList(rowObject) {
+        var list = [];
+        $.ajaxWMS({
+            url: "/PC_MoveManage/MoveRecord/GetLocList",
+            data: { srcLocID: rowObject.F_Id, itemID: rowObject.ItemID, TagLocationID: rowObject.TagLocationID },
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    $.each(data, function (i, n) {
+                        list.push({ id: n.F_Id, text: n.LocationCode });
+                    });
+                }
+            }
+        });
+        return list;
+    }
+
+    //确定按钮
+    function submitForm(fun) {
+        //if (!$('#form1').formValid()) {
+        //    return false;
+        //}
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList_Right").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            var select = $("#gridList_Right tbody tr[id='" + n.F_Id + "'] select");
+            n.TagLocationID = $(select).select2().val();
+            n.TagLocationCode = "";
+        });
+
+        var isRepear = false;
+        $.each(rows, function (i, n) {
+            if (n.TagLocationID == "0") {
+                return true;
+            }
+
+            $.each(rows, function (j, k) {
+                if (n.F_Id != k.F_Id && n.TagLocationID == k.TagLocationID) {
+                    $.modalMsg("目标货位重复", "error");
+                    $("#gridList_Right tbody tr[id='" + n.F_Id + "'] select").addClass("has-error");
+                    $("#gridList_Right tbody tr[id='" + k.F_Id + "'] select").addClass("has-error");
+                    isRepear = true;
+                    return false;
+                }
+            });
+        });
+
+        if (isRepear) { //存在重复
+            return;
+        }
+
+        var jsonStr = JSON.stringify(rows);
+        postdata["moveRecordEntityListStr"] = jsonStr;
+        $.submitForm({
+            url: "/PC_MoveManage/MoveRecord/SubmitFormList?moveID=" + keyValue,
+            param: postdata,
+            success: function () {
+                //$("#gridList", window.parent.frames[2].document).trigger("reloadGrid");
+                fun();
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-north" style="height:60%">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称 / 批号 / 货位编码 / 容器编码" style="width: 300px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+        <div>
+
+            <div class="ui-layout" id="layoutChild" style="height: 348px; width: 100%;">
+                <div class="ui-layout-west" style="height:60%">
+                    <div id="kindTree"></div>
+                </div>
+                <div class="ui-layout-center" style="height:60%">
+                    <table id="gridList_Big"></table>
+                    <div id="gridPager2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-center" style="height:40%">
+        <div class="topPanel">
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <button id="toright" type="button" class="btn  btn-primary"><i class="fa fa-angle-down"></i></button>
+                            <button id="toleft" type="button" class="btn  btn-primary"><i class="fa fa-angle-up"></i></button>
+                            <div class="input-group">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-south" style="height:35%">
+        <table id="gridList_Right"></table>
+        <div id="gridPager3"></div>
+    </div>
+</div>
+
+

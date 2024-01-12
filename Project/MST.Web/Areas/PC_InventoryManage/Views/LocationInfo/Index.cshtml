@@ -1,0 +1,171 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .ui-jqgrid tr.jqgrow td {
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_InventoryManage/LocationInfo/GetGridJson",
+            height: $(window).height() - 128,
+            rownumbers: false,
+            colModel: [
+                //{ label: "主键", name: "F_Id", index: 'F_Id', hidden: true, key: true },
+                {
+                    label: "区域", name: "AreaName", index: "AreaName", width: 80, valign: 'middle', sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\AreaName' + rowId + "\'";
+                    }
+                },
+                { label: '物料编码', name: 'ItemCode', width: 100 },
+                { label: '物料名称', name: 'ItemName', width: 250 },
+                { label: '生产厂家', name: 'Factory', width: 240, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 100, align: 'left' },
+                { label: '实物数', name: 'Qty', width: 50 },
+                { label: '计量单位', name: 'ItemUnitText', width: 60, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 80, align: 'left', formatter: "date", formatoptions: { srcformat: 'Y-m-d', newformat: 'Y-m-d' } },
+                { label: '物料状态', name: 'ItemStateName', width: 80, align: 'left' },
+                { label: '贴标条码', name: 'ItemBarCode', width: 100  },
+                { label: 'ERP仓', name: 'ERPWarehouseName', width: 100 },
+                {
+                    label: '货位编码', name: 'LocationCode', index: "LocationCode", width: 100, align: "left", sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\LocationCode' + rowId + "\'";
+                    }
+                },
+                {
+                    label: '货位状态', name: 'StateName', index: "StateName", width: 60, align: "left", sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\StateName' + rowId + "\'";
+                    }
+                },
+                {
+                    label: '禁用状态', name: 'ForbiddenStateName', index: "ForbiddenStateName", width: 60, align: "left", sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\ForbiddenStateName' + rowId + "\'";
+                    }
+                },
+                {
+                    label: '容器', name: 'BarCode', index: "BarCode", width: 120, align: "left", sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\BarCode' + rowId + "\'";
+                    }
+                },
+                {
+                    label: '容器类型', name: 'ContainerTypeName', index: "ContainerTypeName", width: 230, align: "left", sortable: true,
+                    cellattr: function (rowId, tv, rowObject, cm, rdata) {
+                        return 'id=\ContainerTypeName' + rowId + "\'";
+                    }
+                },
+            ],
+            gridComplete: function () {
+                Merger("gridList", 'AreaName', 'LocationCode');
+                Merger("gridList", 'LocationCode', 'LocationCode');
+                Merger("gridList", 'StateName', 'LocationCode');
+                Merger("gridList", 'ForbiddenStateName', 'LocationCode');
+                Merger("gridList", 'BarCode', 'LocationCode');
+                Merger("gridList", 'ContainerTypeName', 'BarCode');
+            },
+            //recordpos: 'left',
+            pager: "#gridPager",
+            sortname: 'AreaName asc,LocationCode asc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看货位信息",
+            url: "/PC_InventoryManage/LocationInfo/Details?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            btn: null,
+        });
+    }
+
+    function Merger(gridName, CellName, KeyCell) {
+        var showIds = $("#" + gridName + "").getDataIDs();
+        var length = showIds.length;
+        for (var i = 0; i < length; i++) {
+            var before = $("#" + gridName + "").jqGrid('getRowData', showIds[i]);
+            var rowSpanTaxCount = 1;
+            for (j = i + 1; j <= length; j++) {
+                var end = $("#" + gridName + "").jqGrid('getRowData', showIds[j]);
+                if (before[CellName] == end[CellName] && before[KeyCell] == end[KeyCell] && before[KeyCell] != "") {
+                    rowSpanTaxCount++;
+                    $("#" + gridName + "").setCell(showIds[j], CellName, '', { display: 'none' });
+                } else {
+                    rowSpanTaxCount = 1;
+                    break;
+                }
+                $("#" + gridName + "").setCell(showIds[i], CellName, '', { align: 'center' }, { rowspan: rowSpanTaxCount });
+            }
+        }
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新增货位信息</a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="货位编码 / 物料编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

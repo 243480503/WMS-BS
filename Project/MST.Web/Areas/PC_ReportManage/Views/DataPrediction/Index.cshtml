@@ -1,0 +1,642 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script src="~/Content/js/echarts/echarts.min.js"></script>
+<script src="~/Content/js/echarts/ecStat.js"></script>
+<script src="~/Content/js/echarts/require.js"></script>
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    function GenColor(index) {
+        var color = [
+            '#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B',
+            '#FE8463', '#9BCA63', '#FAD860', '#F3A43B', '#60C0DD',
+            '#D7504B', '#C6E579', '#F4E001', '#F0805A', '#26C0C0'
+        ];
+        var colInd = 0;
+        if (index % color.length) {
+            colInd = index % color.length
+        }
+        return color[colInd];
+    }
+
+    var year = (new Date()).getFullYear();
+    $(function () {
+
+
+        var doc = $("#result_perYear");
+        for (var i = 0; i < 5; i++) {
+            doc.append('<a name="yearBtn" class="btn btn-default  ' + (i == 0 ? "active" : "") + '" data-value="' + (year - i) + '">' + (year - i) + '年</a>');
+        }
+
+        $("a[name='yearBtn']").bind("click", function (e) {
+            $("a[name='yearBtn']").removeClass("active");
+            $(e.target).addClass("active");
+            var yearVal = $(e.target).attr("data-value");//年份
+            var dataTypeVal = $("a[name='dataType'].btn.btn-default.active").attr("data-value");//1按年月，2按年,3按月
+            var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+            var keyword = $("#txt_keyword").val();
+            GetDataAndShow(dataTypeVal, yearVal, forecastTypeVal, keyword);
+        });
+        $("a[name='yearBtn']").hide();
+
+        $("a[name='dataType']").bind("click", function (e) {
+            $("a[name='dataType']").removeClass("active");
+            $(e.target).addClass("active");
+            var dataTypeVal = $(e.target).attr("data-value"); //1按年月，2按年,3按月
+
+            var dataVal = "";
+            if (dataTypeVal == 1) {
+                $("a[name='monthBtn']").show();
+                $("a[name='yearBtn']").hide();
+                dataVal = $("a[name='monthBtn'].btn.btn-default.active").attr("data-value"); //月份
+            }
+            else if (dataTypeVal == 2) {
+                $("a[name='monthBtn']").hide();
+                $("a[name='yearBtn']").hide();
+                dataVal = "0";
+            }
+            else if (dataTypeVal == 3) {
+                $("a[name='monthBtn']").hide();
+                $("a[name='yearBtn']").show();
+
+                dataVal = $("a[name='yearBtn'].btn.btn-default.active").attr("data-value"); //年份
+            }
+
+
+            var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+            var keyword = $("#txt_keyword").val();
+            GetDataAndShow(dataTypeVal, dataVal, forecastTypeVal, keyword);
+        });
+
+        $("a[name='monthBtn']").bind("click", function (e) {
+            $("a[name='monthBtn']").removeClass("active");
+            $(e.target).addClass("active");
+            var monthVal = $(e.target).attr("data-value");//月份
+            var dataTypeVal = $("a[name='dataType'].btn.btn-default.active").attr("data-value");//1按年月，2按年,3按月
+            var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+            var keyword = $("#txt_keyword").val();
+            GetDataAndShow(dataTypeVal, monthVal, forecastTypeVal, keyword);
+        });
+
+
+
+        $("a[name='ForecastType']").bind("click", function (e) {
+            $("a[name='ForecastType']").removeClass("active");
+            $(e.target).addClass("active");
+            var dataTypeVal = $("a[name='dataType'].btn.btn-default.active").attr("data-value");//1按年月，2按年,3按月
+            var dataVal = "";
+            if (dataTypeVal == 1) {
+                dataVal = $("a[name='monthBtn'].btn.btn-default.active").attr("data-value"); //月份
+            }
+            else if (dataTypeVal == 2) { //按年份
+                dataVal = 0;//无用
+            }
+            else if (dataTypeVal == 3) { //按月份
+                dataVal = $("a[name='yearBtn'].btn.btn-default.active").attr("data-value"); //年份
+            }
+            var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+            var keyword = $("#txt_keyword").val();
+            GetDataAndShow(dataTypeVal, dataVal, forecastTypeVal, keyword);
+        });
+
+        $("#btn_search").bind("click", function () {
+            var dataTypeVal = $("a[name='dataType'].btn.btn-default.active").attr("data-value");//1按年月，2按年,3按月
+            var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+            var monthVal = $("a[name='monthBtn'].btn.btn-default.active").attr("data-value"); //月份
+            var keyword = $("#txt_keyword").val();
+            GetDataAndShow(dataTypeVal, monthVal, forecastTypeVal, keyword);
+        });
+
+        var month = (new Date()).getMonth() + 1;
+        $("a[name='monthBtn'][data-value='" + month + "']").trigger("click");
+    });
+
+    function GetDataAndShow(dataType, dataVal, forecastTypeVal, keyword) {
+        $.ajaxWMS({
+            url: "/DataPrediction/GetData",
+            data: { "dataType": dataType, "dataVal": dataVal, "forecastTypeVal": forecastTypeVal, "keyword": keyword },
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (res) {
+                if (res == null) {
+                    return;
+                }
+
+                var forecastTypeVal = $("a[name='ForecastType'].btn.btn-default.active").attr("data-value");//1回归，2智能
+
+                if (forecastTypeVal == "2" && res.msg != null) {
+                    $.modalMsg("数据周期需大于2年", "error");
+                }
+
+                require(['../../Content/js/echarts/ecStat'], function () {
+                    var dbData = res;
+                    var data = [];
+                    var curMonth = dbData.month;
+
+                    if (dbData.dataType == 1) //按年月
+                    {
+                        $.each(dbData.itemList, function (k, ItemCode) {
+                            var DataForItem = [];
+                            $.each(dbData.xList, function (i, yearAndMonth) {
+                                var sumQty = 0;
+                                //循环数据
+                                $.each(dbData.Data, function (a, cellData) {
+                                    if (cellData.Year + "" + ((curMonth + "").length > 1 ? curMonth : ("0" + curMonth)) == yearAndMonth) {
+                                        $.each(cellData.MonthDetail, function (b, monthDetail) {
+                                            if (monthDetail.Month == curMonth) {
+                                                $.each(monthDetail.ItemDetail, function (c, cellitem) {
+                                                    if (cellitem.ItemCode == ItemCode) {
+                                                        sumQty = cellitem.QtySum;
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                if (yearAndMonth < dbData.ForecastX) {
+                                    DataForItem.push([yearAndMonth, sumQty]);
+                                }
+                            });
+                            data.push({ ItemCode: ItemCode, DataList: DataForItem }); //按物料分组
+                        });
+
+                    }
+                    else if (dbData.dataType == 2) {
+                        $.each(dbData.itemList, function (k, ItemCode) {
+                            var DataForItem = [];
+                            $.each(dbData.xList, function (i, year) {
+                                var sumQty = 0;
+                                //循环数据
+                                $.each(dbData.Data, function (a, cellData) {
+                                    if (cellData.Year == year) {
+                                        $.each(cellData.ItemDetail, function (c, cellitem) {
+                                            if (cellitem.ItemCode == ItemCode) {
+                                                sumQty = cellitem.QtySum;
+                                            }
+                                        });
+                                    }
+                                });
+
+
+                                if (year < dbData.ForecastX) {
+                                    DataForItem.push([year + "", sumQty]);
+                                }
+                            });
+                            data.push({ ItemCode: ItemCode, DataList: DataForItem }); //按物料分组
+                        });
+
+                    }
+                    else if (dbData.dataType == 3) {
+                        $.each(dbData.itemList, function (k, ItemCode) {
+                            var DataForItem = [];
+                            $.each(dbData.xList, function (i, month) {
+                                var sumQty = 0;
+
+                                //循环数据
+                                $.each(dbData.Data, function (a, cellData) {
+                                    if (cellData.Year == dataVal) { //处理当前年份的值
+                                        if (dbData.ForecastX == -1) { //无需预测
+                                            DataForItem.push([month + "", sumQty]);
+                                        }
+                                        else if (month < dbData.ForecastX) {
+                                            DataForItem.push([month + "", sumQty]);
+                                        }
+                                    }
+                                    else {  //非当年年份的值，x轴需减1
+                                        $.each(cellData.MonthDetail, function (b, monthDetail) {
+                                            if (monthDetail.Month == month) {
+                                                $.each(monthDetail.ItemDetail, function (c, cellitem) {
+                                                    if (cellitem.ItemCode == ItemCode) {
+                                                        sumQty = cellitem.QtySum;
+                                                    }
+                                                });
+                                            }
+                                        });
+
+                                        DataForItem.push([(month - 12) + "", sumQty]);
+                                    }
+                                });
+
+
+
+                            });
+
+                            DataForItem = DataForItem.sort(function (a, b) {
+                                if (parseInt(a[0]) < parseInt(b[0])) {
+                                    return -1;
+                                }
+                                if (parseInt(a[0]) > parseInt(b[0])) {
+                                    return 1
+                                }
+                                return 0;
+                            });
+
+                            data.push({ ItemCode: ItemCode, DataList: DataForItem }); //按物料分组
+                        });
+
+                    }
+
+
+
+
+                    var ecStat = require('../../Content/js/echarts/ecStat');
+                    var chartDom = document.getElementById('salarychart');
+                    var myChart = echarts.init(chartDom);
+                    var option;
+                    // 声明外部转换器
+                    echarts.registerTransform(ecStat.transform.regression);
+                    var seriesArray = [];
+                    var dataArray = [];
+                    var legendData = [];
+                    $.each(data, function (i, DataForItem) {
+                        legendData.push(DataForItem.ItemCode);
+                        var color = GenColor(i);
+                        dataArray.push({ source: DataForItem.DataList }); //元素数据集
+                        dataArray.push({  //回归后的数据集
+                            transform: {
+                                type: 'ecStat:regression',
+                                config: { method: 'polynomial', order: 3 },
+                                print: true
+                            },
+                            fromDatasetIndex: i * 4
+                        });
+
+                        //预测的数据集
+                        var tempData = [];
+                        var myRegression = ecStat.regression('polynomial', DataForItem.DataList, 3); //表达式预测数据集
+                        var parms = myRegression.parameter;
+                        var P3 = parms[3]; //3次幂因数
+                        var P2 = parms[2];//2次幂因数
+                        var P1 = parms[1];//1次幂因数
+                        var P = parms[0];//常数
+                        var x1 = dbData.ForecastX; //需要预测的x值
+
+                        var next = 0;
+                        if (forecastTypeVal == "2") { //智能预测
+                            $.each(dbData.Forecast, function (a, b) {
+                                if (b.ItemCode == DataForItem.ItemCode) {
+                                    next = b.Qty;
+                                }
+                            });
+                        }
+                        else { //回归预测
+                            next = P3 * (x1) * (x1) * (x1) + P2 * (x1) * (x1) + P1 * (x1) + P;
+                        }
+
+                        next = next < 0 ? 0 : parseFloat(next.toFixed(2));
+
+                        var xLast = DataForItem.DataList[DataForItem.DataList.length - 1][0];
+                        var xLastFun = P3 * (xLast) * (xLast) * (xLast) + P2 * (xLast) * (xLast) + P1 * (xLast) + P;
+                        xLastFun = xLastFun < 0 ? 0 : xLastFun;
+                        tempData.push([xLast, xLastFun]); //将最后一个实际值通过回归函数取函数值
+                        tempData.push([x1 + "", next]);
+                        dataArray.push({ source: tempData });
+
+                        var lastNode = [];
+                        lastNode.push([x1 + "", next]);
+                        dataArray.push({ source: lastNode });//预测的数据
+
+                        seriesArray.push(
+                            {
+                                name: DataForItem.ItemCode,
+                                type: 'scatter',
+                                datasetIndex: i * 4,
+                                label: {
+                                    show: true,
+                                    position: 'top'
+                                },
+                                itemStyle: {
+                                    normal: {
+                                        color: color,
+                                        labelLine: { show: true }
+                                    }
+                                }
+                            });
+                        seriesArray.push(
+                            {
+                                name: DataForItem.ItemCode,
+                                type: 'line',
+                                smooth: true,
+                                datasetIndex: (i * 4) + 1,
+                                symbolSize: 0.1,
+                                symbol: 'circle',
+                                label: { show: false, fontSize: 12 }, //是否显示函数
+                                encode: { label: 2, tooltip: 1 },
+                                itemStyle: {
+                                    normal: {
+                                        color: color,
+                                        labelLine: { show: true },
+                                    }
+                                }
+                            });
+
+                        seriesArray.push(
+                            {
+                                name: DataForItem.ItemCode,
+                                datasetIndex: (i * 4) + 2,
+                                type: 'line',
+                                symbol: null,
+                                itemStyle: {
+                                    normal: {
+                                        color: color,
+                                        lineStyle: {
+                                            type: 'dotted'  //'dotted'虚线 'solid'实线
+                                        }
+                                    },
+                                    type: 'dotted'
+                                }
+                            });
+                        seriesArray.push(
+                            {
+                                name: DataForItem.ItemCode,
+                                type: 'line',
+                                symbolSize: 8,
+                                label: {
+                                    show: true,
+                                    position: 'top'
+                                },
+                                smooth: true,
+                                datasetIndex: (i * 4) + 3,
+                                itemStyle: {
+                                    normal: {
+                                        color: color,
+                                        labelLine: { show: true }
+                                    }
+                                }
+                            });
+                    });
+
+
+                    option = {
+                        dataset: dataArray,
+                        grid: {
+                            left: "10%",
+                            right: "3%"
+                        },
+                        title: {
+                            text: '采购数据预测',
+                            subtext: dbData.dataType == 1 ? ('历年' + curMonth + '月采购数量') : ("历年采购数量"),
+                            left: 'center',
+                            top: 0
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross'
+                            }
+                        },
+                        xAxis: {
+                            splitLine: {
+                                lineStyle: {
+                                    type: 'dashed'
+                                }
+                            },
+                            data: dbData.xList
+                        },
+                        yAxis: {
+                            min: 0,
+                            splitLine: {
+                                lineStyle: {
+                                    type: 'dashed'
+                                }
+                            }
+                        },
+                        legend: {
+                            type: "scroll",
+                            orient: 'vertical',
+                            left: 'left',
+                            top: 80,
+                            textStyle: {
+                                fontSize: 12
+                            }
+                        },
+                        series: seriesArray
+                    };
+
+                    option && myChart.setOption(option);
+                    myChart.resize();
+
+                    // 监听浏览器缩放，图表对象调用缩放resize函数
+                    window.addEventListener("resize", function () {
+                        myChart.resize();
+                    });
+                });
+
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建盘点单</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit-CountOnOff" authorize="yes" onclick="btn_countOnOff()"><i class="fa fa-pencil-square-o"></i>开始盘点</a></li>
+                <li><a id="NF-edit-Sumbit" authorize="yes" onclick="btn_countAuditSumbit()"><i class="fa fa-long-arrow-up"></i>提交审核</a></li>
+                <li><a id="NF-edit-CountOver" authorize="yes" onclick="btn_countOver()"><i class="fa fa-pencil-square-o"></i>强制完成</a></li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改盘点单</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除盘点单</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看盘点单</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料名称 / 物料编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon1" class="btn-group">
+                        <a name="dataType" class="btn btn-default active" data-value="1">按年月</a>
+                        <a name="dataType" class="btn btn-default" data-value="2">按年</a>
+                        <a name="dataType" class="btn btn-default" data-value="3">按月</a>
+                    </div>
+                </td>
+
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a name="monthBtn" class="btn btn-default  active" data-value="1">1月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="2">2月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="3">3月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="4">4月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="5">5月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="6">6月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="7">7月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="8">8月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="9">9月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="10">10月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="11">11月</a>
+                        <a name="monthBtn" class="btn btn-default" data-value="12">12月</a>
+
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_perYear" class="btn-group">
+
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon2" class="btn-group">
+                        <a name="ForecastType" class="btn btn-default active" data-value="1">回归预测</a>
+                        <a name="ForecastType" class="btn btn-default" data-value="2">智能预测</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div id="areascontent">
+    <div class="rows" style="margin-bottom: 1%; overflow: hidden; padding-left: 1px;">
+        <div style="width: 100%;">
+            <div style="height: 100%; border: 1px solid #e6e6e6; background-color: #fff;">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-area-chart fa-lg" style="padding-right: 5px;"></i>采购数据预测
+                    </div>
+                    <div class="panel-body" style="padding-bottom: 0px;">
+                        <canvas id="salarychart" style="padding: 10px; height:700px;width:1650px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #copyrightcontent {
+        height: 30px;
+        line-height: 29px;
+        overflow: hidden;
+        position: absolute;
+        top: 100%;
+        margin-top: -30px;
+        width: 100%;
+        background-color: #fff;
+        border: 1px solid #e6e6e6;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .dashboard-stats {
+        float: left;
+        width: 20%;
+    }
+
+    .dashboard-stats-item {
+        position: relative;
+        overflow: hidden;
+        color: #fff;
+        cursor: pointer;
+        height: 105px;
+        margin-right: 25px;
+        margin-bottom: 10px;
+        padding: 20px 20px;
+    }
+
+        .dashboard-stats-item .m-top-none {
+            margin-top: 2px;
+        }
+
+        .dashboard-stats-item h2 {
+            font-size: 35px;
+            font-family: inherit;
+            line-height: 1.1;
+            font-weight: 500;
+        }
+
+        .dashboard-stats-item h5 {
+            font-size: 14px;
+            font-family: inherit;
+            margin-top: 3px;
+            line-height: 1.1;
+        }
+
+        .dashboard-stats-item .stat-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 30px;
+            opacity: .3;
+        }
+
+    .dashboard-stats i.fa.stats-icon {
+        width: 50px;
+        padding: 20px;
+        font-size: 50px;
+        text-align: center;
+        color: #fff;
+        height: 50px;
+        border-radius: 10px;
+    }
+
+    .panel-default {
+        border: none;
+        border-radius: 0px;
+        margin-bottom: 0px;
+        box-shadow: none;
+        -webkit-box-shadow: none;
+    }
+
+        .panel-default > .panel-heading {
+            color: #777;
+            background-color: #fff;
+            border-color: #e6e6e6;
+            padding: 10px 10px;
+        }
+
+        .panel-default > .panel-body {
+            padding: 10px;
+            padding-bottom: 0px;
+        }
+
+            .panel-default > .panel-body ul {
+                overflow: hidden;
+                padding: 0;
+                margin: 0px;
+                margin-top: -5px;
+            }
+
+                .panel-default > .panel-body ul li {
+                    line-height: 27px;
+                    list-style-type: none;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+
+                    .panel-default > .panel-body ul li .time {
+                        color: #a1a1a1;
+                        float: right;
+                        padding-right: 5px;
+                    }
+</style>

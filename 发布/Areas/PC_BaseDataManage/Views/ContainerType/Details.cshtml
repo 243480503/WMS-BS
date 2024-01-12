@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/PC_BaseDataManage/ContainerType/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+                $("#ContainerKind").select2({ disabled: "readonly" });
+                $("#InStationID").select2({ disabled: "readonly" });
+                $("#OutStationID").select2({ disabled: "readonly" });
+            }
+        });
+    });
+
+    function initControl() {
+
+        $("#ContainerKind").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ContainerType&fieldName=ContainerKind",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#InStationID").bindSelect({
+            url: "/PC_BaseDataManage/ContainerType/GetStationDicList?type=In",
+            id: "F_Id",
+            text: "StationName"
+        });
+
+        $("#OutStationID").bindSelect({
+            url: "/PC_BaseDataManage/ContainerType/GetStationDicList?type=Out",
+            id: "F_Id",
+            text: "StationName"
+        });
+    }
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">容器类型编码</th>
+                <td class="formValue">
+                    <input id="ContainerTypeCode" name="ContainerTypeCode" type="text" class="form-control required" placeholder="请输入容器类型编码" />
+                </td>
+                <th class="formTitle">容器类型名称</th>
+                <td class="formValue">
+                    <input id="ContainerTypeName" name="ContainerTypeName" type="text" class="form-control required" placeholder="请输入容器类型名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器大类</th>
+                <td class="formValue">
+                    <select id="ContainerKind" name="ContainerKind" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">入库站台</th>
+                <td class="formValue">
+                    <select id="InStationID" name="InStationID" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">出库站台</th>
+                <td class="formValue">
+                    <select id="OutStationID" name="OutStationID" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">深</th>
+                <td class="formValue">
+                    <input id="BorderLong" name="BorderLong" type="text" class="form-control required" placeholder="请输入深" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">宽</th>
+                <td class="formValue">
+                    <input id="BorderWidth" name="BorderWidth" type="text" class="form-control required" placeholder="请输入宽" />
+                </td>
+                <th class="formTitle">高</th>
+                <td class="formValue">
+                    <input id="BorderHeight" name="BorderHeight" type="text" class="form-control required" placeholder="请输入高" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">货位最短深</th>
+                <td class="formValue">
+                    <input id="LocLong" name="LocLong" type="text" class="form-control required" placeholder="请输入货位深度" />
+                </td>
+                <th class="formTitle">货位最短宽</th>
+                <td class="formValue">
+                    <input id="LocWidth" name="LocWidth" type="text" class="form-control required" placeholder="请输入货位宽度" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">货位最短高</th>
+                <td class="formValue">
+                    <input id="LocHeight" name="LocHeight" type="text" class="form-control required" placeholder="请输入货位高度" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">AGV箱型</th>
+                <td class="formValue">
+                    <input id="AGVContainerTypeCode" name="AGVContainerTypeCode" type="text" class="form-control" placeholder="映射AGV平台箱型" />
+                </td>
+                <th class="formTitle"></th>
+                <td class="formValue">
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" sysbasedata="yes" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

@@ -1,0 +1,65 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/PC_MsgManage/Msg/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#MsgType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_SendMsg&fieldName=MsgType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+    }
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">消息类型</th>
+                <td class="formValue">
+                    <select id="MsgType" name="MsgType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">推送时间</th>
+                <td class="formValue">
+                    <input id="SendTime" name="SendTime" type="text" class="form-control required" placeholder="请输入推送时间" />
+                </td>
+            </tr>
+            <tr >
+                <th class="formTitle">消息</th>
+                <td class="formValue" colspan ="3" height="250">
+                    <textarea id="Msg" name="Msg" class="form-control required" style="height:250px;" placeholder="请输入消息" ></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsReadOver" name="IsReadOver" type="checkbox"><label for="IsReadOver">站内已读</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

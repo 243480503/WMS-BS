@@ -1,0 +1,105 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_BaseDataManage/TimerTask/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+
+        $.hideBaseData();
+    });
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+        $.submitForm({
+            url: "/PC_BaseDataManage/TimerTask/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>规则：</strong>&nbsp;[开始时间]&nbsp; 或&nbsp; [结束时间]&nbsp;为空，则不受相应时间影响，[最大执行次数] &nbsp;为0则不受次数影响，[频率]&nbsp; 为0则不执行
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">任务编码</th>
+                <td class="formValue">
+                    <input id="TimerCode" name="TimerCode" type="text" class="form-control required" placeholder="请输入任务编码" />
+                </td>
+                <th class="formTitle">任务名称</th>
+                <td class="formValue">
+                    <input id="TimerName" name="TimerName" type="text" class="form-control required" placeholder="请输入任务名称" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">开始时间</th>
+                <td class="formValue">
+                    <input id="BeginTime" name="BeginTime" type="text" class="form-control input-wdatepicker" onfocus="WdatePicker({ dateFmt: 'yyyy-MM-dd HH:mm:ss' })"  placeholder="请输入开始时间" />
+                </td>
+                <th class="formTitle">结束时间</th>
+                <td class="formValue">
+                    <input id="EndTime" name="EndTime" type="text" class="form-control input-wdatepicker" onfocus="WdatePicker({ dateFmt: 'yyyy-MM-dd HH:mm:ss' })"  placeholder="请输入结束时间" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">已执行次数</th>
+                <td class="formValue">
+                    <input id="OverCount" name="OverCount" type="number" class="form-control required" placeholder="请输入已执行次数" />
+                </td>
+                <th class="formTitle">最大执行次数</th>
+                <td class="formValue">
+                    <input id="MaxCount" name="MaxCount" type="number" class="form-control required" placeholder="请输入最大执行次数" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">频率(秒)</th>
+                <td class="formValue">
+                    <input id="Rate" name="Rate" type="number" class="form-control required" placeholder="请输入频率" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsEnable" name="IsEnable" type="checkbox" checked="checked"><label for="IsEnable">是否启用</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" sysbasedata="yes" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

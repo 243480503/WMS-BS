@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F2035EE2-B73D-4FB8-A433-CAB465DE6A2A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MST.Application</RootNamespace>
+    <AssemblyName>MST.Application</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.7\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.7\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="01 Infrastructure\DbLogType.cs" />
+    <Compile Include="APIPost\ERPPost.cs" />
+    <Compile Include="APIPost\WCSPost.cs" />
+    <Compile Include="EnumType\FixType.cs" />
+    <Compile Include="EnumType\RuleConfig.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SystemManage\ItemsApp.cs" />
+    <Compile Include="SystemManage\ItemsDetailApp.cs" />
+    <Compile Include="SystemManage\ModuleApp.cs" />
+    <Compile Include="SystemManage\ModuleButtonApp.cs" />
+    <Compile Include="SystemManage\AreaApp.cs" />
+    <Compile Include="SystemManage\OrganizeApp.cs" />
+    <Compile Include="SystemManage\RoleApp.cs" />
+    <Compile Include="SystemManage\UserApp.cs" />
+    <Compile Include="SystemManage\UserLogOnApp.cs" />
+    <Compile Include="SystemManage\DutyApp.cs" />
+    <Compile Include="SystemManage\RoleAuthorizeApp.cs" />
+    <Compile Include="SystemSecurity\DbBackupApp.cs" />
+    <Compile Include="SystemSecurity\FilterIPApp.cs" />
+    <Compile Include="SystemSecurity\LogApp.cs" />
+    <Compile Include="WebMsg\IndexModel.cs" />
+    <Compile Include="WMSLogic\T_LocationStateDetailApp.cs" />
+    <Compile Include="WMSLogic\T_ReportSourceApp.cs" />
+    <Compile Include="WMSLogic\T_DevRowApp.cs" />
+    <Compile Include="WMSLogic\T_LocCountApp.cs" />
+    <Compile Include="WMSLogic\T_LocCountRecordApp.cs" />
+    <Compile Include="WMSLogic\T_OffLineDownApp.cs" />
+    <Compile Include="WMSLogic\T_PhoApp.cs" />
+    <Compile Include="WMSLogic\T_PhoDetailApp.cs" />
+    <Compile Include="WMSLogic\T_OffRackDetailApp.cs" />
+    <Compile Include="WMSLogic\T_OffRackApp.cs" />
+    <Compile Include="WMSLogic\T_OffRackRecordApp.cs" />
+    <Compile Include="WMSLogic\T_CountResultApp.cs" />
+    <Compile Include="WMSLogic\T_RowLineApp.cs" />
+    <Compile Include="WMSLogic\T_QAResuleApp.cs" />
+    <Compile Include="WMSLogic\T_TaskDetailApp.cs" />
+    <Compile Include="WMSLogic\T_TransRecordApp.cs" />
+    <Compile Include="WMSLogic\T_WaveDetailApp.cs" />
+    <Compile Include="WMSLogic\T_WaveApp.cs" />
+    <Compile Include="WMSLogic\T_ContainerType.cs" />
+    <Compile Include="WMSLogic\T_AreaApp.cs" />
+    <Compile Include="WMSLogic\T_CodeGenApp.cs" />
+    <Compile Include="WMSLogic\T_ContainerApp.cs" />
+    <Compile Include="WMSLogic\T_ContainerDetailApp.cs" />
+    <Compile Include="WMSLogic\T_ItemInStationApp.cs" />
+    <Compile Include="WMSLogic\T_ItemAreaApp.cs" />
+    <Compile Include="WMSLogic\T_StationApp.cs" />
+    <Compile Include="WMSLogic\T_ERPWareHouseApp.cs" />
+    <Compile Include="WMSLogic\T_CountApp.cs" />
+    <Compile Include="WMSLogic\T_CountDetailApp.cs" />
+    <Compile Include="WMSLogic\T_CountRecordApp.cs" />
+    <Compile Include="WMSLogic\T_ReportSetApp.cs" />
+    <Compile Include="WMSLogic\T_EquApp.cs" />
+    <Compile Include="WMSLogic\T_InOutDetailApp.cs" />
+    <Compile Include="WMSLogic\T_ItemApp.cs" />
+    <Compile Include="WMSLogic\T_ItemKindApp.cs" />
+    <Compile Include="WMSLogic\T_LocationApp.cs" />
+    <Compile Include="WMSLogic\T_MarkRecordApp.cs" />
+    <Compile Include="WMSLogic\T_MarkRuleApp.cs" />
+    <Compile Include="WMSLogic\T_MoveApp.cs" />
+    <Compile Include="WMSLogic\T_MoveRecordApp.cs" />
+    <Compile Include="WMSLogic\T_OutBoundApp.cs" />
+    <Compile Include="WMSLogic\T_OutBoundDetailApp.cs" />
+    <Compile Include="WMSLogic\T_OutRecordApp.cs" />
+    <Compile Include="WMSLogic\T_InBoundApp.cs" />
+    <Compile Include="WMSLogic\T_InBoundDetailApp.cs" />
+    <Compile Include="WMSLogic\T_QAApp.cs" />
+    <Compile Include="WMSLogic\T_QADetailApp.cs" />
+    <Compile Include="WMSLogic\T_QARecordApp.cs" />
+    <Compile Include="WMSLogic\T_ReceiveRecordApp.cs" />
+    <Compile Include="WMSLogic\T_SendMsgApp.cs" />
+    <Compile Include="WMSLogic\T_SupplierApp.cs" />
+    <Compile Include="WMSLogic\T_TaskApp.cs" />
+    <Compile Include="WMSLogic\T_TaskHisApp.cs" />
+    <Compile Include="WMSLogic\T_TimerApp.cs" />
+    <Compile Include="WMSLogic\T_TimerUserApp.cs" />
+    <Compile Include="WMSLogic\V_ConDetailGroupByItemReportApp.cs" />
+    <Compile Include="WMSLogic\V_Board_YearMonthDayItemChangeApp.cs" />
+    <Compile Include="WMSLogic\V_CountOrderReportApp.cs" />
+    <Compile Include="WMSLogic\V_OutBoundOrderReportApp.cs" />
+    <Compile Include="WMSLogic\V_InBoundOrderReportApp.cs" />
+    <Compile Include="WMSLogic\V_LocationInfoApp.cs" />
+    <Compile Include="WMSLogic\V_QAOrderReportApp.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MST.Code\MST.Code.csproj">
+      <Project>{db19ce03-c307-43fe-a209-08aa4ae10e21}</Project>
+      <Name>MST.Code</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MST.Data\MST.Data.csproj">
+      <Project>{f71003e8-a836-48f4-9df6-df9095cebd18}</Project>
+      <Name>MST.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MST.Domain\MST.Domain.csproj">
+      <Project>{7dc886cd-b8a0-44e8-aadd-57fcb0cfecb8}</Project>
+      <Name>MST.Domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MST.Repository\MST.Repository.csproj">
+      <Project>{875233bf-ea15-49e0-9a9c-77884a897ff6}</Project>
+      <Name>MST.Repository</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

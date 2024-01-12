@@ -1,0 +1,162 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 40%;
+    }
+</style>
+<script>
+    var url = $.request("Url");
+    $(function () {
+        gridList_Source();
+    });
+
+    function gridList_Source() {
+        var $gridList_Source = $("#gridList_Source");
+        $gridList_Source.dataGrid({
+            url: "/PC_ReportEditorManage/ReportSource/GetGridJson",
+            height: $(window).height() - 140,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '数据源编码', name: 'SourceCode', width: 120, align: 'left' },
+                { label: '数据源名称', name: 'SourceName', width: 120, align: 'left' },
+                {
+                    label: '远程', name: 'IsTelnet', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '数据库', name: 'IsDB', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                { label: '备注', name: 'Remark', width: 120, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList_Source.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList_Source").setGridWidth($(window).width());
+        $("#gridList_Source").setGridHeight($(window).height() - 126);
+    }).trigger('resize');
+
+    function btn_add() {
+        $.modalFixHightOpen({
+            id: "SourceForm",
+            title: "配置",
+            url: "/PC_ReportEditorManage/ReportSource/Form",
+            width: "850px",
+            height: "680px",
+            btn: null,
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+                top.clients = $.clientsInit();
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridList_Source").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalOpen({
+            id: "SourceEdit",
+            title: "修改配置",
+            url: "/PC_ReportEditorManage/ReportSource/Form?keyValue=" + keyValue,
+            width: "850px",
+            height: "680px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //新增页面点击完成按钮时的回调函数
+    function reloadList() {
+        $("#gridList_Source").trigger("reloadGrid");
+    }
+
+    function btn_delete() {
+        var rowid = $("#gridList_Source").jqGridRowValue().F_Id;
+        if (rowid == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.deleteForm({
+            url: "/PC_ReportEditorManage/ReportSource/DeleteForm",
+            param: { keyValue: rowid },
+            success: function () {
+                $("#gridList_Source").trigger("reloadGrid");
+            }
+        })
+    }
+
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add-receive"  class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建数据源</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit-receive"  onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改</a></li>
+                <li><a id="NF-delete-receive"  onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="数据源编码 / 数据源名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList_Source"></table>
+    <div id="gridPager"></div>
+</div>

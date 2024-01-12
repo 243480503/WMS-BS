@@ -1,0 +1,376 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 40%;
+    }
+</style>
+<script>
+    var QADetailID = $.request("keyValue");
+    var dataAll = {};
+    $(function () {
+        GetQADetail();
+        gridList();
+    })
+
+    var oldNum = 0;
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_QARecordManage/QARecord/GetGridJson?QADetailID=" + QADetailID,
+            height: $(window).height() - 170,
+            cellsubmit: "clientArray",
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 100, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 60, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 80, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: '容器大类', name: 'ContainerKindName', width: 100, align: 'left', sortable: false },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: "货位编码", name: "LocationNo", width: 100, align: 'left' },
+                { label: '标签条码', name: 'ItemBarCode', width: 120, align: 'left' },
+                { label: "可用数量", name: "CanUseQty", width: 100, align: 'left', sortable: false },
+                {
+                    label: "抽样数量", name: "SampleSumNum", width: 50, align: 'left', editable: true, sortable: false,
+                    editoptions: {
+                        size: 1,
+                        width: 30,
+                        type: "Number",
+                        class: "form-control required",
+                        dataEvents: [{
+                            type: 'change',
+                            fn: function (e) {
+                                var val = $(e.target).val();
+                                if (val == "") {    // 无输入
+                                    $(e.target).val(0);
+                                }
+
+                                $("#chooseSumNum").text(parseFloat($("#chooseSumNum").text()) + parseFloat(this.value) - oldNum);
+                                if (parseFloat($("#chooseSumNum").text()) == parseFloat($("#SampleSumNum").text())) {
+                                    $("#chooseQty").css("color", "#3d882f");
+                                    $("#chooseSumNum").css("color", "#3d882f");
+                                }
+                                else {
+                                    $("#chooseQty").css("color", "#f00");
+                                    $("#chooseSumNum").css("color", "#f00");
+                                }
+                            }
+                        }, {
+                            type: 'focus',
+                            fn: function (e) {
+                                oldNum = parseFloat(this.value);
+                                $(this).select();
+                            }
+                        }, {
+                            type: "blur",
+                            fn: function (e) {
+                                var id = $("#gridList").jqGridRowValue().F_Id;
+                                var CanUseQty = parseFloat($gridList.getRowData(id).CanUseQty);
+
+                                var val = $(e.target).val();
+                                //if (val == "") {  //无输入
+                                //    $(e.target).val(0);
+                                //    return;
+                                //}
+
+                                if (!$.isNumeric(val)) { //不是数字
+                                    $(e.target).css("border-color", "red");
+                                    $(e.target).attr("err", true);
+                                    return;
+                                }
+                                var valNum = parseFloat(val);
+                                if (valNum < 0) {  // 非正数
+                                    $(e.target).css("border-color", "red");
+                                    $(e.target).attr("err", true);
+                                    return;
+                                }
+
+                                if (CanUseQty < valNum) {  // 超过可以数量
+                                    $(e.target).css("border-color", "red");
+                                    $(e.target).attr("err", true);
+                                    return;
+                                }
+
+                                $(e.target).css("border-color", "");
+                                $(e.target).attr("err", false);
+                                $gridList.jqGrid('saveRow', id, null, "clientArray");
+                            }
+                        }]
+                    }
+                },
+            ],
+            pager: "#gridPager1",
+            sortname: 'Lot asc,LocationNo asc',
+            viewrecords: true,
+            customEdit: true,
+            loadComplete: function () {
+                dataAll = $("#gridList").jqGrid("getRowData");
+            },
+        });
+
+        $("#btn_search").click(function () {
+            $("#chooseSumNum").text(0);
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    //质检头部信息
+    function GetQADetail() {
+        $.ajaxWMS({
+            url: "/PC_QARecordManage/QARecord/GetQADetail?QADetailID=" + QADetailID,
+            data: {},
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                $("#itemName").text(data.ItemName);
+                $("#itemCode").text(data.ItemCode);
+                $("#Lot").text(data.Lot);
+                $("#SampleSumNum").text(data.SampleSumNum); //单据的取样总数
+                var tempQty = data.Qty == undefined ? "0" : data.Qty;
+                $("#chooseSumNum").text(tempQty);
+
+                if (parseFloat($("#chooseSumNum").text()) == parseFloat($("#SampleSumNum").text())) {
+                    $("#chooseQty").css("color", "#3d882f");
+                    $("#chooseSumNum").css("color", "#3d882f");
+                }
+                else {
+                    $("#chooseQty").css("color", "#f00");
+                    $("#chooseSumNum").css("color", "#f00");
+                }
+            }
+        });
+    }
+
+    //自动波次运算(删除波次并执行波次)
+    function btn_AutoSelect() {
+
+        if (parseFloat($("#SampleSumNum").text()) < parseFloat($("#chooseSumNum").text())) {
+            $.modalMsg("数量超过需求数量", "error");
+            return;
+        }
+
+        var chooseList = new Array();
+        var dataList = $("#gridList").jqGrid("getRowData");
+        $.each(dataList, function (i, n) {
+            if (parseFloat(n.SampleSumNum) > 0) {
+                var cell = {};
+                cell.F_Id = n.F_Id;
+                cell.HandQty = n.SampleSumNum;
+                chooseList.push(cell);
+            }
+        });
+
+        var chooseListStr = JSON.stringify(chooseList);
+
+        $.submitForm({
+            url: "/PC_QARecordManage/QARecord/AutoSelect_QA",
+            param: { QADetailID: QADetailID, handChooseListStr: chooseListStr },
+            close: false,
+            success: function (data) {
+                $("#gridList").jqGrid('setGridParam', {
+                    postData: { keyword: $("#txt_keyword").val() },
+                }).trigger('reloadGrid', { fromServer: true, page: 1 });
+                GetQADetail();
+                $.modalMsg(data.message, data.state);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        });
+    }
+
+    //清理波次
+    function btn_Clear() {
+        $.ajaxWMS({
+            url: "/PC_QARecordManage/QARecord/ClearWave_QA",
+            data: { QADetailID: QADetailID },
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $("#gridList").jqGrid('setGridParam', {
+                        postData: { keyword: $("#txt_keyword").val() },
+                    }).trigger('reloadGrid', { fromServer: true, page: 1 });
+                    GetQADetail();
+                    $.modalMsg(data.message, data.state);
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    //点击确定按钮
+    function submitForm() {
+
+        if (parseFloat($("#SampleSumNum").text()) != parseFloat($("#chooseSumNum").text())) {
+            $.modalMsg("数量不正确", "error");
+            return;
+        }
+
+        //还原后重新获取数据
+        var rows = $("#gridList").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        rows = $("#gridList").jqGrid("getRowData");
+        var isErr = false;
+        var isErrQty = false;
+        $.each(rows, function (i, n) {
+            var curRowErr = false;
+            var curRowErrQty = false;
+
+            if (n.SampleSumNum == "") {
+                curRowErr = true;
+            }
+
+            if (!$.isNumeric(n.SampleSumNum)) { //不是数字
+                curRowErr = true;
+            }
+            var valNum = parseFloat(n.SampleSumNum);
+            if (valNum < 0) {  // 非正数
+                curRowErr = true;
+            }
+
+            if (parseFloat(n.SampleSumNum) > parseFloat(n.CanUseQty)) {
+                curRowErrQty = true;   /// 大于可用数量
+            }
+
+            if (curRowErr) {
+                $("#gridList").jqGrid('editRow', n.F_Id)
+                $("#gridList").find("#" + n.F_Id + ">td>input").css("border-color", "red");
+                $("#gridList").find("#" + n.F_Id + ">td>input").focus();
+                isErr = true;
+            }
+
+            if (curRowErrQty) {
+                $("#gridList").jqGrid('editRow', n.F_Id)
+                $("#gridList").find("#" + n.F_Id + ">td>input").css("border-color", "red");
+                $("#gridList").find("#" + n.F_Id + ">td>input").focus();
+                isErrQty = true;
+            }
+        });
+
+        if (isErr) {
+            $.modalMsg("无效数据", "warning");
+            return;
+        }
+
+        if (isErrQty) {
+            $.modalMsg("数量超过可用数量", "warning");
+            return;
+        }
+
+        var chooseList = new Array();
+        var dataList = $("#gridList").jqGrid("getRowData");
+        $.each(dataList, function (i, n) {
+            if (parseFloat(n.SampleSumNum) > 0) {
+                var cell = {};
+                cell.F_Id = n.F_Id;
+                cell.HandQty = n.SampleSumNum;
+                chooseList.push(cell);
+            }
+        });
+
+        var isChange = false;
+        $.each(dataAll, function (i, n) {
+            $.each(dataList, function (j, k) {
+                if (n.F_Id == k.F_Id) {
+                    if (n.SampleSumNum != k.SampleSumNum) {
+                        isChange = true;
+                    }
+                }
+            });
+        });
+
+        if (!isChange) {
+            $.modalClose();
+            return;
+        }
+
+        var chooseListStr = JSON.stringify(chooseList);
+
+        $.submitForm({
+            url: "/PC_QARecordManage/QARecord/AutoSelect_QA",
+            param: { QADetailID: QADetailID, handChooseListStr: chooseListStr },
+            success: function (data) {
+                $("#gridList").jqGrid('setGridParam', {
+                    postData: { keyword: $("#txt_keyword").val() },
+                }).trigger('reloadGrid', { fromServer: true, page: 1 });
+                GetQADetail();
+                $.modalMsg(data.message, data.state);
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        });
+    }
+
+</script>
+<div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+    <span>物料名称：</span><span id="itemName"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span>物料编码：</span><span id="itemCode"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span>批号：</span><span id="Lot"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span>需求数量：</span><span id="SampleSumNum"></span>&nbsp;&nbsp;&nbsp;&nbsp;<strong id="chooseQty" style="color:#F00;">已选数量：</strong><strong id="chooseSumNum" style="color:#F00;">0</strong>
+</div>
+<div class="topPanel">
+
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-Clear" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_Clear()"><i class="fa fa-trash-o"></i>清除</a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-AutoSelect" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_AutoSelect()"><i class="fa fa-plus"></i>自动选取</a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="容器条码 / 货位编码 / 标签条码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager1"></div>
+</div>

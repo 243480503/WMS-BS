@@ -1,0 +1,182 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+
+    $(function () {
+        //初始化标题与来源单据号
+        $(".title").text(parentName + " - " + curName);
+        //获取库存信息
+        initControl();
+        $("#TagStation").bind("change", function () {
+            var stationID = $("#TagStation option:selected").val();
+            if (stationID == undefined || stationID == "") {
+                $("#ContainerDetailCount").val(0);
+            }
+            else {
+                GetContainerCount(stationID);
+            }
+        });
+
+        //在切换标签事件时
+        $("#tab2").bind("shown.bs.tab", function () {
+            //gridList();
+
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: {}
+            //}).trigger('reloadGrid');
+            BindRFList();
+        });
+    });
+
+    //初始化站台信息
+    function initControl() {
+        $("#TagStation").bindSelect({
+            url: "/RF_EmptyContainerManage/EmptyContainer/GetStationDicList",
+            id: "F_Id",
+            text: "StationName"
+        });
+    }
+
+    //站台对应的库存
+    function GetContainerCount(stationID) {
+        $.ajaxWMS({
+            url: "/RF_EmptyContainerManage/EmptyContainer/GetEmptyCountInWare",
+            data: { stationID: stationID },
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                $("#ContainerDetailCount").val(data);
+            }
+        });
+    }
+
+    //function gridList() {
+    //    var $gridList = $("#gridList");
+    //    $gridList.dataGrid({
+    //        url: "/RF_EmptyContainerManage/EmptyContainer/GetEmptyTask",
+    //        shrinkToFit: true,
+    //        colModel: [
+    //            { label: "主键", name: "F_Id", hidden: true, key: true },
+    //            { label: '任务编码', name: 'TaskNo', width: "30", align: 'left' },
+    //            { label: '任务类型', name: 'TaskTypeName', width: "20", align: 'left' },
+    //            { label: '目标地址', name: 'TagLocationCodeName', width: "30", align: 'left' },
+    //            { label: '状态', name: 'StateName', width: "30", align: 'left' }
+    //        ],
+    //        datatype: "local",
+    //        unwritten: false
+    //    });
+    //}
+
+    function BindRFList() {
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: {},
+            url: "/RF_EmptyContainerManage/EmptyContainer/GetEmptyTask",
+            colModel: [
+                { label: '任务编码', name: 'TaskNo', width: "30", align: 'left', br: true },
+                { label: '容器条码', name: 'BarCode', width: "30", align: 'left', br: true },
+                { label: '目标地址', name: 'TagLocationCodeName', width: "30", align: 'left', br: true },
+                { label: '任务类型', name: 'TaskTypeName', width: "20", align: 'left', br: true },
+                { label: '任务状态', name: 'StateName', width: "30", align: 'left' }
+            ],
+            delbtn: false
+        });
+    }
+
+
+    //开始呼叫
+    function callOut() {
+        var stationID = $("#TagStation option:selected").val();
+        if (stationID == undefined || stationID == "") {
+            $.modalMsg("请先选定站台", "warning");
+            return;
+        }
+        var data = $("#form1").formSerialize();
+        if (data.ContainerDetailCount < data.CallNum) {
+            $.modalMsg("库存不足", "warning");
+            return;
+        }
+        if (data.CallNum<1) {
+            $.modalMsg("呼叫数量需大于0", "warning");
+            return;
+        }
+
+        $.ajaxWMS({
+            url: "/RF_EmptyContainerManage/EmptyContainer/CallOut",
+            data: { stationID: stationID, num: data.CallNum},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.modalMsg(data.message, data.state);
+                if (data.state == "success") {
+                    var stationIDTemp = $("#TagStation option:selected").val();
+                    GetContainerCount(stationIDTemp);
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>    
+    <div class="fa fa-refresh RFRef"></div>
+
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">呼叫</a></li>
+    <li style="width: 50%;"><a id="tab2" href="#tabB" data-toggle="tab">任务</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <form id="form1">
+            <div class="RF">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">目标站台:</th>
+                        <td class="formValue">
+                            <select id="TagStation" name="TagStation" class="form-control required">
+                                <option value="">==请选择==</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">当前库存:</th>
+                        <td class="formValue">
+                            <input id="ContainerDetailCount" name="ItemName" type="text" class="form-control" disabled="disabled" placeholder="当前库存" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">呼叫数量:</th>
+                        <td class="formValue">
+                            <input id="CallNum" name="CallNum" type="number" value="1" class="form-control required" placeholder="呼叫数量" />
+                        </td>
+                    </tr>
+                </table>
+
+
+            </div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="callOut()">确定</a>
+            </div>
+        </form>
+    </div>
+    <div id="tabB" class="tab-pane">
+        <div id="RFList"></div>
+        <div class="btn-group RFboot" style="margin-top:3rem">
+            <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+        </div>
+    </div>
+</div>

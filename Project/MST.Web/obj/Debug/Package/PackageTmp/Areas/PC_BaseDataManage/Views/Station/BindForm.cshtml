@@ -1,0 +1,262 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+
+        $("#OrderType").bindSelect({
+            url: "/PC_BaseDataManage/Station/GetDic_OrderType?StationID=" + keyValue,
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+        $("#CurOrderCode").bindSelect();
+
+        $("#SEQ").bindSelect();
+
+        $("#WaveCode").bindSelect();
+
+        $("#BarCode").bindSelect();
+
+        $("#OrderType").change(function () {
+            var orderType = $("#OrderType option:checked").val();
+
+            $("#CurOrderCode").clearSelect();
+            $("#SEQ").clearSelect();
+            $("#WaveCode").clearSelect();
+            $("#BarCode").clearSelect();
+            $("#WaveCode").removeAttr("disabled");
+            $("#BarCode").removeAttr("disabled");
+            if (orderType == "" || orderType == undefined) {
+                return;
+            }
+
+            $("#CurOrderCode").bindSelect({
+                url: "/PC_BaseDataManage/Station/GetDic_CurOrderCode?orderType=" + orderType,
+                id: "F_ItemCode",
+                text: "F_ItemName",
+                search: true
+            });
+
+            if (orderType == "WarehouseBackOut" || orderType == "VerBackOut" || orderType == "GetItemOut" || orderType == "OtherOut") { //波次出库
+                $("#WaveCode").removeAttr("disabled");
+                $("#BarCode").removeAttr("disabled");
+            }
+            else if (orderType == "Count" || orderType == "BackSample" || orderType == "GetSample") //非波次出库
+            {
+                $("#WaveCode").attr("disabled", "disabled");
+            } else if (orderType == "PurchaseIn") { //采购入库
+                $("#BarCode").attr("disabled", "disabled");
+                $("#WaveCode").attr("disabled", "disabled");
+            }
+            else {
+                $.modalAlert("未知的单据类型", "error");
+                return;
+            }
+        });
+
+        $("#CurOrderCode").change(function () {
+            var orderType = $("#OrderType option:checked").val();
+            var CurOrderCode = $("#CurOrderCode option:checked").val();
+            $("#SEQ").clearSelect();
+            $("#WaveCode").clearSelect();
+            $("#BarCode").clearSelect();
+            if (CurOrderCode == "" || CurOrderCode == undefined) {
+                return;
+            }
+            $("#SEQ").bindSelect({
+                url: "/PC_BaseDataManage/Station/GetDic_SEQ?orderType=" + orderType + "&CurOrderCode=" + CurOrderCode,
+                id: "F_ItemCode",
+                text: "F_ItemName",
+                search: true
+            });
+        });
+
+        $("#SEQ").change(function () {
+            var orderType = $("#OrderType option:checked").val();
+            var CurOrderCode = $("#CurOrderCode option:checked").val();
+            var SEQ = $("#SEQ option:checked").val();
+            $("#WaveCode").clearSelect();
+            $("#BarCode").clearSelect();
+            if (SEQ == "" || SEQ == undefined) {
+
+                return;
+            }
+            if (orderType == "WarehouseBackOut" || orderType == "VerBackOut" || orderType == "GetItemOut") { //波次出库
+                $("#WaveCode").bindSelect({
+                    url: "/PC_BaseDataManage/Station/GetDic_WaveCode?orderType=" + orderType + "&CurOrderCode=" + CurOrderCode + "&SEQ=" + SEQ,
+                    id: "F_ItemCode",
+                    text: "F_ItemName",
+                    search: true
+                });
+            }
+            else {
+                $("#BarCode").bindSelect({
+                    url: "/PC_BaseDataManage/Station/GetDic_BarCode?orderType=" + orderType + "&CurOrderCode=" + CurOrderCode + "&SEQ=" + SEQ,
+                    id: "F_ItemCode",
+                    text: "F_ItemName",
+                    search: true
+                });
+            }
+        });
+
+        $("#WaveCode").change(function () {
+            var orderType = $("#OrderType option:checked").val();
+            var CurOrderCode = $("#CurOrderCode option:checked").val();
+            var SEQ = $("#SEQ option:checked").val();
+            var WaveCode = $("#WaveCode option:checked").val();
+            $("#BarCode").clearSelect();
+            if (WaveCode == "" || WaveCode == undefined) {
+
+                return;
+            }
+
+            $("#BarCode").bindSelect({
+                url: "/PC_BaseDataManage/Station/GetDic_BarCode?orderType=" + orderType + "&CurOrderCode=" + CurOrderCode + "&SEQ=" + SEQ + "&WaveCode=" + WaveCode,
+                id: "F_ItemCode",
+                text: "F_ItemName",
+                search: true
+            });
+        });
+
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_BaseDataManage/Station/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    if (data.OrderType != "") {
+
+                        $("#CurOrderCode").bindSelect({
+                            url: "/PC_BaseDataManage/Station/GetDic_CurOrderCode?orderType=" + data.OrderType,
+                            id: "F_ItemCode",
+                            text: "F_ItemName",
+                            search: true
+                        });
+
+                        $("#SEQ").bindSelect({
+                            url: "/PC_BaseDataManage/Station/GetDic_SEQ?orderType=" + data.OrderType + "&CurOrderCode=" + data.CurOrderCode,
+                            id: "F_ItemCode",
+                            text: "F_ItemName",
+                            search: true
+                        });
+
+                        if (data.OrderType == "WarehouseBackOut" || data.OrderType == "VerBackOut" || data.OrderType == "GetItemOut" || data.OrderType == "OtherOut") { //波次出库
+                            $("#WaveCode").removeAttr("disabled");
+                            $("#WaveCode").bindSelect({
+                                url: "/PC_BaseDataManage/Station/GetDic_WaveCode?orderType=" + data.OrderType + "&CurOrderCode=" + data.CurOrderCode + "&SEQ=" + data.SEQ,
+                                id: "F_ItemCode",
+                                text: "F_ItemName",
+                                search: true
+                            });
+
+                            $("#BarCode").removeAttr("disabled");
+                            $("#BarCode").bindSelect({
+                                url: "/PC_BaseDataManage/Station/GetDic_BarCode?orderType=" + data.OrderType + "&CurOrderCode=" + data.CurOrderCode + "&SEQ=" + data.SEQ,
+                                id: "F_ItemCode",
+                                text: "F_ItemName",
+                                search: true
+                            });
+                        }
+                        else if (data.OrderType == "Count" || data.OrderType == "BackSample" || data.OrderType == "GetSample") //非波次出库
+                        {
+                            $("#WaveCode").attr("disabled", "disabled");
+                            $("#BarCode").removeAttr("disabled");
+                            $("#BarCode").bindSelect({
+                                url: "/PC_BaseDataManage/Station/GetDic_BarCode?orderType=" + data.OrderType + "&CurOrderCode=" + data.CurOrderCode + "&SEQ=" + data.SEQ,
+                                id: "F_ItemCode",
+                                text: "F_ItemName",
+                                search: true
+                            });
+                        }
+                        else if (data.OrderType == "PurchaseIn") { //采购入库
+                            $("#BarCode").attr("disabled", "disabled");
+                            $("#WaveCode").attr("disabled", "disabled");
+                        }
+                        else {
+                            $.modalAlert("未知的单据类型", "error");
+                            return;
+                        }
+
+                        $("#OrderType").val(data.OrderType).select2({ minimumResultsForSearch: -1 });
+                        $("#CurOrderCode").val(data.CurOrderCode).select2({ minimumResultsForSearch: -1 });
+                        $("#SEQ").val(data.SEQ).select2({ minimumResultsForSearch: -1 });
+                        $("#WaveCode").val(data.WaveCode).select2({ minimumResultsForSearch: -1 });
+                        $("#BarCode").val(data.BarCode).select2({ minimumResultsForSearch: -1 });
+                    }
+                }
+            });
+        }
+    });
+
+
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+        data["F_Id"] = keyValue;
+        $.submitForm({
+            url: "/PC_BaseDataManage/Station/BindOrder",
+            param: data,
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+
+            <tr>
+                <th class="formTitle">单据类型</th>
+                <td class="formValue">
+                    <select id="OrderType" name="OrderType" class="form-control">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">当前单据</th>
+                <td class="formValue">
+                    <select id="CurOrderCode" name="CurOrderCode" class="form-control">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+
+                <th class="formTitle">单据项次</th>
+                <td class="formValue">
+                    <select id="SEQ" name="SEQ" class="form-control">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">波次</th>
+                <td class="formValue">
+                    <select id="WaveCode" name="WaveCode" class="form-control">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器条码</th>
+                <td class="formValue">
+                    <select id="BarCode" name="BarCode" class="form-control">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

@@ -1,0 +1,534 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ML.Vision</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.ML.Transforms.DnnRetrainTransformer">
+            <summary>
+            <see cref="T:Microsoft.ML.ITransformer" /> for the <see cref="T:Microsoft.ML.Transforms.DnnRetrainEstimator"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.DnnRetrainTransformer.UpdateModelOnDisk(System.String,Microsoft.ML.Transforms.DnnRetrainEstimator.Options)">
+            <summary>
+            Updates the model on the disk.
+            After retraining Session and Graphs are both up-to-date
+            However model on disk is not which is used to serialzed to ML.Net stream
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Transforms.DnnRetrainEstimator.Options">
+            <summary>
+            The options for the <see cref="T:Microsoft.ML.Transforms.DnnRetrainTransformer"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.ModelLocation">
+            <summary>
+            Location of the TensorFlow model.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.InputColumns">
+            <summary>
+            The names of the model inputs.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.OutputColumns">
+            <summary>
+            The names of the requested model outputs.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.LabelColumn">
+            <summary>
+            The name of the label column in <see cref="T:Microsoft.ML.IDataView"/> that will be mapped to label node in TensorFlow model.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.TensorFlowLabel">
+            <summary>
+            The name of the label in TensorFlow model.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.OptimizationOperation">
+            <summary>
+            Name of the operation in TensorFlow graph that is used for optimizing parameters in the graph.
+            Usually it is the name specified in the minimize method of optimizer in python
+            e.g. optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost, name = "SGDOptimizer").
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.LossOperation">
+            <summary>
+            The name of the operation in the TensorFlow graph to compute training loss (Optional).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.MetricOperation">
+            <summary>
+            The name of the operation in the TensorFlow graph to compute performance metric during training (Optional).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.BatchSize">
+            <summary>
+            Number of samples to use for mini-batch training.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.Epoch">
+            <summary>
+            Number of training iterations.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.LearningRateOperation">
+            <summary>
+            The name of the operation in the TensorFlow graph which sets optimizer learning rate (Optional).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.LearningRate">
+            <summary>
+            Learning rate to use during optimization.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.SaveLocationOperation">
+            <summary>
+            Name of the input in TensorFlow graph that specify the location for saving/restoring models to/from disk.
+            This parameter is set by different kinds of 'Savers' in TensorFlow and users don't have control over this.
+            Therefore, its highly unlikely that this parameter is changed from its default value of 'save/Const'.
+            Please change it cautiously if you need to.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.SaveOperation">
+            <summary>
+            Name of the operation in TensorFlow graph that is used for saving/restoring models to/from disk.
+            This parameter is set by different kinds of 'Savers' in TensorFlow and users don't have control over this.
+            Therefore, its highly unlikely that this parameter is changed from its default value of 'save/control_dependency'.
+            Please change it cautiously if you need to.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.DnnRetrainEstimator.Options.AddBatchDimensionInputs">
+            <summary>
+            Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            </summary>
+            <remarks>
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.
+            In this case, there is no way to induce shape from the model's inputs or input data.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.DnnRetrainEstimator.GetOutputSchema(Microsoft.ML.SchemaShape)">
+            <summary>
+            Returns the <see cref="T:Microsoft.ML.SchemaShape"/> of the schema which will be produced by the transformer.
+            Used for schema propagation and verification in a pipeline.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.DnnRetrainEstimator.Fit(Microsoft.ML.IDataView)">
+            <summary>
+            Trains and returns a <see cref="T:Microsoft.ML.Transforms.DnnRetrainTransformer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a Deep Neural Network(DNN) to classify images.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [ImageClassification](xref:Microsoft.ML.VisionCatalog.ImageClassification(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,System.String,System.String,System.String,System.String,Microsoft.ML.IDataView)).
+            
+             ### Input and Output Columns
+             The input label column data must be [key](xref:Microsoft.ML.Data.KeyDataViewType) type and the feature column must be a variable-sized vector of <xref:System.Byte>.
+            
+             This trainer outputs the following columns:
+            
+             | Output Column Name | Column Type | Description|
+             | -- | -- | -- |
+             | `Score` | Vector of<xref:System.Single> | The scores of all classes.Higher value means higher probability to fall into the associated class. If the i-th element has the largest value, the predicted label index would be i.Note that i is zero-based index. |
+             | `PredictedLabel` | [key](xref:Microsoft.ML.Data.KeyDataViewType) type | The predicted label's index. If its value is i, the actual label would be the i-th category in the key-valued input label type. |
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Multiclass classification |
+             | Is normalization required? | No |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.Vision and SciSharp.TensorFlow.Redist / SciSharp.TensorFlow.Redist-Windows-GPU / SciSharp.TensorFlow.Redist-Linux-GPU |
+             | Exportable to ONNX | No |
+            
+             [!include[io](~/../docs/samples/docs/api-reference/tensorflow-usage.md)]
+            
+             ### Training Algorithm Details
+             Trains a Deep Neural Network(DNN) by leveraging an existing pre-trained model such as Resnet50 for the purpose
+             of classifying images. The technique was inspired from [TensorFlow's retrain image classification tutorial](https://www.tensorflow.org/hub/tutorials/image_retraining)
+             ]]>
+             </format>
+             </remarks>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.Architecture">
+            <summary>
+            Image classification model.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.ModelFileName">
+            <summary>
+            Dictionary mapping model architecture to model location.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.ImagePreprocessingSize">
+            <summary>
+            Dictionary mapping model architecture to image input size supported.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStoppingMetric">
+            <summary>
+            Indicates the metric to be monitored to decide Early Stopping criteria.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics">
+            <summary>
+            DNN training metrics.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.DatasetUsed">
+            <summary>
+            Indicates the dataset on which metrics are being reported.
+            <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.Dataset"/>
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.BatchProcessedCount">
+            <summary>
+            The number of batches processed in an epoch.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.Epoch">
+            <summary>
+            The training epoch index for which this metric is reported.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.Accuracy">
+            <summary>
+            Accuracy of the batch on this <see cref="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.Epoch"/>. Higher the better.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.CrossEntropy">
+            <summary>
+            Cross-Entropy (loss) of the batch on this <see cref="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.Epoch"/>. Lower
+            the better.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.LearningRate">
+            <summary>
+            Learning Rate used for this <see cref="P:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.Epoch"/>. Changes for learning rate scheduling.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics.ToString">
+            <summary>
+            String representation of the metrics.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.BottleneckMetrics">
+            <summary>
+            Metrics for image featurization values. The input image is passed through
+            the network and features are extracted from second or last layer to
+            train a custom full connected layer that serves as classifier.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.BottleneckMetrics.DatasetUsed">
+            <summary>
+            Indicates the dataset on which metrics are being reported.
+            <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.Dataset"/>
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.BottleneckMetrics.Index">
+            <summary>
+            Index of the input image.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.BottleneckMetrics.ToString">
+            <summary>
+            String representation of the metrics.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping">
+            <summary>
+            Early Stopping feature stops training when monitored quantity stops improving'.
+            Modeled after https://github.com/tensorflow/tensorflow/blob/00fad90125b18b80fe054de1055770cfb8fe4ba3/
+            tensorflow/python/keras/callbacks.py#L1143
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping._bestMetricValue">
+            <summary>
+            Best value of metric seen so far.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping._wait">
+            <summary>
+            Current counter for number of epochs where there has been no improvement.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping._metric">
+            <summary>
+            The metric to be monitored (eg Accuracy, Loss).
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping.MinDelta">
+            <summary>
+            Minimum change in the monitored quantity to be considered as an improvement.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping.Patience">
+            <summary>
+            Number of epochs to wait after no improvement is seen consecutively
+            before stopping the training.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping.CheckIncreasing">
+            <summary>
+            Whether the monitored quantity is to be increasing (eg. Accuracy, CheckIncreasing = true)
+            or decreasing (eg. Loss, CheckIncreasing = false).
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping.#ctor(System.Single,System.Int32,Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStoppingMetric,System.Boolean)">
+            <param name="minDelta"></param>
+            <param name="patience"></param>
+            <param name="metric"></param>
+            <param name="checkIncreasing"></param>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.EarlyStopping.ShouldStop(Microsoft.ML.Vision.ImageClassificationTrainer.TrainMetrics)">
+            <summary>
+            To be called at the end of every epoch to check if training should stop.
+            For increasing metric(eg.: Accuracy), if metric stops increasing, stop training if
+            value of metric doesn't increase within 'patience' number of epochs.
+            For decreasing metric(eg.: Loss), stop training if value of metric doesn't decrease
+            within 'patience' number of epochs.
+            Any change  in the value of metric of less than 'minDelta' is not considered a change.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics">
+            <summary>
+            Metrics for image classification bottleneck phase and training.
+            Train metrics may be null when bottleneck phase is running, so have check!
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.Dataset">
+            <summary>
+            Indicates the kind of the dataset of which metric is reported.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.Train">
+            <summary>
+            Contains train time metrics.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.Bottleneck">
+            <summary>
+            Contains pre-train time metrics. These contains metrics on image
+            featurization.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.ImageClassificationMetrics.ToString">
+            <summary>
+            String representation of the metrics.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationTrainer.Options">
+            <summary>
+            Options class for <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.BatchSize">
+            <summary>
+            Number of samples to use for mini-batch training. The default value for BatchSize is 10.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.Epoch">
+            <summary>
+            Number of training iterations. The default value for Epoch is 200.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.LearningRate">
+            <summary>
+            Learning rate to use during optimization. The default value for Learning Rate is 0.01.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.EarlyStoppingCriteria">
+            <summary>
+            Early stopping technique parameters to be used to terminate training when training metric stops improving. By default EarlyStopping is turned on and the monitoring metric is Accuracy.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.Arch">
+            <summary>
+            Specifies the model architecture to be used in the case of image classification training using transfer learning. The default Architecture is Resnet_v2_50.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ScoreColumnName">
+            <summary>
+            Name of the tensor that will contain the output scores of the last layer when transfer learning is done. The default tensor name is "Score".
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.PredictedLabelColumnName">
+            <summary>
+            Name of the tensor that will contain the predicted label from output scores of the last layer when transfer learning is done. The default tensor name is "PredictedLabel".
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.FinalModelPrefix">
+            <summary>
+            Final model and checkpoint files/folder prefix for storing graph files. The default prefix is "custom_retrained_model_based_on_".
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.MetricsCallback">
+            <summary>
+            Callback to report statistics on accuracy/cross entropy during training phase. Metrics Callback is set to null by default.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.WorkspacePath">
+            <summary>
+            Indicates the path where the image bottleneck cache files and trained model are saved, default is a new temporary directory.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.TestOnTrainSet">
+            <summary>
+            Indicates to evaluate the model on train set after every epoch. Test on trainset is set to true by default.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ReuseTrainSetBottleneckCachedValues">
+            <summary>
+            Indicates to not re-compute cached bottleneck trainset values if already available in the bin folder. This parameter is set to false by default.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ReuseValidationSetBottleneckCachedValues">
+            <summary>
+            Indicates to not re-compute cached bottleneck validationset values if already available in the bin folder. This parameter is set to false by default.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ValidationSet">
+            <summary>
+            Validation set.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ValidationSetFraction">
+            <summary>
+            When validation set is not passed then a fraction of train set is used as validation. To disable this
+            behavior set <see cref="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ValidationSetFraction"/> to null. Accepts value between 0 and 1.0, default
+            value is 0.1 or 10% of the trainset.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.TrainSetBottleneckCachedValuesFileName">
+            <summary>
+            Indicates the file name within the workspace to store trainset bottleneck values for caching, default file name is "trainSetBottleneckFile.csv".
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.ValidationSetBottleneckCachedValuesFileName">
+            <summary>
+            Indicates the file name within the workspace to store validationset  bottleneck values for caching, default file name is "validationSetBottleneckFile.csv".
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Vision.ImageClassificationTrainer.Options.LearningRateScheduler">
+            <summary>
+            A class that performs learning rate scheduling. The default learning rate scheduler is exponential learning rate decay.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.PredictionKind">
+            <summary> Return the type of prediction task.</summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationTrainer.Info">
+            <summary>
+            Auxiliary information about the trainer in terms of its capabilities
+            and requirements.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.String,Microsoft.ML.IDataView)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/>
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="labelColumn">The name of the label column.</param>
+            <param name="featureColumn">The name of the feature column.</param>
+            <param name="scoreColumn">The name of score column.</param>
+            <param name="predictedLabelColumn">The name of the predicted label column.</param>
+            <param name="validationSet">The validation set used while training to improve model quality.</param>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Vision.ImageClassificationTrainer.Options)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/>
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Vision.ImageClassificationTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/> using both training and validation data,
+            returns a <see cref="T:Microsoft.ML.Vision.ImageClassificationModelParameters"/>.
+            </summary>
+            <param name="trainData">The training data set.</param>
+            <param name="validationData">The validation data set.</param>
+        </member>
+        <member name="T:Microsoft.ML.Vision.ImageClassificationModelParameters">
+            <summary>
+            Image Classification predictor. This class encapsulates the trained Deep Neural Network(DNN) model
+            and is used to score images.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Vision.ImageClassificationModelParameters.PredictionKind">
+            <summary> Return the type of prediction task.</summary>
+        </member>
+        <member name="T:Microsoft.ML.VisionCatalog">
+            <summary>
+            Collection of extension methods for <see cref="T:Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers" /> to create instances of ImageClassification trainer components.
+            </summary>
+            <remarks>
+            This requires additional nuget dependencies to link against Tensorflow native dlls. See <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/> for more information.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ML.VisionCatalog.RetrainDnnModel(Microsoft.ML.ModelOperationsCatalog,System.String[],System.String[],System.String,System.String,System.String,System.String,System.Int32,System.Int32,System.String,System.String,System.String,System.Single,System.Boolean)">
+            <summary>
+            Retrain the dnn model on new data.
+            usage of this API requires additional NuGet dependencies on TensorFlow redist, see linked document for more information.
+            <format type="text/markdown">
+            <![CDATA[
+            [!include[io](~/../docs/samples/docs/api-reference/tensorflow-usage.md)]
+            ]]>
+            </format>
+            </summary>
+            <param name="catalog"></param>
+            <param name="inputColumnNames"> The names of the model inputs.</param>
+            <param name="outputColumnNames">The names of the requested model outputs.</param>
+            <param name="labelColumnName">Name of the label column.</param>
+            <param name="dnnLabel">Name of the node in DNN graph that is used as label during training in Dnn.
+            The value of <paramref name="labelColumnName"/> from <see cref="T:Microsoft.ML.IDataView"/> is fed to this node.</param>
+            <param name="optimizationOperation">The name of the optimization operation in the Dnn graph.</param>
+            <param name="modelPath">Path to model file to retrain.</param>
+            <param name="epoch">Number of training iterations.</param>
+            <param name="batchSize">Number of samples to use for mini-batch training.</param>
+            <param name="lossOperation">The name of the operation in the Dnn graph to compute training loss (Optional).</param>
+            <param name="metricOperation">The name of the operation in the Dnn graph to compute performance metric during training (Optional).</param>
+            <param name="learningRateOperation">The name of the operation in the Dnn graph which sets optimizer learning rate (Optional).</param>
+            <param name="learningRate">Learning rate to use during optimization (Optional).</param>
+            <param name="addBatchDimensionInput">Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.</param>
+            <remarks>
+            The support for retraining is under preview.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ML.VisionCatalog.ImageClassification(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,Microsoft.ML.Vision.ImageClassificationTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/> using advanced options, which trains a Deep Neural Network(DNN) to classify images.
+            </summary>
+            <param name="catalog">Catalog</param>
+            <param name="options">An <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer.Options"/> object specifying advanced
+            options for <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/>.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+             [!code-csharp[ImageClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/MulticlassClassification/ImageClassification/ResnetV2101TransferLearningTrainTestSplit.cs)]
+            ]]></format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.VisionCatalog.ImageClassification(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,System.String,System.String,System.String,System.String,Microsoft.ML.IDataView)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Vision.ImageClassificationTrainer"/>, which trains a Deep Neural Network(DNN) to classify images.
+            </summary>
+            <param name="catalog">Catalog</param>
+            <param name="labelColumnName">The name of the labels column. The default for this parameter is "label".</param>
+            <param name="featureColumnName">The name of the input features column. The default for this parameter is "Features".</param>
+            <param name="scoreColumnName">The name of the output score column. The default for this parameter is "Score"</param>
+            <param name="predictedLabelColumnName">The name of the output predicted label columns. The default for this parameter is "PredictedLabel"</param>
+            <param name="validationSet">The validation set used while training to improve model quality. The default for this parameter is null.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+             [!code-csharp[ImageClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/MulticlassClassification/ImageClassification/ImageClassificationDefault.cs)]
+             ]]></format>
+            </example>
+        </member>
+    </members>
+</doc>

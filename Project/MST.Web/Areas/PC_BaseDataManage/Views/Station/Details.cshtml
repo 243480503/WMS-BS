@@ -1,0 +1,94 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/PC_BaseDataManage/Station/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data, [{ "id": "UseCodeList", "key": "ItemCode" }]);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#UseCodeList").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Station&fieldName=UseCode",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">站台名称</th>
+                <td class="formValue">
+                    <input id="StationName" name="StationName" type="text" class="form-control required" placeholder="请输入站台名称" />
+                </td>
+                <th class="formTitle">站台编码</th>
+                <td class="formValue">
+                    <input id="StationCode" name="StationCode" type="text" class="form-control required" placeholder="请输入站台编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">达到地址</th>
+                <td class="formValue">
+                    <input id="TagAddress" name="TagAddress" type="text" class="form-control required" placeholder="请输入到达地址" />
+                </td>
+                <th class="formTitle">离开地址</th>
+                <td class="formValue">
+                    <input id="LeaveAddress" name="LeaveAddress" type="text" class="form-control required" placeholder="请输入离开地址" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">故障状态</th>
+                <td class="formValue">
+                    <input id="IsErr" name="IsErr" type="text" class="form-control" readonly="readonly" placeholder="" />
+                </td>
+                <th class="formTitle">故障消息</th>
+                <td class="formValue">
+                    <input id="ErrMsg" name="ErrMsg" type="text" class="form-control" readonly="readonly" placeholder="" />
+                </td>
+            </tr>
+
+            <tr>
+                <th class="formTitle">用途</th>
+                <td class="formValue" colspan="3">
+                    <select name="UseCodeList" id="UseCodeList" type="select2" multiple="multiple" class="selectpicker form-control">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsEnable" name="IsEnable" type="checkbox" checked="checked"><label for="IsEnable">启用</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+</form>

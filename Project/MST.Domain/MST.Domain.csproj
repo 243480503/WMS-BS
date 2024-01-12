@@ -1,0 +1,304 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7DC886CD-B8A0-44E8-AADD-57FCB0CFECB8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MST.Domain</RootNamespace>
+    <AssemblyName>MST.Domain</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="01 Infrastructure\ICreationAudited.cs" />
+    <Compile Include="01 Infrastructure\IDeleteAudited.cs" />
+    <Compile Include="01 Infrastructure\IEntity.cs" />
+    <Compile Include="01 Infrastructure\IModificationAudited.cs" />
+    <Compile Include="01 Infrastructure\IWMSEntity.cs" />
+    <Compile Include="02 ViewModel\V_ConDetailGroupByItemReportModel.cs" />
+    <Compile Include="02 ViewModel\EBoardModel.cs" />
+    <Compile Include="02 ViewModel\OffLineDownModel.cs" />
+    <Compile Include="02 ViewModel\ReportSetConfigModel.cs" />
+    <Compile Include="02 ViewModel\ReportSourceAdapter.cs" />
+    <Compile Include="02 ViewModel\ReportSourceModel.cs" />
+    <Compile Include="02 ViewModel\ReportSetModel.cs" />
+    <Compile Include="02 ViewModel\FilterIPModel.cs" />
+    <Compile Include="02 ViewModel\InOutDetailModel.cs" />
+    <Compile Include="02 ViewModel\LocCountModel.cs" />
+    <Compile Include="02 ViewModel\LocCountRecordModel.cs" />
+    <Compile Include="02 ViewModel\UserModel.cs" />
+    <Compile Include="02 ViewModel\ThreeModel.cs" />
+    <Compile Include="02 ViewModel\ContainerModel.cs" />
+    <Compile Include="02 ViewModel\OffRackDatailModel.cs" />
+    <Compile Include="02 ViewModel\OffRackModel.cs" />
+    <Compile Include="02 ViewModel\OffRackRecordModel.cs" />
+    <Compile Include="02 ViewModel\PhoDetailModel.cs" />
+    <Compile Include="02 ViewModel\SendMsgModel.cs" />
+    <Compile Include="02 ViewModel\MoveModel.cs" />
+    <Compile Include="02 ViewModel\MoveRecordModel.cs" />
+    <Compile Include="02 ViewModel\QARecordModel.cs" />
+    <Compile Include="02 ViewModel\QADetailModel.cs" />
+    <Compile Include="02 ViewModel\RowLineModel.cs" />
+    <Compile Include="02 ViewModel\PrintItemBarCodeModel.cs" />
+    <Compile Include="02 ViewModel\ContainerTypeModel.cs" />
+    <Compile Include="02 ViewModel\CountDetailModel.cs" />
+    <Compile Include="02 ViewModel\CountRecordModel.cs" />
+    <Compile Include="02 ViewModel\ItemModel.cs" />
+    <Compile Include="02 ViewModel\CountModel.cs" />
+    <Compile Include="02 ViewModel\DevRowModel.cs" />
+    <Compile Include="02 ViewModel\ContainerDetailModel.cs" />
+    <Compile Include="02 ViewModel\LocationInfoModel.cs" />
+    <Compile Include="02 ViewModel\OutRecordModel.cs" />
+    <Compile Include="02 ViewModel\OutBoundDetailModel.cs" />
+    <Compile Include="02 ViewModel\OutBoundModel.cs" />
+    <Compile Include="02 ViewModel\SendMsgModel.cs" />
+    <Compile Include="02 ViewModel\StationModel.cs" />
+    <Compile Include="02 ViewModel\ReceiveRecordModel.cs" />
+    <Compile Include="02 ViewModel\InBoundModel.cs" />
+    <Compile Include="02 ViewModel\InBoundDetailModel.cs" />
+    <Compile Include="02 ViewModel\QAModel.cs" />
+    <Compile Include="02 ViewModel\EquModel.cs" />
+    <Compile Include="02 ViewModel\SysItemsModel.cs" />
+    <Compile Include="02 ViewModel\AreaModel.cs" />
+    <Compile Include="02 ViewModel\GenLocationModel.cs" />
+    <Compile Include="02 ViewModel\LocationModel.cs" />
+    <Compile Include="02 ViewModel\TaskDetailModel.cs" />
+    <Compile Include="02 ViewModel\TaskHisModel.cs" />
+    <Compile Include="02 ViewModel\TaskModel.cs" />
+    <Compile Include="02 ViewModel\ERPModel.cs" />
+    <Compile Include="02 ViewModel\TransRecordModel.cs" />
+    <Compile Include="02 ViewModel\RFOffLineModel.cs" />
+    <Compile Include="02 ViewModel\WCSModel.cs" />
+    <Compile Include="03 Entity\SystemManage\AreaEntity.cs" />
+    <Compile Include="03 Entity\SystemManage\ModuleButtonEntity.cs" />
+    <Compile Include="03 Entity\SystemManage\ModuleEntity.cs" />
+    <Compile Include="03 Entity\SystemManage\RoleAuthorizeEntity.cs" />
+    <Compile Include="03 Entity\SystemManage\UserLogOnEntity.cs" />
+    <Compile Include="03 Entity\SystemManage\ItemsDetailEntity.cs" />
+    <Compile Include="03 Entity\SystemSecurity\DbBackupEntity.cs" />
+    <Compile Include="03 Entity\SystemSecurity\FilterIPEntity.cs" />
+    <Compile Include="03 Entity\SystemSecurity\LogEntity.cs" />
+    <Compile Include="02 ViewModel\AuthorizeActionModel.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_LocationStateDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ReportSourceEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ReportSetEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_LocCountEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_LocCountRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OffLineDownEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_PhoEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_PhoDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_CountResultEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OffRackDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OffRackEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OffRackRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_RowLineEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_QAResultEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_SendMsgUserEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_TaskDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_TransRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_WaveDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_WaveEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ItemInStationEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ItemAreaEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_StationEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ERPWareHouseEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_AreaEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_CodeGenEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ContainerEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ContainerDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ContainerTypeEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_CountEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_CountDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_CountRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_DevRowEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_EquEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_InOutDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ItemEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ItemKindEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_LocationEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_MarkRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_MarkRuleEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_MoveEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_MoveRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OutBoundEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OutBoundDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_OutRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_InBoundEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_InBoundDetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_QAEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_QADetailEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_QARecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_ReceiveRecordEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_SendMsgEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_SupplierEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_TaskEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_TaskHisEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_TimerEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\T_SendMsgUserEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_ConDetailGroupByItemReportEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_Board_YearMonthDayItemChangeEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_CountOrderReportEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_OutBoundOrderReportEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_InBoundOrderReportEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_LocationInfoEntity.cs" />
+    <Compile Include="03 Entity\WMSLogic\V_QAOrderReportEntity.cs" />
+    <Compile Include="04 IRepository\SystemManage\IAreaRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IItemsDetailRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IItemsRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IModuleButtonRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IModuleRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IOrganizeRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IRoleAuthorizeRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IRoleRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IUserLogOnRepository.cs" />
+    <Compile Include="04 IRepository\SystemManage\IUserRepository.cs" />
+    <Compile Include="04 IRepository\SystemSecurity\IDbBackupRepository.cs" />
+    <Compile Include="04 IRepository\SystemSecurity\IFilterIPRepository.cs" />
+    <Compile Include="04 IRepository\SystemSecurity\ILogRepository.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_LocationStateDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ReportSource.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ReportSet.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_LocCount.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_LocCountRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Pho.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_PhoDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_CountResult.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OffRack.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OffRackDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OffRackRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OffLineDown.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_RowLine.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_QAResult.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_TaskDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_TransRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_WaveDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Wave.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ItemInStation.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ItemArea.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Station.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_InBoundDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_InBound.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Area.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_CodeGen.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Container.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ContainerDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Count.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_CountDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_CountRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_DevRow.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Equ.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_InOutDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Item.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ItemKind.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Location.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_MarkRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ContainerType.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_MarkRule.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Move.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_MoveRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OutBound.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ERPWareHouse.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OutBoundDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_OutRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_QA.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_QADetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_QARecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_ReceiveRecord.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_SendMsg.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Supplier.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Task.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_TaskDetail.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_TaskHis.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_Timer.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IT_TimerUser.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_ConDetailGroupByItemReport.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_Board_YearMonthDayItemChange.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_CountOrderReport.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_OutBoundOrderReport.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_InBoundOrderReport.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_LocationInfo.cs" />
+    <Compile Include="04 IRepository\WMSLogic\IV_QAOrderReport.cs" />
+    <Compile Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReportModel\OutBoundOrderReportModel.cs" />
+    <Compile Include="ReportModel\InBoundOrderReportModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="03 Entity\SystemManage\ItemsEntity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="03 Entity\SystemManage\OrganizeEntity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="03 Entity\SystemManage\RoleEntity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="03 Entity\SystemManage\UserEntity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MST.Code\MST.Code.csproj">
+      <Project>{db19ce03-c307-43fe-a209-08aa4ae10e21}</Project>
+      <Name>MST.Code</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MST.Data\MST.Data.csproj">
+      <Project>{f71003e8-a836-48f4-9df6-df9095cebd18}</Project>
+      <Name>MST.Data</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="bin\Debug\EntityFramework.dll" />
+    <Content Include="bin\Debug\EntityFramework.xml" />
+    <Content Include="bin\Debug\ICSharpCode.SharpZipLib.dll" />
+    <Content Include="bin\Debug\log4net.dll" />
+    <Content Include="bin\Debug\log4net.xml" />
+    <Content Include="bin\Debug\MST.Code.dll" />
+    <Content Include="bin\Debug\MST.Code.pdb" />
+    <Content Include="bin\Debug\MST.Data.dll" />
+    <Content Include="bin\Debug\MST.Data.pdb" />
+    <Content Include="bin\Debug\MST.Domain.dll" />
+    <Content Include="bin\Debug\MST.Domain.pdb" />
+    <Content Include="bin\Debug\Newtonsoft.Json.dll" />
+    <Content Include="bin\Debug\Newtonsoft.Json.xml" />
+    <Content Include="bin\Debug\NPOI.dll" />
+    <Content Include="bin\Debug\NPOI.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

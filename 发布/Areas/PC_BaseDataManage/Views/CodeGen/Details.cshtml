@@ -1,0 +1,100 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $.ajax({
+            url: "/PC_BaseDataManage/CodeGen/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">规则名称</th>
+                <td class="formValue">
+                    <input id="RuleName" name="RuleName" type="text" class="form-control required" placeholder="请输入规则名称" />
+                </td>
+                <th class="formTitle">规则编码</th>
+                <td class="formValue">
+                    <input id="RuleCode" name="RuleCode" type="text" class="form-control required" placeholder="请输入规则编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">前缀字符</th>
+                <td class="formValue">
+                    <input id="FixStr" name="FixStr" type="text" class="form-control required" placeholder="请输入前缀字符" />
+                </td>
+                <th class="formTitle">格式</th>
+                <td class="formValue">
+                    <input id="Format" name="Format" type="text" class="form-control required" placeholder="请输入格式" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">起始值</th>
+                <td class="formValue">
+                    <input id="StartVal" name="StartVal" type="number" class="form-control required" placeholder="请输入起始值" />
+                </td>
+                <th class="formTitle">长度</th>
+                <td class="formValue">
+                    <input id="Length" name="Length" type="number" class="form-control required" placeholder="请输入长度" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">当前值</th>
+                <td class="formValue">
+                    <input id="CurVal" name="CurVal" type="number" class="form-control required" placeholder="请输入当前值" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

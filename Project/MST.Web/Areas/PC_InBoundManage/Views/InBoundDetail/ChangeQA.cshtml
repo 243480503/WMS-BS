@@ -1,0 +1,110 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_InBoundManage/InBoundDetail/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+    });
+
+    function initControl() {
+
+        $("#ConDetailCheckState").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ContainerDetail&fieldName=CheckState",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+    }
+
+    function submitForm() {
+       
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+
+        var postdata = {};
+        postdata = $("#form1").formSerialize();
+        postdata["F_Id"] = keyValue
+        $.submitForm({
+            url: "/PC_InBoundManage/InBoundDetail/ChangeConDetailCheckState",
+            param: postdata ,
+            success: function (data) {
+                $.modalAlert(data.message, data.state);
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        该功能将跳过质检单，直接修改库存质检状态
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">项次</th>
+                <td class="formValue">
+                    <input id="SEQ" name="SEQ" type="text" class="form-control" readonly="readonly" placeholder="项次" />
+                </td>
+                <th class="formTitle">物料编码</th>
+                <td class="formValue">
+                    <input id="ItemCode" name="ItemCode" readonly="readonly" type="text" class="form-control" placeholder="物料编码" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" type="text" class="form-control" readonly="readonly" placeholder="物料名称" />
+                </td>
+                <th class="formTitle">批号</th>
+                <td class="formValue">
+                    <input id="Lot" name="Lot" readonly="readonly" type="text" class="form-control" placeholder="批号" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">采购数量</th>
+                <td class="formValue">
+                    <input id="Qty" name="Qty" type="text" class="form-control" readonly="readonly" placeholder="采购数量" />
+                </td>
+
+                <th class="formTitle">已收数量</th>
+                <td class="formValue">
+                    <input id="CurQty" name="CurQty" type="text" class="form-control" readonly="readonly" placeholder="已收数量" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">已上架数量</th>
+                <td class="formValue">
+                    <input id="OverInQty" name="OverInQty" type="text" class="form-control" readonly="readonly" placeholder="已上架数量" />
+                </td>
+                <th class="formTitle">库存质检状态</th>
+                <td class="formValue">
+                    <select id="ConDetailCheckState" name="ConDetailCheckState" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+</form>

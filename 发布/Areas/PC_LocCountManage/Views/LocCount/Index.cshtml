@@ -1,0 +1,339 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px -22px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    var tipRowId = "";
+    var tipIsShow = false;
+    var queryJson = "";
+
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        queryJson = { resultType: $("#result_horizon a.active").attr('data-value') }
+        $gridList.dataGrid({
+            url: "/PC_LocCountManage/LocCount/GetGridJson",
+            postData: { queryJson: JSON.stringify(queryJson) },
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '货位校对编码', name: 'LocCountCode', width: 150, align: 'left' },
+                { label: '盘点区域', name: 'AreaName', width: 150, align: 'left' },
+                { label: '是否区域全盘', name: 'IsAllCount', width: 120, align: 'center', formatter: function (cellvalue) { return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>"; } },
+                { label: '单据状态', name: 'State', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                {
+                    label: '异常处理', name: 'IsNeedConfirm', width: 100, align: 'center', hidden: true,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.State == "WaitConfirm") {
+                            detail = "<div onclick=\"btn_ConfirmLocCount(\'" + rowObject.F_Id + "\')\" title='处理全部异常' class='fa fa-hand-pointer-o'></div>";
+                        }
+                        return detail;
+                    }
+                },
+
+                { label: "创建日期", name: "F_CreatorTime", width: 150, align: 'left' },
+                { label: "备注", name: "Remark", width: 150, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            subGrid: true,
+            subGridOptions: { openicon: "ui-helper-hidden" },
+            subGridBeforeExpand: function (subgrid_id, row_id) { //展开前，返回false不展开
+
+            },
+            subGridRowExpanded: function (subgrid_id, row_id) { //点击加号按钮展开
+                $.each($("#" + row_id).siblings(), function (i, n) {
+                    if ($(n).hasClass("ui-subgrid") && $(n).hasClass("ui-sg-expanded")) {
+                        var id = $(n).attr("id").replace("gridList_", "").replace("_expandedContent", "");
+                        $.each($("#" + id).children("td"), function (j, k) {
+                            if ($(k).hasClass("ui-sgcollapsed") && $(k).hasClass("sgexpanded")) {
+                                $(k).trigger("click");
+                            }
+                        })
+                    }
+                });
+
+                $("#" + subgrid_id).html('<div style="height:450px;width:100%;overflow:auto"><iframe class= "MST_iframe_row" id = "iframe" name = "iframe" width = "100%" height = "95%" src = "/PC_LocCountManage/LocCountRecord/Index?keyvalue=' + row_id + '" frameborder = "0"  seamless = "" ></iframe ></div > ');
+                $gridList.jqGrid('setSelection', row_id);
+
+                tipRowId = row_id;
+                tipIsShow = true;
+            },
+            subGridRowColapsed: function (subgrid_id, row_id) { //点击加号按钮收缩，返回false不收缩
+                var subgrid_table_id = "gridList_" + row_id + "_expandedContent";
+                $("#" + subgrid_table_id).remove();
+
+                tipRowId = row_id;
+                tipIsShow = false;
+            },
+            serializeSubGridData: function (subgrid_id, row_id) { //初始化数据
+
+            },
+            onSelectRow: function (rowid) {
+                tipRowId = rowid;
+            },
+            loadComplete: function () {
+                if (tipIsShow) {
+                    $("#" + tipRowId + ">td[aria-describedby='gridList_subgrid']").trigger("click");
+                }
+            }
+        });
+
+        $("#btn_search").click(function () {
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                resultType: $("#result_horizon a.active").attr('data-value')
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增货位校对",
+            url: "/PC_LocCountManage/LocCount/Form",
+            width: "650px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: "修改货位校对",
+            url: "/PC_LocCountManage/LocCount/Form?keyValue=" + keyValue,
+            width: "650px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_delete() {
+        var rowid = $("#gridList").jqGridRowValue().F_Id;
+        if (rowid == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.deleteForm({
+            url: "/PC_LocCountManage/LocCount/DeleteForm",
+            param: { keyValue: rowid },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalOpen({
+            id: "Details",
+            title: "查看货位校对",
+            url: "/PC_LocCountManage/LocCount/Details?keyValue=" + keyValue,
+            width: "650px",
+            height: "480px",
+            btn: null,
+        });
+    }
+
+    function btn_BeginLocCount() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        $.submitForm({
+            url: "/PC_LocCountManage/LocCount/BeginLocCount",
+            param: { LocCountID: keyValue },
+            success: function (data) {
+                $.modalMsg(data.message, data.state);
+                $("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+
+    //重新生成校对单
+    function btn_ReCount() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }        
+
+        $.modalOpen({
+            id: "ReCount",
+            title: "重新校对",
+            url: "/PC_LocCountManage/LocCount/ReCount?keyValue=" + keyValue,
+            width: "450px",
+            height: "360px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_StopLocCount() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.ajaxWMS({
+            url: "/PC_LocCountManage/LocCount/StopLocCount",
+            data: { LocCountID: keyValue },
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    // 确认处理异常
+    function btn_ConfirmLocCount(rowID) {
+        var keyValue = "";
+        if (rowID == "" || rowID == undefined) {
+            keyValue = $("#gridList").jqGridRowValue().F_Id;
+        }
+        else {
+            keyValue = rowID;
+        }
+
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        $.modalConfirm("确认处理单据全部异常吗？", function (r) {
+            if (r) {
+                var postdata = {};
+                if ($('[name=__RequestVerificationToken]').length > 0) {
+                    postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+                }
+                postdata["locCountID"] = keyValue;
+                $.ajax({
+                    url: "/PC_LocCountManage/LocCount/ConfirmLocCount",
+                    data: postdata,
+                    dataType: "json",
+                    type: "POST",
+                    async: false,
+                    success: function (data) {
+                        $.checkLogin(data);
+                        if (data.state == "success") {
+                            $.modalMsg(data.message, data.state);
+                            $("#gridList").trigger("reloadGrid");
+                        }
+                        else {
+                            $.modalAlert(data.message, data.state);
+                        }
+                    }
+                });
+            }
+        })
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建校对</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-BeginLocCount" authorize="yes" onclick="btn_BeginLocCount()"><i class="fa fa-play"></i>开始校对</a></li>
+                <li><a id="NF-StopLocCount" authorize="yes" onclick="btn_StopLocCount()"><i class="fa fa-stop-circle-o"></i>结束校对</a></li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改校对</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除校对</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看校对</a></li>
+                <li><a id="NF-ReCount" authorize="yes" onclick="btn_ReCount()"><i class="fa fa-recycle"></i>重新校对</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="货位校对编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default" data-value="1">全部</a>
+                        <a class="btn btn-default  active" data-value="2">未结束</a>
+                        <a class="btn btn-default" data-value="3">结束</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

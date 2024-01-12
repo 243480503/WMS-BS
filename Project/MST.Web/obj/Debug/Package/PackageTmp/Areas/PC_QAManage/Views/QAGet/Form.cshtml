@@ -1,0 +1,121 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $("#RefInBoundCode").bindSelect({
+                url: "/PC_QAManage/QAGet/GetRefInBoundCodeListAll",
+                id: "RefInBoundCode",
+                text: "RefInBoundCode",
+                search: true
+            });
+
+            $.ajax({
+                url: "/PC_QAManage/QAGet/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#form1").formSerialize(data);
+                    //$("#RefInBoundCode").val(data.RefInBoundCode);
+                    $("#State").attr("disabled", "disabled");
+                    if ($("#State").val() != 'New') {
+                        $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                    }
+                }
+            });
+        }
+        else {
+            initInboundOrder();
+
+            $.ajax({
+                url: "/PC_QAManage/QAGet/GenNum",
+                data: { ruleCode: "QARule" },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    var dataSer = { "QACode": data.Code, "State": "New" };
+                    $("#form1").formSerialize(dataSer);
+                    $("#State").attr("disabled", "disabled");
+                }
+            });
+        }
+        //$("#RefInBoundCode").onclick(function (e) {
+        //    initInboundOrder();
+        //});
+
+        $("#RefInBoundCode").bind("click", function (e) {
+            initInboundOrder();
+        });
+    });
+    function initControl() {
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_QA&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+    }
+    function initInboundOrder() {
+        $("#RefInBoundCode").bindSelect({
+            url: "/PC_QAManage/QAGet/GetRefInBoundCodeList",
+            id: "RefInBoundCode",
+            text: "RefInBoundCode",
+            search: true
+        });
+    }
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/PC_QAManage/QAGet/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function (data) {
+                $.modalAlert(data.message, data.state);
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">质检单号</th>
+                <td class="formValue">
+                    <input id="QACode" name="QACode" type="text" readonly="readonly" class="form-control required" placeholder="请输入质检单号" />
+                </td>
+                <th class="formTitle">质检单状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" class="form-control required"></select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">来源单号</th>
+                <td class="formValue">
+                    <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control" placeholder="请输入来源单号" />
+                </td>
+                <th class="formTitle">入库来源单号</th>
+                <td class="formValue">
+                    <select id="RefInBoundCode" name="RefInBoundCode" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 5px;">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

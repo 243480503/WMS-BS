@@ -1,0 +1,167 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<script>
+    $(function () {
+        gridList();
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    });
+
+    function gridList() {
+        $("#gridList").dataGrid({
+            treeGrid: true,
+            treeGridModel: "adjacency",
+            treeReader: {
+                id_field: "id",              //Id       非空
+                parent_id_field: "parent", //父节点Id 非空
+                level_field: "level",        //层级     非空
+                leaf_field: "isLeaf",      //叶节点过滤内已处理"isLeaf"
+                expanded_field: "expanded"
+            },
+            ExpandColumn: "KindName",
+            //shrinkToFit: true,//表格宽度自动充满
+            url: "/PC_BaseDataManage/ItemKind/GetTreeGridJson",
+            height: $(window).height() - 90,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '品类名称', name: 'KindName', width: 250, align: 'left' },
+                { label: '品类编码', name: 'KindCode', width: 150, align: 'left' },
+                {
+                    label: '系统数据', name: 'IsBase', width: 80, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "已删除", name: "F_DeleteMark", width: 80, align: "center",
+                    formatter: function (cellvalue) {
+                        return cellvalue == true ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                }
+            ],
+            rownumbers: false,
+            sortname: 'KindCode asc',
+            postData: { delType: "2" },
+        });
+
+        $("#btn_search").click(function () {
+            var delType = $("#result_horizon a.active").attr('data-value');
+            $("#gridList").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), delType: delType, },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增品类",
+            url: "/PC_BaseDataManage/ItemKind/Form",
+            width: "450px",
+            height: "380px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "修改品类",
+            url: "/PC_BaseDataManage/ItemKind/Form?keyValue=" + keyValue,
+            width: "450px",
+            height: "380px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //删除与启用
+    function btn_delete() {
+        var delMark = $("#gridList").jqGridRowValue().F_DeleteMark;
+        var docMark = $(delMark).hasClass("fa-toggle-on");
+        if (docMark == true) { //当前为已删除，操作为启用
+            btn_edit();
+        }
+        else { //当前为启用，操作为删除
+            $.deleteForm({
+                url: "/PC_BaseDataManage/ItemKind/DeleteForm",
+                param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+                success: function () {
+                    $("#gridList").resetSelection();
+                    $("#gridList").trigger("reloadGrid");
+                }
+            })
+        }
+    }
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看品类",
+            url: "/PC_BaseDataManage/ItemKind/Details?keyValue=" + keyValue,
+            width: "450px",
+            height: "510px",
+            btn: null,
+        });
+    }
+</script>
+
+<div class="topPanel" style="border: 0px;">
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="请输入要查询关键字" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default " data-value="1">全部</a>
+                        <a class="btn btn-default active" data-value="2">已启用</a>
+                        @*<a class="btn btn-default" data-value="3">已删除</a>*@
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="btn_add()"><i class="fa fa-plus"></i>新建品类</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改品类</a></li>
+                <li><a onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除/启用</a></li>
+                <li><a onclick="btn_details()"><i class="fa fa-search-plus"></i>查看品类</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <style>
+        .ui-jqgrid {
+            border-left: 0px;
+            border-right: 0px;
+            border-bottom: 0px;
+        }
+    </style>
+</div>

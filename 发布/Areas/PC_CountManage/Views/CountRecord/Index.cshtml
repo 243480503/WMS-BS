@@ -1,0 +1,139 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    var CountDetailID = $.request("keyvalue");
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_CountManage/CountRecord/GetGridJson?CountDetailID=" + CountDetailID,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "物料编码", name: "ItemCode", width: 60, align: 'left' },
+                { label: "物料名称", name: "ItemName", width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 240, align: 'left' },
+                { label: "规格", name: "Spec", width: 100, align: 'left' },
+                { label: "批号", name: "Lot", width: 80, align: 'left' },
+                { label: "原数量", name: "Qty", width: 55, align: 'center' },
+                { label: "盘点数量", name: "CountQty", width: 55, align: 'center' },
+                //{ label: "供应商", name: "SupplierUserName", width: 250, align: 'left' },
+                {
+                    label: '盘点结果', name: 'CountResult', width: 100, align: 'left',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.CountResult == "" || rowObject.CountResult == null) return "";
+                        else if (!(rowObject.CountResult == "Inner_SameBoxCode" || rowObject.CountResult == "Inner_Empty" || rowObject.CountResult == "Outer_Normal")) { /// 异常
+                            return '<span class=\"label label-danger\">' + rowObject.CountResultName + '</span>';
+                        }
+                        else {
+                            return '<span class=\"label label-success\">' + rowObject.CountResultName + '</span>';  //return rowObject.CountResultName;
+                        } } },
+                { label: '盘点状态', name: 'CountState', width: 60, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.StateName; } },
+                { label: '容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: '标签条码', name: 'ItemBarCode', width: 100, align: 'left' },
+                { label: "货位编码", name: "LocationCode", width: 100, align: 'left' },
+            ],
+            pager: "#gridPager",
+            sortname: 'BarCode asc',
+            viewrecords: true,
+        });
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    // 未找到箱码,type=1箱码一致，type=2箱码未找到
+    function btn_ModifyCount(type) {
+
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        postdata["keyValue"] = keyValue;
+        postdata["type"] = type;
+        $.ajax({
+            url: "/PC_CountManage/CountRecord/ModifyCount",
+            data: postdata,
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-NoFind"  onclick="btn_ModifyCount(1)"><i class="fa fa-pencil-square-o"></i>箱码一致</a></li>
+                <li><a id="NF-Lost"  onclick="btn_ModifyCount(2)"><i class="fa fa-trash-o"></i>未找到箱码</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="容器条码 / 物料名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

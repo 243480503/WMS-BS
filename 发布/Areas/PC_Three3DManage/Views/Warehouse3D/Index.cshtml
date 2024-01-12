@@ -1,0 +1,742 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script type="module" src="~/Content/js/three/build/three.js"></script>
+<script type="module" src="~/Content/js/three/build/three.module.js"></script>
+<script src="~/Content/js/three/editor/js/libs/signals.min.js"></script>
+<link rel="stylesheet" href="~/Content/js/three/editor/css/main.css">
+<script src="~/Content/js/three/examples/js/libs/draco/draco_encoder.js"></script>
+<link rel="stylesheet" href="~/Content/js/three/editor/js/libs/codemirror/codemirror.css">
+<link rel="stylesheet" href="~/Content/js/three/editor/js/libs/codemirror/theme/monokai.css">
+<script src="~/Content/js/three/editor/js/libs/codemirror/codemirror.js"></script>
+<script src="~/Content/js/three/editor/js/libs/codemirror/mode/javascript.js"></script>
+<script src="~/Content/js/three/editor/js/libs/codemirror/mode/glsl.js"></script>
+<script src="~/Content/js/three/editor/js/libs/esprima.js"></script>
+<script src="~/Content/js/three/editor/js/libs/jsonlint.js"></script>
+<link rel="stylesheet" href="~/Content/js/three/editor/js/libs/codemirror/addon/dialog.css">
+<link rel="stylesheet" href="~/Content/js/three/editor/js/libs/codemirror/addon/show-hint.css">
+<link rel="stylesheet" href="~/Content/js/three/editor/js/libs/codemirror/addon/tern.css">
+<script src="~/Content/js/three/editor/js/libs/codemirror/addon/dialog.js"></script>
+<script src="~/Content/js/three/editor/js/libs/codemirror/addon/show-hint.js"></script>
+<script src="~/Content/js/three/editor/js/libs/codemirror/addon/tern.js"></script>
+<script src="~/Content/js/three/editor/js/libs/acorn/acorn.js"></script>
+<script src="~/Content/js/three/editor/js/libs/acorn/acorn_loose.js"></script>
+<script src="~/Content/js/three/editor/js/libs/acorn/walk.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/polyfill.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/signal.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/tern.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/def.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/comment.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/infer.js"></script>
+<script src="~/Content/js/three/editor/js/libs/ternjs/doc_comment.js"></script>
+<script src="~/Content/js/three/editor/js/libs/tern-threejs/threejs.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+    }
+</style>
+
+<script type="module">
+    /*
+                                                          |形状
+                                         |几何体(Geometry)|
+                                         |                |尺寸
+                                         |
+                          |网络模型(Mesh)|                |颜色
+                          |              |材质(Material)  |贴图
+                          |                               |透明度
+                          |
+            | 场景(Scene) |
+            |             |           |颜色
+            |             |光照(Light)|     |环境光
+            |                         |分类 |点光源
+            |                               |平行光
+            |
+            |
+            |
+            |              | 位置
+      Three | 相机(Camera) | 视线方向
+            |              |
+            |              |        | 透射投影(PerspectiveCamera)
+            |              |投影方式|
+            |                       | 正射投影(OrthographicCamera)
+            |
+            |
+            |
+            |                  | 渲染器创建(WebGLRenderer())
+            | 渲染器(Renderer) | 开始渲染（.render(scene,camera)）
+                               | domElement属性(canvas对象)
+
+    */
+
+    /*
+
+    $(document).ready(function () {
+
+        //创建场景对象Scene
+        var scene = new THREE.Scene();
+
+        //创建辅助线
+        InitGrid(scene);
+
+        // 创建网格模型
+        var geometry = new THREE.BoxGeometry(100, 100, 100); //创建一个立方体几何对象Geometry
+        var material = new THREE.MeshLambertMaterial({
+            color: 0xeeeeee
+        }); //材质对象Material
+        var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+        scene.add(mesh); //网格模型添加到场景中
+
+
+        //光源设置
+        //点光源
+        var point = new THREE.PointLight(0xffffff);
+        point.position.set(400, 200, 300); //点光源位置
+        scene.add(point); //点光源添加到场景中
+        //环境光
+        var ambient = new THREE.AmbientLight(0x444444);
+        scene.add(ambient);
+
+        //相机设置
+        var width = window.innerWidth; //窗口宽度
+        var height = window.innerHeight; //窗口高度
+        var k = width / height; //窗口宽高比
+        var s = 1000; //三维场景显示范围控制系数，系数越大，显示的范围越大
+        //创建相机对象
+        var camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 2000);
+        camera.position.set(200, 300, 200); //设置相机位置
+        camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
+
+
+        //创建渲染器对象
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);//设置渲染区域尺寸
+        renderer.setClearColor(0xeeeeee, 1); //设置背景颜色
+        document.body.appendChild(renderer.domElement); //body元素中插入canvas对象
+        //执行渲染操作   指定场景、相机作为参数
+        renderer.render(scene, camera);
+    });
+
+    function InitGrid(scene) {
+        const size = 6000;
+        const divisions = 60;
+
+        const gridHelper = new THREE.GridHelper(size, divisions);
+        scene.add(gridHelper);
+    }
+
+*/
+    /****************/
+    import * as THREE from '../../Content/js/three/build/three.module.js';
+    import { Editor } from '../../Content/js/three/editor/js/Editor.js';
+    import { Viewport } from '../../Content/js/three/editor/js/Viewport.js';
+    import { Toolbar } from '../../Content/js/three/editor/js/Toolbar.js';
+    import { Script } from '../../Content/js/three/editor/js/Script.js';
+    import { Player } from '../../Content/js/three/editor/js/Player.js';
+    import { Sidebar } from '../../Content/js/three/editor/js/Sidebar.js';
+    import { Menubar } from '../../Content/js/three/editor/js/Menubar.js';
+    import { Resizer } from '../../Content/js/three/editor/js/Resizer.js';
+    import { VRButton } from '../../Content/js/three/examples/jsm/webxr/VRButton.js';
+    import { MTLLoader } from '../../Content/js/three/examples/jsm/loaders/MTLLoader.js'; //MTLLoader.js
+    import { OBJLoader } from '../../Content/js/three/examples/jsm/loaders/OBJLoader.js'; //OBJLoader.js
+    import { FBXLoader } from '../../Content/js/three/examples/jsm/loaders/FBXLoader.js'; //FBXLoader.js
+
+    import { AddObjectCommand } from '../../Content/js/three/editor/js/commands/AddObjectCommand.js';
+
+
+    $(document).ready(function () {
+
+
+        window.URL = window.URL || window.webkitURL;
+        window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
+
+        Number.prototype.format = function () {
+            return this.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+        };
+
+        //
+
+        var editor = new Editor();
+
+        window.editor = editor; // Expose editor to Console
+        window.THREE = THREE; // Expose THREE to APP Scripts and Console
+        window.VRButton = VRButton; // Expose VRButton to APP Scripts
+
+        var viewport = new Viewport(editor);
+        document.body.appendChild(viewport.dom);
+
+        var toolbar = new Toolbar(editor);
+        document.body.appendChild(toolbar.dom);
+
+        var script = new Script(editor);
+        document.body.appendChild(script.dom);
+
+        var player = new Player(editor);
+        document.body.appendChild(player.dom);
+
+        var sidebar = new Sidebar(editor);
+        document.body.appendChild(sidebar.dom);
+
+        var menubar = new Menubar(editor);
+        document.body.appendChild(menubar.dom);
+
+        var resizer = new Resizer(editor);
+        document.body.appendChild(resizer.dom);
+
+        /********自定义 begin *************/
+        //点光源
+        var point = new window.THREE.PointLight(0xffffff);
+        point.position.set(400, 200, 300); //点光源位置
+        editor.scene.add(point); //点光源添加到场景中
+        //环境光
+        var ambient = new window.THREE.AmbientLight(0x666666);
+        editor.scene.add(ambient);
+        editor.scene.background = new THREE.Color(0xedf2ff);
+
+        var loader = new window.THREE.FileLoader();
+        loader.crossOrigin = '';
+        //loader.load("../../Content/js/three/obj/line.obj", function (text) {
+        //    var object = new OBJLoader().parse(text);
+        //    object.name = "line.obj";
+        //    object.position.set(0.5, 2, 2);
+        //    object.color.copy(new THREE.Color(0xf2a20b));
+        //    editor.execute(new AddObjectCommand(editor, object));
+
+        //    var object1 = new OBJLoader().parse(text);
+        //    object1.name = "line1.obj";
+        //    object1.position.set(1, 3, 3);
+        //    editor.execute(new AddObjectCommand(editor, object1));
+        //});
+
+        //var InLineGroup = new THREE.Group();
+        //var OutLineGroup = new THREE.Group();
+        //var LocGroup = new THREE.Group();
+
+        //loader.load("../../Content/js/three/obj/all.obj", function (text) {
+        //    loader.load("../../Content/js/three/obj/all.mtl", function (mtlStr) {
+        //        var materials = new MTLLoader().parse(mtlStr);
+        //        var object = new OBJLoader().setMaterials(materials).parse(text);
+        //        object.name = "all.obj";
+        //        $.each(object.children, function (i, n) {
+        //            if (n.name == "墙体") {
+        //                n.material.color.set("#29b90e");
+        //            }
+        //            if (n.name.indexOf("料箱") > -1) {
+        //                n.visible = false;
+        //            }
+        //        });
+
+        //        InLineGroup.add(object);
+        //        editor.execute(new AddObjectCommand(editor, object));
+        //    });
+        //});
+
+        var box = null;
+        var rack = null;
+        var plastic = null;
+
+
+
+
+        loader.load("../../Content/js/three/obj/all.obj", function (text) {
+            var object = new OBJLoader().parse(text);
+            //var object = new FBXLoader().parse(text);
+            object.name = "all.obj";
+            $.each(object.children, function (i, n) {
+                n.scale.set(280, 280, 280);//缩放
+                n.translateX(1);
+                if (n.name == "墙体") {
+                    n.material = new THREE.MeshPhongMaterial({
+                        color: 0xb3bdcc,
+                        specular: 0x444444,//高光部分的颜色
+                        shininess: 30,//高光部分的亮度，默认30
+                    });
+                }
+
+                if (n.name.indexOf("预存货架") > -1) {
+                    n.material = new THREE.MeshPhongMaterial({
+                        color: 0x8c64e2,
+                        specular: 0x444444,//高光部分的颜色
+                        shininess: 30,//高光部分的亮度，默认30
+                    });
+                }
+
+                if (n.name.indexOf("货架2") > -1) {
+                    n.material = new THREE.MeshPhongMaterial({
+                        color: 0x1d76d6,
+                        specular: 0x444444,//高光部分的颜色
+                        shininess: 30,//高光部分的亮度，默认30
+                    });
+                    n.material.transparent = true;//是否透明
+                    n.material.opacity = 0.3;//透明度
+                }
+
+                if (n.name.indexOf("流道") > -1) {
+                    n.material = new THREE.MeshPhongMaterial({
+                        color: 0x85d61d,
+                        specular: 0x444444,//高光部分的颜色
+                        shininess: 30,//高光部分的亮度，默认30
+                    });
+                }
+                if (n.name.indexOf("料箱") > -1) {
+                    n.visible = false;
+                    if (box == null) {
+                        box = n.clone();
+                    }
+                }
+            });
+
+
+            //TestLocationPoint(box);
+            //TestFacePoint();
+            LocationInit();
+
+            editor.execute(new AddObjectCommand(editor, object));
+        });
+
+        var LocationData = null;
+        var rowZ = new Array(); //每行原点坐标
+        rowZ.push({ "Line": 1, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.83, -0.115, -2.71) }); // 1 ColX每列的偏移量,LayY每层的偏移量
+        rowZ.push({ "Line": 2, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.83, -0.115, -2.27) }); // 2
+        rowZ.push({ "Line": 3, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.85, -0.115, -2.02) }); // 3
+        rowZ.push({ "Line": 4, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.80, -0.115, -1.59) }); // 4
+        rowZ.push({ "Line": 5, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.80, -0.115, -1.35) }); // 5
+        rowZ.push({ "Line": 6, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.79, -0.115, -0.98) }); // 6
+        rowZ.push({ "Line": 7, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.77, -0.115, -0.74) }); // 7
+        rowZ.push({ "Line": 8, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.78, -0.115, -0.31) }); // 8
+        rowZ.push({ "Line": 9, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.78, -0.115, -0.05) }); // 9
+        rowZ.push({ "Line": 10, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.79, -0.115, 0.36) }); // 10
+        rowZ.push({ "Line": 11, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.77, -0.115, 0.57) }); // 11
+        rowZ.push({ "Line": 12, "ColX": 0.1577, "LayY": 0.1255, "Vector": new THREE.Vector3(-7.75, -0.115, 1.06) }); // 12
+
+        var faceZ = new Array(); //每货位面原点坐标
+        faceZ.push({ "Line": 1, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.209, 0.268, -1.895) }); // 1 ColX每列的偏移量,LayY每层的偏移量
+        faceZ.push({ "Line": 2, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.209, 0.268, -1.455) }); // 2
+        faceZ.push({ "Line": 3, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.209, 0.268, -1.205) }); // 3
+        faceZ.push({ "Line": 4, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.209, 0.268, -0.783) }); // 4
+        faceZ.push({ "Line": 5, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.209, 0.268, -0.535) }); // 5
+        faceZ.push({ "Line": 6, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.199, 0.268, -0.165) }); // 6
+        faceZ.push({ "Line": 7, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.179, 0.268, 0.075) }); // 7
+        faceZ.push({ "Line": 8, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.189, 0.268, 0.505) }); // 8
+        faceZ.push({ "Line": 9, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.189, 0.268, 0.765) }); // 9
+        faceZ.push({ "Line": 10, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.189, 0.268, 1.175) }); // 10
+        faceZ.push({ "Line": 11, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.179, 0.268, 1.385) }); // 11
+        faceZ.push({ "Line": 12, "ColX": 0.1577, "LayY": 0.1258, "Vector": new THREE.Vector3(-2.129, 0.268, 1.875) }); // 12
+
+        function LocationInit() {
+            $.ajax({
+                url: "/PC_Three3DManage/Warehouse3D/GetDBData",
+                data: {},
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.each(data.LocationList, function (i, n) {
+                        if (n.AreaCode == "EmptyArea") {
+                        }
+                        if (n.AreaCode == "BigItemArea") {
+                        }
+                        else if (n.AreaCode == "NormalArea") {
+                            //货架状态
+
+                            var planeGeometry = new THREE.PlaneGeometry(0.10, 0.15);
+                            var planeMaterial = new THREE.MeshLambertMaterial({});
+                            //材质对象Material
+                            planeMaterial.transparent = true;//是否透明
+                            planeMaterial.opacity = 0.3;//透明度
+
+                            var planeMesh = new THREE.Mesh(planeGeometry, planeMaterial); //网格模型对象Mesh
+                            switch (n.ForbiddenState) {
+                                case "Lock": //锁定
+                                    {
+                                        planeMesh.material.color = new THREE.Color(0xff2f2f);
+                                    } break;
+                                case "OnlyIn": //可入不可出
+                                    {
+                                        planeMesh.material.color = new THREE.Color(0xe2c915);
+                                    } break;
+                                case "OnlyOut": //可出不可入
+                                    {
+                                        planeMesh.material.color = new THREE.Color(0xf9b800);
+                                    } break;
+                                case "Normal": //正常
+                                    {
+                                        planeMesh.visible = false;
+                                    } break;
+                                default: //其它
+                                    {
+                                        alert("货位状态异常");
+                                        return;
+                                    }
+                            }
+                            planeMesh.rotateX(-Math.PI / 2); //旋转网格模型
+                            //设置网格模型y坐标
+                            var facePoint = null;
+                            $.each(faceZ, function (idx, o) {
+                                if (o.Line == n.Line) {
+                                    facePoint = o;
+                                }
+                            });
+                            planeMesh.position.x = facePoint.Vector.x + (n.ColNum - 1) * facePoint.ColX;
+                            planeMesh.position.y = facePoint.Vector.y + (n.Layer - 1) * facePoint.LayY;
+                            planeMesh.position.z = facePoint.Vector.z;
+                            editor.scene.add(planeMesh);
+
+
+                            //货位物品
+                            if (n.IsHasContainer) { //存在容器
+                                var linePoint = null;
+                                $.each(rowZ, function (idx, o) {
+                                    if (o.Line == n.Line) {
+                                        linePoint = o;
+                                    }
+                                });
+
+                                var curContainer = null;
+                                switch (n.ContainerKind) {
+                                    case "Box":
+                                        {
+                                            curContainer = box.clone();
+                                        } break;
+                                    case "Plastic":
+                                        {
+                                            curContainer = box.clone();
+                                        } break;
+                                    case "Rack":
+                                        {
+                                            curContainer = box.clone();
+                                        } break;
+                                    default: {
+                                        alert("未知的容器类型");
+                                    } break;
+                                }
+
+                                var colorVal = null;
+                                switch (n.LocationState) {
+                                    case "Out": //待出
+                                        {
+                                            colorVal = 0xded813;
+                                        } break;
+                                    default: //其它
+                                        {
+                                            colorVal = 0x20b92c;
+                                        }
+                                }
+
+                                curContainer.visible = true;
+                                curContainer.material = new THREE.MeshPhongMaterial({
+                                    color: colorVal,
+                                    specular: 0x444444,//高光部分的颜色
+                                    shininess: 30,//高光部分的亮度，默认30
+                                });
+                                var x = linePoint.Vector.x + (n.ColNum - 1) * linePoint.ColX;
+                                var y = linePoint.Vector.y + (n.Layer - 1) * linePoint.LayY;
+                                var z = linePoint.Vector.z;
+
+
+                                curContainer.position.set(x, y, z);
+
+                                // 先获取geometey的中心点位置并留存
+                                let center = new THREE.Vector3();
+                                curContainer.geometry.computeBoundingBox();
+                                curContainer.geometry.boundingBox.getCenter(center);
+                                // 把对象放到坐标原点
+                                curContainer.geometry.center();
+                                // 绕轴旋转
+                                curContainer.geometry.rotateY(Math.PI / 2);
+                                // 再把对象放回原来的地方
+                                curContainer.geometry.translate(center.x, center.y, center.z);
+
+                                editor.scene.add(curContainer);
+                            }
+                        }
+                        else {
+
+                        }
+                    });
+                    $.each(data.EquList, function (i, n) {
+                        if (n.EquType == "MecLine") //流道
+                        {
+                            if (n.EquCode.indexOf("In") > -1) { //入库流道
+
+                            }
+                            else if (n.EquCode.indexOf("Out") > -1) //出库流道
+                            {
+
+                            }
+                        }
+                        else if (n.EquType == "AGV") //AGV
+                        {
+
+                        } if (n.EquType == "MecMark") //贴标机
+                        {
+
+                        }
+
+                    });
+                    $.each(data.TaskList, function (i, n) {
+
+                    });
+                }
+            });
+        }
+
+        function TestLocationPoint(curContainer) {
+
+            var lineCount = 12;
+            var cloCount = 44;
+            var layCount = 12;
+
+            for (var i = 1; i <= lineCount; i++) {
+                var linePoint = null;
+                $.each(rowZ, function (m, n) {
+                    if (n.Line == i) {
+                        linePoint = n;
+                    }
+                });
+                for (var j = 1; j <= cloCount; j++) {
+                    for (var k = 1; k <= layCount; k++) {
+                        var cell = curContainer.clone();
+
+                        cell.visible = true;
+                        cell.material = new THREE.MeshPhongMaterial({
+                            color: 0xff0000,
+                            specular: 0x444444,//高光部分的颜色
+                            shininess: 30,//高光部分的亮度，默认30
+                        });
+
+
+                        var x = linePoint.Vector.x + (j - 1) * linePoint.ColX;
+                        var y = linePoint.Vector.y + (k - 1) * linePoint.LayY;
+                        var z = linePoint.Vector.z;
+
+                        cell.position.set(x, y, z);
+
+                        // 先获取geometey的中心点位置并留存
+                        let center = new THREE.Vector3();
+                        cell.geometry.computeBoundingBox();
+                        cell.geometry.boundingBox.getCenter(center);
+                        // 把对象放到坐标原点
+                        cell.geometry.center();
+                        // 绕轴旋转
+                        cell.geometry.rotateY(Math.PI / 2);
+                        // 再把对象放回原来的地方
+                        cell.geometry.translate(center.x, center.y, center.z);
+
+                        editor.scene.add(cell);
+                    }
+                }
+            }
+        }
+
+        function TestFacePoint() {
+
+            var lineCount = 12;
+            var cloCount = 44;
+            var layCount = 12;
+
+            for (var i = 1; i <= lineCount; i++) {
+                var facePoint = null;
+                $.each(faceZ, function (idx, o) {
+                    if (o.Line == i) {
+                        facePoint = o;
+                    }
+                });
+                for (var j = 1; j <= cloCount; j++) {
+                    for (var k = 1; k <= layCount; k++) {
+                        var planeGeometry = new THREE.PlaneGeometry(0.10, 0.15);
+                        var planeMaterial = new THREE.MeshLambertMaterial({});
+                        //材质对象Material
+                        planeMaterial.transparent = true;//是否透明
+                        planeMaterial.opacity = 0.3;//透明度
+
+                        var planeMesh = new THREE.Mesh(planeGeometry, planeMaterial); //网格模型对象Mesh
+                        var radom = Math.ceil(Math.random() * 4);
+                        switch (radom) {
+                            case 1: //锁定Lock
+                                {
+                                    planeMesh.material.color = new THREE.Color(0xff2f2f);
+                                } break;
+                            case 2: //可入不可出OnlyIn
+                                {
+                                    planeMesh.material.color = new THREE.Color(0xffb52f);
+                                } break;
+                            case 3: //可出不可入OnlyOut
+                                {
+                                    planeMesh.material.color = new THREE.Color(0xec5795);
+                                } break;
+                            case 4: //正常Normal
+                                {
+                                    planeMesh.visible = false;
+                                } break;
+                            default: //其它
+                                {
+                                    alert("货位状态异常");
+                                    return;
+                                }
+                        }
+                        planeMesh.rotateX(-Math.PI / 2); //旋转网格模型
+                        //设置网格模型y坐标
+                        planeMesh.position.x = facePoint.Vector.x + (j - 1) * facePoint.ColX;
+                        planeMesh.position.y = facePoint.Vector.y + (k - 1) * facePoint.LayY;
+                        planeMesh.position.z = facePoint.Vector.z;
+                        editor.scene.add(planeMesh);
+                    }
+                }
+            }
+        }
+
+
+        /*************end************/
+        //
+
+        editor.storage.init(function () {
+
+            editor.storage.get(function (state) {
+
+                if (isLoadingFromHash) return;
+
+                if (state !== undefined) {
+
+                    editor.fromJSON(state);
+
+                }
+
+                var selected = editor.config.getKey('selected');
+
+                if (selected !== undefined) {
+
+                    editor.selectByUuid(selected);
+
+                }
+
+            });
+
+            //
+
+            var timeout;
+
+            function saveState() {
+
+                if (editor.config.getKey('autosave') === false) {
+
+                    return;
+
+                }
+
+                clearTimeout(timeout);
+
+                timeout = setTimeout(function () {
+
+                    editor.signals.savingStarted.dispatch();
+
+                    timeout = setTimeout(function () {
+
+                        editor.storage.set(editor.toJSON());
+
+                        editor.signals.savingFinished.dispatch();
+
+                    }, 100);
+
+                }, 1000);
+
+            }
+
+            var signals = editor.signals;
+
+            signals.geometryChanged.add(saveState);
+            signals.objectAdded.add(saveState);
+            signals.objectChanged.add(saveState);
+            signals.objectRemoved.add(saveState);
+            signals.materialChanged.add(saveState);
+            signals.sceneBackgroundChanged.add(saveState);
+            signals.sceneEnvironmentChanged.add(saveState);
+            signals.sceneFogChanged.add(saveState);
+            signals.sceneGraphChanged.add(saveState);
+            signals.scriptChanged.add(saveState);
+            signals.historyChanged.add(saveState);
+
+        });
+
+        //
+
+        document.addEventListener('dragover', function (event) {
+
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+
+        }, false);
+
+        document.addEventListener('drop', function (event) {
+
+            event.preventDefault();
+
+            if (event.dataTransfer.types[0] === 'text/plain') return; // Outliner drop
+
+            if (event.dataTransfer.items) {
+
+                // DataTransferItemList supports folders
+
+                editor.loader.loadItemList(event.dataTransfer.items);
+
+            } else {
+
+                editor.loader.loadFiles(event.dataTransfer.files);
+
+            }
+
+        }, false);
+
+        function onWindowResize() {
+
+            editor.signals.windowResize.dispatch();
+
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        onWindowResize();
+
+        //
+
+        var isLoadingFromHash = false;
+        var hash = window.location.hash;
+
+        if (hash.substr(1, 5) === 'file=') {
+
+            var file = hash.substr(6);
+
+            if (confirm('Any unsaved data will be lost. Are you sure?')) {
+
+                var loader = new THREE.FileLoader();
+                loader.crossOrigin = '';
+                loader.load(file, function (text) {
+
+                    editor.clear();
+                    editor.fromJSON(JSON.parse(text));
+                });
+
+                isLoadingFromHash = true;
+
+            }
+
+        }
+
+        // ServiceWorker
+
+        if ('serviceWorker' in navigator) {
+
+            try {
+
+                navigator.serviceWorker.register('../../Content/js/three/editor/sw.js');
+
+            } catch (error) {
+
+            }
+
+        }
+    });
+
+</script>

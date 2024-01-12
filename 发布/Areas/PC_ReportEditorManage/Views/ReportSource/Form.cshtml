@@ -1,0 +1,531 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+
+        //初始化控件
+        var IsTelnet = $("#IsTelnet").prop("checked");
+        var IsDB = $("#IsDB").prop("checked");
+        HideOrShowConfig(IsDB, IsTelnet);
+
+        //切换数据库类型/Json返回值类型
+        $("#IsDB,#IsTelnet").change(function () {
+            var IsTelnet = $("#IsTelnet").prop("checked");
+            var IsDB = $("#IsDB").prop("checked");
+            HideOrShowConfig(IsDB, IsTelnet);
+        });
+
+        //切换数据库类型
+        $("#DetailType").change(function () {
+            var DetailType = $("#DetailType option:checked").val();
+            switch (DetailType) {
+                case "SqlServer": {
+                    $("#DBName_R").show();
+                } break;
+                case "Oracle": {
+                    $("#DBName_R").hide();
+                } break;
+                case "MySql": {
+                    $("#DBName_R").hide();
+                } break;
+            }
+        });
+
+        //切换数据库查询类型
+        $("#SelectType").change(function () {
+            var SelectType = $("#SelectType option:checked").val();
+            switch (SelectType) {
+                case "Table": {
+                    $("#TableCode_R").show();
+                    $("#ViewCode_R").hide();
+                    $("#Sql_R").hide();
+                } break;
+                case "View": {
+                    $("#TableCode_R").hide();
+                    $("#ViewCode_R").show();
+                    $("#Sql_R").hide();
+                } break;
+                case "Sql": {
+                    $("#TableCode_R").hide();
+                    $("#ViewCode_R").hide();
+                    $("#Sql_R").show();
+                } break;
+            }
+        });
+
+
+        //刷新按钮，根据配置获取表或视图下拉列表数据
+        $("#getTab_Table,#getTab_View").click(function () {
+            var IsTelnet = $("#IsTelnet").prop("checked");
+            var IsDB = $("#IsDB").prop("checked");
+            var DetailType = $("#DetailType option:checked").val();         //数据库类型
+            var ReqTextType = $("#ReqTextType option:checked").val();        //返回值类型
+            var DBName = $("#DBName").val();             //数据库名称
+            var IP = $("#IP").val();                 //IP与端口
+            var Uid = $("#Uid").val();                //用户名
+            var Pwd = $("#Pwd").val();                //密码
+            var URL = $("#URL").val();                //URL
+            var SelectType = $("#SelectType option:checked").val(); //查询类型(Table,View,Sql)
+            var Sql = $("#Sql").val();                //Sql
+            var Table = $("#TableCode option:checked").val();          //表名
+            var View = $("#ViewCode option:checked").val();           //视图
+
+            $.ajax({
+                url: "/PC_ReportEditorManage/ReportSource/GetDBTabViewList",
+                data: { SelectType:SelectType,IsTelnet: IsTelnet, IsDB: IsDB, DetailType: DetailType, ReqTextType: ReqTextType, DBName: DBName, IP: IP, Uid: Uid, Pwd: Pwd, URL: URL, Sql: Sql, TableCode: Table, ViewCode: View},
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#colType").html("");
+                    $.each(data, function (i, n) {
+                        if ($("#SelectType option:checked").val() == "Table") {
+                            $("#TableCode").select2('data', null);
+                            $("#TableCode").select2({ "data": data, minimumResultsForSearch: -1 });
+                        }
+                        else { //View
+                            $("#ViewCode").select2('data', null);
+                            $("#ViewCode").select2({ "data": data, minimumResultsForSearch: -1 });
+                        }
+                    });
+                }
+            });
+        });
+
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_ReportEditorManage/ReportSource/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+        $.hideBaseData();
+    });
+
+    function HideOrShowConfig(IsDB, IsTelnet) {
+        if (IsDB) { //数据库
+
+            $("#SelectType_R").show();        //查询类型
+            var SelectType = $("#SelectType option:checked").val();
+            if (IsTelnet) { //远程
+
+                switch (SelectType) {
+                    case "Table": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").show();                 //IP与端口
+                        $("#Uid_R").show();                //用户名
+                        $("#Pwd_R").show();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").hide();                //Sql
+                        $("#TableCode_R").show();          //表名
+                        $("#ViewCode_R").hide();           //视图
+                    } break;
+                    case "View": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").show();                 //IP与端口
+                        $("#Uid_R").show();                //用户名
+                        $("#Pwd_R").show();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").hide();                //Sql
+                        $("#TableCode_R").hide();          //表名
+                        $("#ViewCode_R").show();           //视图
+                    } break;
+                    case "Sql": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").show();                 //IP与端口
+                        $("#Uid_R").show();                //用户名
+                        $("#Pwd_R").show();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").show();                //Sql
+                        $("#TableCode_R").hide();          //表名
+                        $("#ViewCode_R").hide();           //视图
+                    } break;
+                }
+
+                //默认如果是SqlServer，则显示数据库名称控件
+                var DetailType = $("#DetailType option:checked").val();
+                switch (DetailType) {
+                    case "SqlServer": {
+                        $("#DBName_R").show();
+                    } break;
+                    case "Oracle": {
+                        $("#DBName_R").hide();
+                    } break;
+                    case "MySql": {
+                        $("#DBName_R").hide();
+                    } break;
+                }
+            }
+            else { //本地
+                switch (SelectType) {
+                    case "Table": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").hide();                 //IP与端口
+                        $("#Uid_R").hide();                //用户名
+                        $("#Pwd_R").hide();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").hide();                //Sql
+                        $("#TableCode_R").show();          //表名
+                        $("#ViewCode_R").hide();           //视图
+                    } break;
+                    case "View": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").hide();                 //IP与端口
+                        $("#Uid_R").hide();                //用户名
+                        $("#Pwd_R").hide();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").hide();                //Sql
+                        $("#TableCode_R").hide();          //表名
+                        $("#ViewCode_R").show();           //视图
+                    } break;
+                    case "Sql": {
+                        $("#DetailType_R").show();         //数据库类型
+                        $("#ReqTextType_R").hide();        //返回值类型
+                        $("#DBName_R").hide();             //数据库名称
+                        $("#IP_R").hide();                 //IP与端口
+                        $("#Uid_R").hide();                //用户名
+                        $("#Pwd_R").hide();                //密码
+                        $("#URL_R").hide();                //URL
+                        $("#Sql_R").show();                //Sql
+                        $("#TableCode_R").hide();          //表名
+                        $("#ViewCode_R").hide();           //视图
+                    } break;
+                }
+            }
+        }
+        else { //网络接口
+            $("#SelectType_R").hide();        //查询类型
+
+            if (IsTelnet) { //远程
+                $("#DetailType_R").hide();         //数据库类型
+                $("#ReqTextType_R").show();        //返回值类型
+                $("#DBName_R").hide();             //数据库名称
+                $("#IP_R").hide();                 //IP与端口
+                $("#Uid_R").show();                //用户名
+                $("#Pwd_R").show();                //密码
+                $("#URL_R").show();                //URL
+                $("#Sql_R").hide();                //Sql
+                $("#TableCode_R").hide();          //表名
+                $("#ViewCode_R").hide();           //视图
+            }
+            else { //本地
+                $("#DetailType_R").hide();         //数据库类型
+                $("#ReqTextType_R").show();        //返回值类型
+                $("#DBName_R").hide();             //数据库名称
+                $("#IP_R").hide();                 //IP与端口
+                $("#Uid_R").hide();                //用户名
+                $("#Pwd_R").hide();                //密码
+                $("#URL_R").show();                //URL
+                $("#Sql_R").hide();                //Sql
+                $("#TableCode_R").hide();          //表名
+                $("#ViewCode_R").hide();           //视图
+            }
+        }
+    }
+
+    function initControl() {
+        $("#DetailType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReportSource&fieldName=DetailType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+        $("#SelectType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReportSource&fieldName=SelectType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+        $("#ReqTextType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReportSource&fieldName=ReqTextType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+
+        $("#TableCode").bindSelect();
+        $("#ViewCode").bindSelect();
+
+        $('#wizard').wizard().on('change', function (e, data) {
+            var $finish = $("#btn_finish");
+            var $next = $("#btn_next");
+            if (data.direction == "next") {
+                switch (data.step) {
+                    case 1:
+                        if (!$('#form1').formValid()) {
+                            return false;
+                        }
+                        else {
+                            var IsTelnet = $("#IsTelnet").prop("checked");
+                            var IsDB = $("#IsDB").prop("checked");
+                            var DetailType = $("#DetailType option:checked").val();         //数据库类型
+                            var ReqTextType = $("#ReqTextType option:checked").val();        //返回值类型
+                            var DBName = $("#DBName").val();             //数据库名称
+                            var IP = $("#IP").val();                 //IP与端口
+                            var Uid = $("#Uid").val();                //用户名
+                            var Pwd = $("#Pwd").val();                //密码
+                            var URL = $("#URL").val();                //URL
+                            var SelectType = $("#SelectType option:checked").val(); //查询类型
+                            var Sql = $("#Sql").val();                //Sql
+                            var Table = $("#TableCode option:checked").val();          //表名
+                            var View = $("#ViewCode option:checked").val();           //视图
+                            $.ajax({
+                                url: "/PC_ReportEditorManage/ReportSource/CheckConnection", //检查连接是否无误
+                                data: { SelectType: SelectType, IsTelnet: IsTelnet, IsDB: IsDB, DetailType: DetailType, ReqTextType: ReqTextType, DBName: DBName, IP: IP, Uid: Uid, Pwd: Pwd, URL: URL, Sql: Sql, TableCode: Table, ViewCode: View },
+                                dataType: "json",
+                                async: false,
+                                success: function (data) {
+                                    $.checkLogin(data);
+                                    $("#colType").html("");
+                                    $.each(data, function (i, n) {
+                                        $("#colType").append("<tr>" +
+                                            "<th class= \"formTitle\" >" + n.FieldCode + "</th >" +
+                                            "<td class=\"formValue\">" +
+                                            "<select id=\"Field_" + n.FieldCode + "\" name=\"Field_" + n.FieldCode + "\" class=\"form-control required\"></select >" + //加Field_前缀是因为字段可能与其它标签页中的字段冲突
+                                            "</td></tr >");
+
+                                        $("#Field_" + n.FieldCode).bindSelect({
+                                            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReportSource&fieldName=FieldType",
+                                            id: "F_ItemCode",
+                                            text: "F_ItemName",
+                                            search: true
+                                        });
+                                    });
+
+                                }
+                            });
+                        }
+                        $finish.show();
+                        $next.hide();
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                $finish.hide();
+                $next.show();
+            }
+        });
+    }
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+
+        var Source = {};
+        Source.SourceName = $("#SourceName").val();
+        Source.SourceCode = $("#SourceCode").val();
+        Source.Remark = $("#Remark").val();
+        Source.IsTelnet = $("#IsTelnet").prop("checked");
+        Source.IsDB = $("#IsDB").prop("checked");
+        Source.DetailType = $("#DetailType option:checked").val();         //数据库类型
+        Source.ReqTextType = $("#ReqTextType option:checked").val();        //返回值类型
+        Source.DBName = $("#DBName").val();             //数据库名称
+        Source.IP = $("#IP").val();                 //IP与端口
+        Source.Uid = $("#Uid").val();                //用户名
+        Source.Pwd = $("#Pwd").val();                //密码
+        Source.URL = $("#URL").val();                //URL
+        Source.SelectType = $("#SelectType option:checked").val(); //查询类型
+        Source.Sql = $("#Sql").val();                //Sql
+        Source.Table = $("#TableCode option:checked").val();          //表名
+        Source.View = $("#ViewCode option:checked").val();           //视图
+        var ColumnList = new Array();
+
+        var colList = $("#colType tr td select");
+        $.each(colList, function (i, n) {
+            var cell = {};
+            cell.FieldCode = $(n).attr("id").replace("Field_", "");
+            cell.DataType = $(n).val();
+            ColumnList.push(cell);
+        });
+        Source.ColumnJson = JSON.stringify(ColumnList);
+
+        $.submitForm({
+            url: "/PC_ReportEditorManage/ReportSource/SubmitSourceModel",
+            param: { SourceJson: JSON.stringify(Source)},
+            success: function (data) {
+                top.$("#SourceChoose iframe")[0].contentWindow.reloadList();
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        });
+    }
+
+</script>
+
+<form id="form1">
+    <div class="widget-body" style="height:600px;">
+        <div id="wizard" class="wizard" data-target="#wizard-steps" style="border-left: none; border-top: none; border-right: none;">
+            <ul class="steps">
+                <li data-target="#step-1" class="active"><span class="step">1</span>连接信息<span class="chevron"></span></li>
+                <li data-target="#step-2"><span class="step">2</span>类型信息<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content" id="wizard-steps" style="border-left: none; border-bottom: none; border-right: none;">
+            <div class="step-pane active" id="step-1" style="margin: 10px; margin-bottom: 0px;">
+                <div class="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table class="form">
+                            <tr>
+                                <th class="formTitle">数据源名称</th>
+                                <td class="formValue">
+                                    <input id="SourceName" name="SourceName" type="text" class="form-control required" placeholder="请输入数据源名称" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">数据源编码</th>
+                                <td class="formValue">
+                                    <input id="SourceCode" name="SourceCode" type="text" class="form-control required" placeholder="请输入数据源编号" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th class="formTitle" style="height: 35px;">选项</th>
+                                <td class="formValue" style="padding-top: 1px;">
+                                    <div class="ckbox">
+                                        <input id="IsDB" name="IsDB" type="checkbox" checked="checked"><label for="IsDB">数据库</label>
+                                    </div>
+                                    <div class="ckbox">
+                                        <input id="IsTelnet" name="IsTelnet" type="checkbox" ><label for="IsTelnet">远程</label>
+                                    </div>
+
+                                </td>
+                            </tr>
+                            <tr id="DetailType_R">
+                                <th class="formTitle">数据库类型</th>
+                                <td class="formValue">
+                                    <select id="DetailType" name="DetailType" class="form-control required">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr id="ReqTextType_R">
+                                <th class="formTitle">返回值类型</th>
+                                <td class="formValue">
+                                    <select id="ReqTextType" name="ReqTextType" class="form-control required">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr id="DBName_R">
+                                <th class="formTitle">数据库名称</th>
+                                <td class="formValue">
+                                    <input id="DBName" name="DBName" type="text" class="form-control required" placeholder="请输入数据库名称" />
+                                </td>
+                            </tr>
+                            <tr id="IP_R">
+                                <th class="formTitle">IP与端口</th>
+                                <td class="formValue">
+                                    <input id="IP" name="IP" type="text" class="form-control required" placeholder="请输入IP" />
+                                </td>
+                            </tr>
+
+                            <tr id="Uid_R">
+                                <th class="formTitle">用户名</th>
+                                <td class="formValue">
+                                    <input id="Uid" name="Uid" type="text" class="form-control required" placeholder="请输入用户名" />
+                                </td>
+                            </tr>
+                            <tr id="Pwd_R">
+                                <th class="formTitle">密码</th>
+                                <td class="formValue">
+                                    <input id="Pwd" name="Pwd" type="text" class="form-control required" placeholder="请输入密码" />
+                                </td>
+                            </tr>
+                            <tr id="SelectType_R">
+                                <th class="formTitle">查询类型</th>
+                                <td class="formValue">
+                                    <select id="SelectType" name="SelectType" class="form-control required">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr id="Sql_R">
+                                <th class="formTitle">Sql</th>
+                                <td class="formValue">
+                                    <textarea id="Sql" name="Sql" class="form-control required" style="height: 60px;"></textarea>
+                                </td>
+                            </tr>
+                            <tr id="TableCode_R">
+                                <th class="formTitle">表名</th>
+                                <td class="formValue">
+                                    <div class="input-group">
+                                        <select id="TableCode" name="TableCode" class="form-control required">
+                                        </select>
+                                        <span id="getTab_Table" class="input-group-btn" title="刷新">
+                                            <a class="btn  btn-primary"><i class="fa fa-refresh"></i></a>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="ViewCode_R">
+                                <th class="formTitle">视图</th>
+                                <td class="formValue">
+                                    <div class="input-group">
+                                        <select id="ViewCode" name="ViewCode" class="form-control required">
+                                        </select>
+                                        <span id="getTab_View" class="input-group-btn" title="刷新">
+                                            <a class="btn  btn-primary"><i class="fa fa-refresh"></i></a>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="URL_R">
+                                <th class="formTitle">URL</th>
+                                <td class="formValue">
+                                    <input id="URL" name="URL" type="text" class="form-control required" placeholder="请输入URL" />
+                                </td>
+                            </tr>
+
+
+                            <tr>
+                                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                                    备注
+                                </th>
+                                <td class="formValue">
+                                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-2">
+                <div class="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table id="colType" class="form">
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-button" id="wizard-actions">
+            <a id="btn_last" disabled class="btn btn-default btn-prev">上一步</a>
+            <a id="btn_next" class="btn btn-default btn-next">下一步</a>
+            <a id="btn_finish" class="btn btn-default" style="display: none;" onclick="submitForm()">完成</a>
+        </div>
+    </div>
+</form>
+

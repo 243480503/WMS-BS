@@ -1,0 +1,2 @@
+E:\四川项目\WMS分支标准版\开源版\MST.Mapping\obj\Release\MST.Mapping.csproj.AssemblyReference.cache
+E:\四川项目\WMS分支标准版\开源版\MST.Mapping\obj\Release\MST.Mapping.csproj.CoreCompileInputs.cache

@@ -1,0 +1,15 @@
+
+    <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <EnableLightGBMUnsupportedPlatformTargetCheck Condition="'$(EnableLightGBMUnsupportedPlatformTargetCheck)' == ''">true</EnableLightGBMUnsupportedPlatformTargetCheck>
+    </PropertyGroup>
+    <Target Name="_LightGBMCheckForUnsupportedPlatformTarget"
+            Condition="'$(EnableLightGBMUnsupportedPlatformTargetCheck)' == 'true'"
+            AfterTargets="_CheckForInvalidConfigurationAndPlatform">
+        <Error Condition="'$(PlatformTarget)' != 'x64' AND
+                        ('$(OutputType)' == 'Exe' OR '$(OutputType)'=='WinExe') AND
+                        !('$(TargetFrameworkIdentifier)' == '.NETCoreApp' AND '$(PlatformTarget)' == '')"
+            Text="LightGBM currently supports 'x64' processor architectures. Please ensure your application is targeting 'x64'." />
+    </Target>
+    </Project>
+    

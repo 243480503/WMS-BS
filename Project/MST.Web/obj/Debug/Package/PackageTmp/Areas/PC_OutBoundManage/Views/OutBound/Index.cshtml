@@ -1,0 +1,313 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px -22px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    var tipRowId = "";
+    var tipIsShow = false;
+    var queryJson = "";
+
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        queryJson = { resultType: $("#result_horizon a.active").attr('data-value') }
+        $gridList.dataGrid({
+            url: "/PC_OutBoundManage/OutBound/GetGridJson",
+            height: $(window).height() - 128,
+            postData: { queryJson: JSON.stringify(queryJson) },
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '出库单编码', name: 'OutBoundCode', width: 150, align: 'left' },
+                { label: '来源单号', name: 'RefOrderCode', width: 150, align: 'left' },
+                { label: '出库单类型', name: 'OutBoundType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.OutBoundTypeName; } },
+                { label: "生成方式", name: "GenType", width: 50, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.GenTypeName; }},
+                {
+                    label: '出库单状态', name: 'State', width: 70, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.State == "Outing") { //出库中
+                            return '<span class=\"label label-warning\">' + rowObject.StateName + '</span>';
+                        } else if (rowObject.State == "Waved") { //波次完成
+                            return '<span class=\"label label-info\">' + rowObject.StateName + '</span>';
+                        } else if (rowObject.State == "New") { //新建
+                            return '<span class=\"label label-default\">' + rowObject.StateName + '</span>';
+                        } else if (rowObject.State == "Over") { //结束
+                            return '<span class=\"label label-success\">' + rowObject.StateName + '</span>';
+                        }
+                        else {
+                            return rowObject.StateName;  
+                        }
+                    }
+                },
+                { label: "单据日期", name: "F_CreatorTime", width: 150, align: 'left' },
+                { label: "接收部门", name: "ReceiveDepartment", width: 100, align: 'left' },
+                { label: "接收人", name: "ReceiveUserName", width: 100, align: 'left' },
+                {
+                    label: "是否紧急", name: "IsUrgent", width: 70, align: 'left', 
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                { label: "备注", name: "Remark", width: 570, align: 'left' }
+            ],
+            pager: "#gridPager1",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            subGrid: true,
+            subGridOptions: { openicon: "ui-helper-hidden" },
+            subGridBeforeExpand: function (subgrid_id, row_id) { //展开前，返回false不展开
+
+            },
+            subGridRowExpanded: function (subgrid_id, row_id) { //点击加号按钮展开
+                $.each($("#" + row_id).siblings(), function (i, n) {
+                    if ($(n).hasClass("ui-subgrid") && $(n).hasClass("ui-sg-expanded")) {
+                        var id = $(n).attr("id").replace("gridList_", "").replace("_expandedContent", "");
+                        $.each($("#" + id).children("td"), function (j, k) {
+                            if ($(k).hasClass("ui-sgcollapsed") && $(k).hasClass("sgexpanded")) {
+                                $(k).trigger("click");
+                            }
+                        })
+                    }
+                });
+
+                $("#" + subgrid_id).html('<div style="height:460px;width:100%;overflow:auto"><iframe class= "MST_iframe_row" id = "iframe" name = "iframe" width = "100%" height = "95%" src = "/PC_OutBoundManage/OutBoundDetail/Index?keyvalue=' + row_id + '" frameborder = "0"  seamless = "" ></iframe ></div > ');
+                $gridList.jqGrid('setSelection', row_id);
+                tipRowId = row_id;
+                tipIsShow = true;
+            },
+            subGridRowColapsed: function (subgrid_id, row_id) { //点击加号按钮收缩，返回false不收缩
+                var subgrid_table_id = "gridList_" + row_id + "_expandedContent";
+                $("#" + subgrid_table_id).remove();
+
+                tipRowId = row_id;
+                tipIsShow = false;
+            },
+            serializeSubGridData: function (subgrid_id, row_id) { //初始化数据
+
+            },
+            onSelectRow: function (rowid) {
+                tipRowId = rowid;
+            },
+            loadComplete: function () {
+                if (tipIsShow) {
+                    $("#" + tipRowId + ">td[aria-describedby='gridList_subgrid']").trigger("click");
+                }
+            }
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        $("#btn_search").click(function () {
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                resultType: $("#result_horizon a.active").attr('data-value')
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增出库单",
+            url: "/PC_OutBoundManage/OutBound/Form",
+            width: "700px",
+            height: "550px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: "修改出库单",
+            url: "/PC_OutBoundManage/OutBound/Form?keyValue=" + keyValue,
+            width: "700px",
+            height: "550px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_delete() {
+        var rowid = $("#gridList").jqGridRowValue().F_Id;
+        if (rowid == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.deleteForm({
+            url: "/PC_OutBoundManage/OutBound/DeleteForm",
+            param: { keyValue: rowid },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.modalOpen({
+            id: "Details",
+            title: "查看出库单",
+            url: "/PC_OutBoundManage/OutBound/Details?keyValue=" + keyValue,
+            width: "700px",
+            height: "550px",
+            btn: null,
+        });
+    }
+
+    function btn_BeginOut() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择出库单据", "warning");
+            return;
+        }
+
+        $.modalConfirm("该操作耗时较长，请耐心等待", function (r) {
+            if (r) {
+                $.submitForm({
+                    url: "/PC_OutBoundManage/OutBound/BeginOut",
+                    param: { outBoundID: keyValue },
+                    success: function (data) {
+                        $("#gridList").jqGrid('setGridParam', {
+                            postData: { keyword: $("#txt_keyword").val() },
+                        }).trigger('reloadGrid', { fromServer: true, page: 1 });
+                        $.modalMsg(data.message, data.state);
+                    },
+                    error: function (data) {
+                        $.modalMsg(data.message, data.state);
+                    }
+                });
+            }
+        });
+
+        //$.ajaxWMS({
+        //    url: "/PC_OutBoundManage/OutBound/BeginOut",
+        //    data: { outBoundID: keyValue},
+        //    dataType: "json",
+        //    type: "POST",
+        //    async: false,
+        //    success: function (data) {
+        //        if (data.state == "success") {
+        //            $("#gridList").jqGrid('setGridParam', {
+        //                postData: { keyword: $("#txt_keyword").val() },
+        //            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        //            $.modalMsg(data.message, data.state);
+        //        }
+        //        else {
+        //            $.modalMsg(data.message, data.state);
+        //        }
+        //    }
+        //});
+    }
+
+    function btn_trans() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+        $.ajaxWMS({
+            url: "/PC_OutBoundManage/OutBound/TransByHand?keyValue=" + keyValue,
+            data: {},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建出库单</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-BeginOut" authorize="yes" onclick="btn_BeginOut()"><i class="fa fa-play"></i>开始出库</a></li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改出库单</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除出库单</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看出库单</a></li>
+                <li><a id="NF-trans" authorize="yes" onclick="btn_trans()"><i class="fa fa-calculator"></i>过账</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="出库单编码 / 来源单号" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default" data-value="1">全部</a>
+                        <a class="btn btn-default  active" data-value="2">未结束</a>
+                        <a class="btn btn-default" data-value="3">结束</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager1"></div>
+</div>

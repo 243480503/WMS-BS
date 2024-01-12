@@ -1,0 +1,176 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+    var isScan = false;
+
+    $(function () {
+        //初始化标题与来源单据号
+        $(".title").text(parentName + " - " + curName);
+
+        $("#ConBarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                scan();
+            }
+        });
+    });
+
+    function scan() {
+        var ConBarCode = $("#ConBarCode").val();
+        if (ConBarCode == "") {
+            $.modalMsg("请扫容器条码", "warning");
+            return;
+        }
+
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFForceBind/GetContainerInfo",
+            data: { barCode: ConBarCode},
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+                if (data.Loc == null && data.Container == null && (data.ContainerDetailList == null || data.ContainerDetailList.length < 1)) {
+                    $.modalMsg("没有查询到该容器或库存", "warning");
+                }
+                else {
+                    $("#LocCode").val(data.Loc == null ? "" : data.Loc.LocationCode);                    
+                    $("#LocState").val(data.Loc == null ? "" : data.Loc.StateName);
+                    $("#KindName").val(data.Container == null ? "" : data.Container.ContainerKindName);
+                    BindRFList(data.ContainerDetailList);
+                    isScan = true;
+                }
+            }
+        });
+    }
+
+
+    function BindRFList(data) {
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: data,
+            datatype: "local",
+            colModel: [
+                { label: '物料名称', name: 'ItemName', width: "30", align: 'left', br: true },
+                { label: '物料编码', name: 'ItemCode', width: "30", align: 'left', br: true },
+                { label: '贴标编码', name: 'ItemBarCode', width: "30", align: 'left', br: true },
+                { label: '规格', name: 'Spec', width: "20", align: 'left' },
+                { label: '批号', name: 'Lot', width: "30", align: 'left', br: true },
+                { label: '数量', name: 'Qty', width: "20", align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: "20", align: 'left', br: true },
+                { label: '失效日期', name: 'OverdueDate', width: "30", align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+            ],
+            delbtn: false
+        });
+    }
+
+    function ClearLoc() {
+        if (isScan == false) {
+            $.modalMsg("请先获取数据", "warning");
+            return;
+        }
+        var ConBarCode = $("#ConBarCode").val();
+        if (ConBarCode == "") {
+            $.modalMsg("请扫需绑定的容器编码", "warning");
+            return;
+        }
+
+        var newLocCode = $("#NewLocCode").val();
+        if (newLocCode == "") {
+            $.modalMsg("请扫需绑定的货位编码", "warning");
+            return;
+        }
+
+        
+
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFForceBind/ForceBind",
+            data: { conBarCode: ConBarCode, newLocCode: newLocCode },
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg("操作成功", "success");
+                    $("#LocCode").val("");
+                    $("#LocState").val("");
+                    $("#ConBarCode").val("");
+                    $("#KindName").val("");
+                    $("#NewLocCode").val("");
+                    $("#RFList").empty();
+                    isScan = false;
+                }
+                else {
+                    $.modalMsg(data.message, "error");
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">强制绑定</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+            强制绑定容器与货位，容器原货位置空，货位原容器解绑
+        </div>
+        <form id="form1">
+            <div class="RF">
+
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">原容器码:</th>
+                        <td class="formValue">
+                            <input id="ConBarCode" name="ConBarCode" type="text" class="form-control required" placeholder="原容器条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">原货位码:</th>
+                        <td class="formValue">
+                            <input id="LocCode" name="LocCode" readonly="readonly" type="text" class="form-control required" placeholder="原货位条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">货位状态:</th>
+                        <td class="formValue">
+                            <input id="LocState" name="LocState" readonly="readonly" type="text" class="form-control required" placeholder="货位状态" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">容器类型:</th>
+                        <td class="formValue">
+                            <input id="KindName" name="KindName" readonly="readonly" type="text" class="form-control required" placeholder="容器类型" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">绑定货位:</th>
+                        <td class="formValue">
+                            <input id="NewLocCode" name="NewLocCode" type="text" class="form-control required" placeholder="绑定货位" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="RFList"></div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="ClearLoc()">确定</a>
+            </div>
+        </form>
+    </div>
+
+</div>

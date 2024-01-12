@@ -1,0 +1,336 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ML.TensorFlow</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.ML.TensorflowCatalog">
+            <summary>
+        The <see cref="T:Microsoft.ML.Transforms.TensorFlowTransformer" /> is used in following two scenarios.
+        <list type="number">
+        <item>
+          <description>
+            Scoring with pretrained <a href="https://www.tensorflow.org/">TensorFlow</a> model: In this mode, the transform extracts hidden layers' values from a pre-trained Tensorflow model and uses outputs as features in ML.Net pipeline.
+          </description>
+        </item>
+        <item>
+          <description>
+            Retraining of <a href="https://www.tensorflow.org/">TensorFlow</a> model: In this mode, the transform retrains a TensorFlow model using the user data passed through ML.Net pipeline. Once the model is trained, it's outputs can be used as features for scoring.
+          </description>
+        </item>
+      </list>
+      </summary><remarks>
+        <para>
+          The TensorFlowTransform extracts specified outputs using a pre-trained <a href="https://www.tensorflow.org">Tensorflow</a> model.
+          Optionally, it can further retrain TensorFlow model on user data to adjust model parameters on the user data ( also know as "Transfer Learning").
+        </para>
+        <para>
+          For scoring, the transform takes as inputs the pre-trained Tensorflow model, the names of the input nodes, and names of the output nodes whose values we want to extract.
+          For retraining, the transform also requires training related parameters such as the names of optimization operation in the TensorFlow graph, the name of the learning rate operation in the graph and its value, name of the operations in the graph to compute loss and performance metric etc.
+        </para>
+        <para>
+          This transform requires the <a href="https://dotnet.myget.org/feed/dotnet-core/package/nuget/Microsoft.ML.TensorFlow">Microsoft.ML.TensorFlow</a> nuget to be installed.
+          The TensorFlowTransform has the following assumptions regarding input, output, processing of data, and retraining.
+        </para>
+        <list type="number">
+          <item>
+            <description>
+              For the input model, currently the TensorFlowTransform supports both the <a href="https://www.tensorflow.org/mobile/prepare_models">Frozen model</a> format and also the <a href="https://www.tensorflow.org/guide/saved_model#build_and_load_a_savedmodel">SavedModel</a> format.
+              However, retraining of the model is only possible for the <a href="https://www.tensorflow.org/guide/saved_model#build_and_load_a_savedmodel">SavedModel</a> format.
+              <a href="https://www.tensorflow.org/guide/checkpoints">Checkpoint</a> format is currently neither supported for scoring nor for retraining due lack of TensorFlow C-API support for loading it.
+            </description>
+          </item>
+          <item>
+            <description>The transform supports scoring only one example at a time. However, retraining can be performed in batches.</description>
+          </item>
+          <item>
+            <description>Advanced transfer learning/fine tuning scenarios (e.g. adding more layers into the network, changing the shape of inputs, freezing the layers which do not need to be updated during retraining process etc.) are currently not possible due to lack of support for network/graph manipulation inside the model using TensorFlow C-API.</description>
+          </item>
+          <item>
+            <description>The name of input column(s) should match the name of input(s) in TensorFlow model.</description>
+          </item>
+          <item>
+            <description>The name of each output column should match one of the operations in the TensorFlow graph.</description>
+          </item>
+          <item>
+            <description>Currently, double, float, long, int, short, sbyte, ulong, uint, ushort, byte and bool are the acceptable data types for input/output.</description>
+          </item>
+          <item>
+            <description>Upon success, the transform will introduce a new column in <see cref="T:Microsoft.ML.IDataView" /> corresponding to each output column specified.</description>
+          </item>
+        </list>
+        <para>
+            The inputs and outputs of a TensorFlow model can be obtained using the <see cref="M:Microsoft.ML.Transforms.TensorFlowModel.GetModelSchema" /> or <a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/tools/graph_transforms/README.md#inspecting-graphs">summarize_graph</a> tools.
+        </para>
+      </remarks><altmember cref="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String,System.String,System.Boolean)" /><altmember cref="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String[],System.String[],System.Boolean)" />
+        </member>
+        <member name="M:Microsoft.ML.TensorflowCatalog.LoadTensorFlowModel(Microsoft.ML.ModelOperationsCatalog,System.String)">
+             <summary>
+             Load TensorFlow model into memory. This is the convenience method that allows the model to be loaded once and subsequently use it for querying schema and creation of
+             <see cref="T:Microsoft.ML.Transforms.TensorFlowEstimator"/> using <see cref="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String,System.String,System.Boolean)"/>.
+             usage of this API requires additional NuGet dependencies on TensorFlow redist, see linked document for more information.
+             <see cref="T:Microsoft.ML.Transforms.TensorFlowModel"/> also holds references to unmanaged resources that need to be freed either with an explicit
+             call to Dispose() or implicitly by declaring the variable with the "using" syntax/>
+            
+             <format type="text/markdown">
+             <![CDATA[
+             [!include[io](~/../docs/samples/docs/api-reference/tensorflow-usage.md)]
+             ]]>
+             </format>
+             </summary>
+             <param name="catalog">The transform's catalog.</param>
+             <param name="modelLocation">Location of the TensorFlow model.</param>
+             <example>
+             <format type="text/markdown">
+             <![CDATA[
+             [!code-csharp[LoadTensorFlowModel](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/TensorFlow/TextClassification.cs)]
+             ]]>
+             </format>
+             </example>
+        </member>
+        <member name="M:Microsoft.ML.TensorflowCatalog.LoadTensorFlowModel(Microsoft.ML.ModelOperationsCatalog,System.String,System.Boolean)">
+             <summary>
+             Load TensorFlow model into memory. This is the convenience method that allows the model to be loaded once and subsequently use it for querying schema and creation of
+             <see cref="T:Microsoft.ML.Transforms.TensorFlowEstimator"/> using <see cref="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String,System.String,System.Boolean)"/>.
+             usage of this API requires additional NuGet dependencies on TensorFlow redist, see linked document for more information.
+             <see cref="T:Microsoft.ML.Transforms.TensorFlowModel"/> also holds references to unmanaged resources that need to be freed either with an explicit
+             call to Dispose() or implicitly by declaring the variable with the "using" syntax/>
+            
+             <format type="text/markdown">
+             <![CDATA[
+             [!include[io](~/../docs/samples/docs/api-reference/tensorflow-usage.md)]
+             ]]>
+             </format>
+             </summary>
+             <param name="catalog">The transform's catalog.</param>
+             <param name="modelLocation">Location of the TensorFlow model.</param>
+             <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+             <example>
+             <format type="text/markdown">
+             <![CDATA[
+             [!code-csharp[LoadTensorFlowModel](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/TensorFlow/TextClassification.cs)]
+             ]]>
+             </format>
+             </example>
+        </member>
+        <member name="T:Microsoft.ML.Transforms.TensorFlowModel">
+            <summary>
+            This class holds the information related to TensorFlow model and session.
+            It provides some convenient methods to query model schema as well as
+            creation of <see cref="T:Microsoft.ML.Transforms.TensorFlowEstimator"/> object.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowModel.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Tensorflow.Session,System.String,System.Boolean)">
+            <summary>
+            Instantiates <see cref="T:Microsoft.ML.Transforms.TensorFlowModel"/>.
+            </summary>
+            <param name="env">An <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/> object.</param>
+            <param name="session">TensorFlow session object.</param>
+            <param name="modelLocation">Location of the model from where <paramref name="session"/> was loaded.</param>
+            <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowModel.GetModelSchema">
+            <summary>
+            Get <see cref="T:Microsoft.ML.DataViewSchema"/> for complete model. Every node in the TensorFlow model will be included in the <see cref="T:Microsoft.ML.DataViewSchema"/> object.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowModel.GetInputSchema">
+            <summary>
+            Get <see cref="T:Microsoft.ML.DataViewSchema"/> for only those nodes which are marked "Placeholder" in the TensorFlow model.
+            This method is convenient for exploring the model input(s) in case TensorFlow graph is very large.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String,System.String,System.Boolean)">
+            <summary>
+            Scores a dataset using a pre-trained <a href="https://www.tensorflow.org/">TensorFlow</a> model.
+            </summary>
+            <param name="inputColumnName"> The name of the model input. The data type is a vector of <see cref="T:System.Single"/>.</param>
+            <param name="outputColumnName">The name of the requested model output. The data type is a vector of <see cref="T:System.Single"/></param>
+            <param name="addBatchDimensionInput">Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[ScoreTensorFlowModel](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/TensorFlow/ImageClassification.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowModel.ScoreTensorFlowModel(System.String[],System.String[],System.Boolean)">
+            <summary>
+            Scores a dataset using a pre-trained TensorFlow model.
+            </summary>
+            <param name="inputColumnNames"> The names of the model inputs.</param>
+            <param name="outputColumnNames">The names of the requested model outputs.</param>
+            <param name="addBatchDimensionInput">Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[ScoreTensorFlowModel](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/TensorFlow/ImageClassification.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowTransformer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Transforms.TensorFlowModel,System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Transform for scoring Tensorflow models. Input data column names/types must exactly match
+            all model input names. Only the output columns specified will be generated.
+            This convenience method avoids reloading of TensorFlow model.
+            It is useful in a situation where user has already loaded TensorFlow model using <see cref="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadTensorFlowModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)"/> for inspecting model schema.
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="tfModelInfo"> <see cref="T:Microsoft.ML.Transforms.TensorFlowModel"/> object created with <see cref="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadTensorFlowModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)"/>.</param>
+            <param name="outputColumnName">The output columns to generate. Names must match model specifications. Data types are inferred from model.</param>
+            <param name="inputColumnName">The name of the input data columns. Must match model's input names. If set to <see langword="null"/>, the value of the <paramref name="outputColumnName"/> will be used as source.</param>
+            <param name="addBatchDimensionInput">Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.</param>
+            <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowTransformer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Transforms.TensorFlowModel,System.String[],System.String[],System.Boolean,System.Boolean)">
+            <summary>
+            Transform for scoring Tensorflow models. Input data column names/types must exactly match
+            all model input names. Only the output columns specified will be generated.
+            This convenience method avoids reloading of TensorFlow model.
+            It is useful in a situation where user has already loaded TensorFlow model using <see cref="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadTensorFlowModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)"/> for inspecting model schema.
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="tfModelInfo"> <see cref="T:Microsoft.ML.Transforms.TensorFlowModel"/> object created with <see cref="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadTensorFlowModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)"/>.</param>
+            <param name="inputColumnNames">The name of the input data columns. Must match model's input names.</param>
+            <param name="outputColumnNames">The output columns to generate. Names must match model specifications. Data types are inferred from model.</param>
+            <param name="addBatchDimensionInput">Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.</param>
+            <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+        </member>
+        <member name="T:Microsoft.ML.Transforms.TensorFlowEstimator">
+            <!-- No matching elements were found for the following include tag --><include file="doc.xml" path="doc/members/member[@name=&quot;TensorFlowTransfomer&quot;]/*" />
+        </member>
+        <member name="T:Microsoft.ML.Transforms.TensorFlowEstimator.Options">
+            <summary>
+            The options for the <see cref="T:Microsoft.ML.Transforms.TensorFlowTransformer"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.ModelLocation">
+            <summary>
+            Location of the TensorFlow model.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.InputColumns">
+            <summary>
+            The names of the model inputs.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.OutputColumns">
+            <summary>
+            The names of the requested model outputs.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.BatchSize">
+            <summary>
+            Number of samples to use for mini-batch training.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.AddBatchDimensionInputs">
+            <summary>
+            Add a batch dimension to the input e.g. input = [224, 224, 3] => [-1, 224, 224, 3].
+            </summary>
+            <remarks>
+            This parameter is used to deal with models that have unknown shape but the internal operators in the model require data to have batch dimension as well.
+            In this case, there is no way to induce shape from the model's inputs or input data.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.TensorFlowEstimator.Options.TreatOutputAsBatched">
+            <summary>
+            If the first dimension of the output is unknown, should it be treated as batched or not. e.g. output = [-1] will be read as a vector of unknown length when this is false.
+            </summary>
+            <remarks>
+            This parameter is used to deal with models that have unknown output shape and it needs to be interpreted in ML.NET as a vector of unknown length and not as a batch dimension.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowEstimator.GetOutputSchema(Microsoft.ML.SchemaShape)">
+            <summary>
+            Returns the <see cref="T:Microsoft.ML.SchemaShape"/> of the schema which will be produced by the transformer.
+            Used for schema propagation and verification in a pipeline.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.TensorFlowEstimator.Fit(Microsoft.ML.IDataView)">
+            <summary>
+            Trains and returns a <see cref="T:Microsoft.ML.Transforms.TensorFlowTransformer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.TensorFlow.TensorFlowSessionWrapper">
+            <summary>
+            This class holds the information related to TensorFlow model and session.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowSessionWrapper.#ctor(Tensorflow.Session,System.String)">
+            <summary>
+            Instantiates <see cref="T:Microsoft.ML.TensorFlow.TensorFlowSessionWrapper"/>.
+            </summary>
+            <param name="session">TensorFlow session object.</param>
+            <param name="modelLocation">Location of the model from where <paramref name="session"/> was loaded.</param>
+        </member>
+        <member name="F:Microsoft.ML.TensorFlow.TensorFlowUtils.TensorflowOperatorTypeKind">
+            <summary>
+            Key to access operator's type (a string) in <see cref="P:Microsoft.ML.DataViewSchema.Column.Annotations"/>.
+            Its value describes the Tensorflow operator that produces this <see cref="T:Microsoft.ML.DataViewSchema.Column"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.TensorFlow.TensorFlowUtils.TensorflowUpstreamOperatorsKind">
+            <summary>
+            Key to access upstream operators' names (a string array) in <see cref="P:Microsoft.ML.DataViewSchema.Column.Annotations"/>.
+            Its value states operators that the associated <see cref="T:Microsoft.ML.DataViewSchema.Column"/>'s generator depends on.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowUtils.GetModelSchema(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)">
+            <summary>
+            This method retrieves the information about the graph nodes of a TensorFlow model as an <see cref="T:Microsoft.ML.DataViewSchema"/>.
+            For every node in the graph that has an output type that is compatible with the types supported by
+            <see cref="T:Microsoft.ML.Transforms.TensorFlowTransformer"/>, the output schema contains a column with the name of that node, and the
+            type of its output (including the item type and the shape, if it is known). Every column also contains metadata
+            of kind <see cref="F:Microsoft.ML.TensorFlow.TensorFlowUtils.TensorflowOperatorTypeKind"/>, indicating the operation type of the node, and if that node has inputs in the graph,
+            it contains metadata of kind <see cref="F:Microsoft.ML.TensorFlow.TensorFlowUtils.TensorflowUpstreamOperatorsKind"/>, indicating the names of the input nodes.
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="modelPath">Model to load.</param>
+            <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadTensorFlowModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)">
+            <summary>
+            Load TensorFlow model into memory.
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="modelPath">The model to load.</param>
+            <param name="treatOutputAsBatched">If the first dimension of the output is unknown, should it be treated as batched or not.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowUtils.CreateFolderWithAclIfNotExists(Microsoft.ML.Runtime.IHostEnvironment,System.String)">
+            <summary>
+             Given a folder path, create it with proper ACL if it doesn't exist.
+             Fails if the folder name is empty, or can't create the folder.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowUtils.LoadDnnModel(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.Boolean)">
+            <summary>
+            Load TensorFlow model into memory.
+            </summary>
+            <param name="env">The environment to use.</param>
+            <param name="modelPath">The model to load.</param>
+            <param name="metaGraph"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.ML.TensorFlow.TensorFlowUtils.Runner">
+            <summary>
+            Use the runner class to easily configure inputs, outputs and targets to be passed to the session runner.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.TensorFlow.TensorFlowUtils.Runner.Run">
+            <summary>
+            Executes a pipeline given the specified inputs, inputValues, outputs, targetOpers, runMetadata and runOptions.
+            A simpler API is available by calling the <see cref="M:GetRunner"/> method which performs all the bookkeeping
+            necessary.
+            </summary>
+            <returns>An array of tensors fetched from the requested outputs.</returns>
+        </member>
+    </members>
+</doc>

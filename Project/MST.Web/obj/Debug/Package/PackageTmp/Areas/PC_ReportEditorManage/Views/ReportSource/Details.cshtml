@@ -1,0 +1,96 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $("#F_ParentId").bindSelect({
+            url: "/PC_BaseDataManage/Area/GetTreeSelectJson",
+            search: true
+        });
+
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_BaseDataManage/Area/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                    $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                    $("#form1").find('div.ckbox label').attr('for', '');
+                }
+            });
+        }
+    });
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">上级</th>
+                <td class="formValue">
+                    <select id="ParentID" name="ParentID" class="form-control required">
+                        <option value="0">父节点</option>
+                    </select>
+                </td>
+                <th class="formTitle">名称</th>
+                <td class="formValue">
+                    <input id="AreaName" name="AreaName" type="text" class="form-control required" placeholder="请输入名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">区域类型</th>
+                <td class="formValue">
+                    <select id="AreaType" name="AreaType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">编号</th>
+                <td class="formValue">
+                    <input id="AreaCode" name="AreaCode" type="text" class="form-control required" placeholder="请输入编号" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">货位前缀</th>
+                <td class="formValue">
+                    <input id="LocationPrefix" name="LocationPrefix" type="text" class="form-control required" placeholder="请输货位前缀" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsAreaVir" name="IsAreaVir" type="checkbox" checked="checked"><label for="IsAreaVir">虚拟区域</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

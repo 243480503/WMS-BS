@@ -1,0 +1,214 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReceiveRecord&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#ReceiveStaionID").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetStationDicList",
+            id: "F_Id",
+            text: "StationName"
+        });
+
+        $("#ContainerType").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetContainerDicList",
+            id: "ContainerTypeCode",
+            text: "ContainerTypeName",
+            search: true
+        });
+
+        $("#ContainerKind").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ContainerType&fieldName=ContainerKind",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#AreaID").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetAreaDicList",
+            id: "F_Id",
+            text: "AreaName"
+        });
+
+        $("#CheckState").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReceiveRecord&fieldName=CheckState",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#TransState").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReceiveRecord&fieldName=TransState",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_ReceiveRecordManage/ReceiveRecord/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                    $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                    $("#form1").find('div.ckbox label').attr('for', '');
+                }
+            });
+        }
+    });
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">入库单编码</th>
+                <td class="formValue">
+                    <input id="InBoundCode" name="InBoundCode" type="text" class="form-control required" placeholder="请输入入库单编码" />
+                </td>
+                <th class="formTitle">来源单编码</th>
+                <td class="formValue">
+                    <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control required" placeholder="请输入来源单编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">收货站台</th>
+                <td class="formValue">
+                    <select id="ReceiveStaionID" name="ReceiveStaionID" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">容器类型</th>
+                <td class="formValue">
+                    <select id="ContainerType" name="ContainerType" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器大类</th>
+                <td class="formValue">
+                    <select id="ContainerKind" name="ContainerKind" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">容器条码</th>
+                <td class="formValue">
+                    <input id="BarCode" name="BarCode" type="text" class="form-control required" placeholder="请输入容器条码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">标签条码</th>
+                <td class="formValue">
+                    <input id="ItemBarCode" name="ItemBarCode" type="text" class="form-control required" placeholder="请输入标签条码" />
+                </td>
+                <th class="formTitle">状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">物料编码</th>
+                <td class="formValue">
+                    <input id="ItemCode" name="ItemCode" type="text" class="form-control required" placeholder="请输入物料编码" />
+                </td>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" type="text" class="form-control required" placeholder="请输入物料名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">物料数量</th>
+                <td class="formValue">
+                    <input id="Qty" name="Qty" type="text" class="form-control required" placeholder="请输入物料数量" />
+                </td>
+                <th class="formTitle">生产日期</th>
+                <td class="formValue">
+                    <input id="ProductDate" name="ProductDate" type="text" class="form-control required" placeholder="请输入生产日期" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">ERP仓库</th>
+                <td class="formValue">
+                    <input id="ERPWarehouseCode" name="ERPWarehouseCode" type="text" class="form-control required" placeholder="请输入ERP仓库编码" />
+                </td>
+                <th class="formTitle">存放区域</th>
+                <td class="formValue">
+                    <select name="AreaID" id="AreaID" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">批号</th>
+                <td class="formValue">
+                    <input id="Lot" name="Lot" type="text" class="form-control required" placeholder="请输入批号" />
+                </td>
+                <th class="formTitle">质检状态</th>
+                <td class="formValue">
+                    <select name="CheckState" id="CheckState" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">供应商名称</th>
+                <td class="formValue">
+                    <input id="SupplierUserName" name="SupplierUserName" type="text" class="form-control required" placeholder="请输入供应商名称" />
+                </td>
+                <th class="formTitle">收货人名称</th>
+                <td class="formValue">
+                    <input id="DoneUserName" name="DoneUserName" type="text" class="form-control required" placeholder="请输入收货人名称" />
+                </td>
+            </tr>
+
+            <tr>
+                <th class="formTitle">货位编码</th>
+                <td class="formValue">
+                    <input id="LocationCode" name="LocationCode" type="text" class="form-control required" placeholder="请输入货位编码" />
+                </td>
+                <th class="formTitle">过账状态</th>
+                <td class="formValue">
+                    <select id="TransState" name="TransState" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">失败原因</th>
+                <td class="formValue">
+                    <input id="FailDesc" name="FailDesc" type="text" class="form-control required" placeholder="请输入失败原因" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

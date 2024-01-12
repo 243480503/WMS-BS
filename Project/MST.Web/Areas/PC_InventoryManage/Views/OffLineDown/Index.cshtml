@@ -1,0 +1,205 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+
+<script>
+
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+
+       var queryJson = {
+            resultType: $("#result_horizon a.active").attr('data-value')
+        };
+
+        $gridList.dataGrid({
+            url: "/PC_InventoryManage/OffLineDown/GetGridJson",
+            postData: { queryJson: JSON.stringify(queryJson) },
+            height: $(window).height() - 128,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '库存物料编码', name: 'ConDetailItemCode', width: 100, align: 'left' },
+                { label: '库存物料名称', name: 'ConDetailItemName', width: 250, align: 'left' },
+                { label: '库存批号', name: 'ConDetailLot', width: 100, align: 'left' },
+
+
+
+                { label: '已选容器条码', name: 'BarCode', width: 100, align: 'left' },
+                { label: '已选标签条码', name: 'ItemBarCode', width: 120, align: 'left' },
+                { label: '应出库数量', name: 'Qty', width: 80, align: 'left' },
+                { label: '离线处理状态', name: 'StateName', width: 80, align: 'left' },
+                { label: '货位状态', name: 'ConDetailLocationStateName', width: 60, align: 'left' },
+                { label: '货位编码', name: 'ConDetailLocationCode', width: 120, align: 'left' },
+                { label: '库存供应商', name: 'ConDetailSupplierName', width: 230, align: 'left' },
+                { label: '原库存数量', name: 'ConDetailQty', width: 60, align: 'left' },
+                { label: '库存区域名称', name: 'ConDetailAreaName', width: 120, align: 'left' },
+                { label: '库存状态', name: 'ConDetailStateName', width: 60, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true
+        });
+
+        $("#btn_search").click(function () {
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                resultType: $("#result_horizon a.active").attr('data-value')
+            };
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    //处理离线
+    function btn_downOk() {
+
+        var postdata = {};
+        var offLineID = $("#gridList").jqGridRowValue().F_Id;
+        var keyList = [];
+        keyList.push(offLineID);
+        postdata = { keyValueListStr: JSON.stringify(keyList) };
+        $.ajaxWMS({
+            url: "/PC_InventoryManage/OffLineDown/OffLineDownOK",
+            data: postdata,
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $.currentWindow().$("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "修改离线",
+            url: "/PC_InventoryManage/OffLineDown/Form?keyValue=" + keyValue,
+            width: "600px",
+            height: "420px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增离线",
+            url: "/PC_InventoryManage/OffLineDown/Form",
+            width: "600px",
+            height: "420px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_delete() {
+        $.deleteForm({
+            url: "/PC_InventoryManage/OffLineDown/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看离线",
+            url: "/PC_InventoryManage/OffLineDown/Details?keyValue=" + keyValue,
+            width: "600px",
+            height: "420px",
+            btn: null,
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新增离线</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-DownOk" authorize="yes" onclick="btn_downOk()"><i class="fa fa-search-plus"></i>确认出库</a></li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改离线</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除离线</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看离线</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称 / 容器条码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default active" data-value="1">全部</a>
+                        <a class="btn btn-default" data-value="2">新建</a>
+                        <a class="btn btn-default" data-value="3">完成</a>
+                        <a class="btn btn-default" data-value="4">忽略</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

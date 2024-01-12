@@ -1,0 +1,711 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ML.Recommender</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters">
+            <summary>
+            Model parameters for <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/>.
+            </summary>
+            <remarks>
+            <see cref="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters"/> stores two factor matrices, P and Q, for approximating the training matrix, R, by P * Q,
+            where * is a matrix multiplication. This model expects two inputs, row index and column index, and produces the (approximated)
+            value at the location specified by the two inputs in R. More specifically, if input row and column indices are u and v, respectively.
+            The output (a scalar) would be the inner product of the u-th row in P and the v-th column in Q.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.NumberOfRows">
+            <summary> The number of rows.</summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.NumberOfColumns">
+            <summary> The number of columns.</summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.ApproximationRank">
+            <summary> The rank of the factor matrices.</summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.LeftFactorMatrix">
+            <summary>
+            Left approximation matrix
+            </summary>
+            <remarks>
+            This is two dimensional matrix with size of <see cref="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.NumberOfRows"/> * <see cref="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.ApproximationRank"/> flattened into one-dimensional matrix.
+            Row by row.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.RightFactorMatrix">
+            <summary>
+            Right approximation matrix
+            </summary>
+            <remarks>
+            This is two dimensional matrix with size of <see cref="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.ApproximationRank"/> * <see cref="F:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.NumberOfColumns"/> flattened into one-dimensional matrix.
+            Row by row.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.Create(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.ModelLoadContext)">
+            <summary>
+            Load model from the given context
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.Microsoft#ML#ICanSaveModel#Save(Microsoft.ML.ModelSaveContext)">
+            <summary>
+            Save model to the given context
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.Microsoft#ML#Model#ICanSaveInTextFormat#SaveAsText(System.IO.TextWriter,Microsoft.ML.Data.RoleMappedSchema)">
+            <summary>
+            Save the trained matrix factorization model (two factor matrices) in text format
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.GetMapper``3">
+            <summary>
+            Create the mapper required by matrix factorization's predictor. That mapper maps two
+            index inputs (e.g., row index and column index) to an approximated value located by the
+            two indexes in the training matrix. In recommender system where the training matrix stores
+            ratings from users to items, the mappers maps user ID and item ID to the rating of that
+            item given by the user.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.MapperCore(System.UInt32@,System.UInt32@,System.Single@)">
+            <summary>
+            Compute the (approximated) value at the <paramref name="srcCol"/>-th column and the
+            <paramref name="srcRow"/>-th row. Notice that both of <paramref name="srcCol"/> and
+            <paramref name="srcRow"/> are 1-based indexes, so the first row/column index is 1.
+            The reason for having 1-based indexing system is that key-valued getter in ML.NET returns
+            1 for its first value and 0 is used to denote missing value.
+            </summary>
+            <param name="srcCol">1-based column index.</param>
+            <param name="srcRow">1-based row index.</param>
+            <param name="dst">value at the <paramref name="srcCol"/>-th column and the <paramref name="srcRow"/>-th row.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.Score(System.Int32,System.Int32)">
+            <summary>
+            Compute the (approximated) value at the <paramref name="columnIndex"/>-th column and the
+            <paramref name="rowIndex"/>-th row. Notice that, in contrast to <see cref="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.MapperCore(System.UInt32@,System.UInt32@,System.Single@)"/>,
+            both of <paramref name="columnIndex"/> and <paramref name="rowIndex"/> are 0-based indexes,
+            so the first row/column index is 0.
+            </summary>
+            <param name="columnIndex">0-based column index.</param>
+            <param name="rowIndex">0-based row index.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.Microsoft#ML#Data#ISchemaBindableMapper#Bind(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Data.RoleMappedSchema)">
+            <summary>
+            Create a row mapper based on regression scorer. Because matrix factorization predictor maps a tuple of a row ID (u) and a column ID (v)
+            to the expected numerical value at the u-th row and the v-th column in the considered matrix, it is essentially a regressor.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters.RowMapper.GetDependenciesForNewColumns(System.Collections.Generic.IEnumerable{Microsoft.ML.DataViewSchema.Column})">
+            <summary>
+            Given a set of columns, return the input columns that are needed to generate those output columns.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters"/>. It factorizes the training matrix into the product of two low-rank matrices.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Trainers.Recommender.MatrixFactorizationModelParameters,Microsoft.ML.DataViewSchema,System.String,System.String,System.String)">
+            <summary>
+            Build a transformer based on matrix factorization predictor (model) and the input schema (trainSchema). The created
+            transformer can only transform IDataView objects compatible to the input schema; that is, that IDataView must contain
+            columns specified by <see cref="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.MatrixColumnIndexColumnName"/>, <see cref="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.MatrixColumnIndexColumnType"/>, <see cref="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.MatrixRowIndexColumnName"/>, and <see cref="P:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.MatrixRowIndexColumnType"></see>.
+            The output column is "Score" by default but user can append a string to it.
+            </summary>
+            <param name="env">Eviroment object for showing information</param>
+            <param name="model">The model trained by one of the training functions in <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/></param>
+            <param name="trainSchema">Targeted schema that containing columns named as xColumnName</param>
+            <param name="matrixColumnIndexColumnName">The name of the column used as role <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixColumnIndexKind"/> in matrix factorization world</param>
+            <param name="matrixRowIndexColumnName">The name of the column used as role <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixRowIndexKind"/> in matrix factorization world</param>
+            <param name="scoreColumnNameSuffix">A string attached to the output column name of this transformer</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.ModelLoadContext)">
+            <summary>
+            The counter constructor of re-creating <see cref="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer"/> from the context where
+            the original transform is saved.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer.GetOutputSchema(Microsoft.ML.DataViewSchema)">
+            <summary>
+            Schema propagation for transformers.
+            Returns the output schema of the data, if the input schema is like the one provided.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> to predict elements in a matrix using matrix factorization (also known as a type of <a href="https://en.wikipedia.org/wiki/Collaborative_filtering">collaborative filtering</a>).
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [MatrixFactorization](xref:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(System.String,System.String,System.String,System.Int32,System.Double,System.Int32))
+             or [MatrixFactorization(Options)](xref:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)).
+            
+             ### Input and Output Columns
+             There are three input columns required, one for matrix row indexes, one for matrix column indexes, and one for
+             values (i.e., labels) in matrix.
+             They together define a matrix in [COO](https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)) format.
+             The type for label column is a vector of <xref:System.Single> while the other two columns are
+             [key](xref:Microsoft.ML.Data.KeyDataViewType) type scalar.
+            
+             | Output Column Name | Column Type | Description|
+             | -- | -- | -- |
+             | `Score` | <xref:System.Single> | The predicted matrix value at the location specified by input columns (row index column and column index column). |
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Recommender systems |
+             | Is normalization required? | Yes |
+             | Is caching required? | Yes |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.Recommender |
+             | Exportable to ONNX | No |
+            
+             ### Background
+             The basic idea of matrix factorization is finding two low-rank factor matrices to approximate the training matrix.
+             In this module, the expected training data (the factorized matrix) is a list of tuples.
+             Every tuple consists of a column index, a row index,
+             and the value at the location specified by the two indices. For an example data structure of a tuple, one can use:
+            
+             ```csharp
+             // The following variables defines the shape of a m-by-n matrix. Indexes start with 0; that is, our indexing system
+             // is 0-based.
+             const int m = 60;
+             const int n = 100;
+            
+             // A tuple of row index, column index, and rating. It specifies a value in the rating matrix.
+             class MatrixElement
+             {
+                 // Matrix column index starts from 0 and is at most n-1.
+                 [KeyType(n)]
+                 public uint MatrixColumnIndex;
+                 // Matrix row index starts from 0 and is at most m-1.
+                 [KeyType(m)]
+                 public uint MatrixRowIndex;
+                 // The rating at the MatrixColumnIndex-th column and the MatrixRowIndex-th row.
+                 public float Value;
+             }
+             ```
+            
+             Notice that it's not necessary to specify all entries in the training matrix, so matrix factorization can be used to fill <i>missing values</i>.
+             This behavior is very helpful when building recommender systems.
+            
+             To provide a better understanding on practical uses of matrix factorization, let's consider music recommendation as an example.
+             Assume that user IDs and music IDs are used as row and column indexes, respectively, and matrix's values are ratings provided by those users.
+             That is, rating $r$ at row $u$ and column $v$ means that user $u$ give $r$ to item $v$.
+             An incomplete matrix is very common because not all users may provide their feedbacks to all products (for example, no one can rate ten million songs).
+             Assume that $R\in{\mathbb R}^{m\times n}$ is a m-by-n rating matrix and the [rank](https://en.wikipedia.org/wiki/Rank_(linear_algebra)) of the two factor matrices are $P\in {\mathbb R}^{k\times m}$ and $Q\in {\mathbb R}^{k\times n}$, where $k$ is the approximation rank.
+             The predicted rating at the $u$-th row and the $v$-th column in $R$ would be the inner product of the $u$-th row of $P$ and the $v$-th row of $Q$; that is, $R$ is approximated by the product of $P$'s transpose ($P^T$) and $Q$.
+             Note that $k$ is usually much smaller than $m$ and $n$, so $P^T Q$ is usually called a low-rank approximation of $R$.
+            
+             This trainer includes a [stochastic gradient method](https://en.wikipedia.org/wiki/Stochastic_gradient_descent) and a [coordinate descent method](https://en.wikipedia.org/wiki/Coordinate_descent) for finding $P$ and $Q$ via minimizing the distance between (non-missing part of) $R$ and its approximation $P^T Q$.
+             The coordinate descent method included is specifically for one-class matrix factorization where all observed ratings are positive signals (that is, all rating values are 1).
+             Notice that the only way to invoke one-class matrix factorization is to assign [one-class squared loss](xref:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass)
+             to [loss function](xref:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LossFunction)
+             when calling [MatrixFactorization(Options)](xref:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)).
+             See Page 6 and Page 28 [here](https://www.csie.ntu.edu.tw/~cjlin/talks/facebook.pdf) for a brief introduction to standard matrix factorization and one-class matrix factorization.
+             The [default setting](xref:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression) induces standard matrix factorization.
+             The underlying library used in ML.NET matrix factorization can be found on [a Github repository](https://github.com/cjlin1/libmf).
+            
+             For users interested in the mathematical details, please see the references below.
+            
+             * For the multi-threading implementation of the used stochastic gradient method, see [A Fast Parallel Stochastic Gradient Method for Matrix Factorization in Shared Memory Systems](https://www.csie.ntu.edu.tw/~cjlin/papers/libmf/libmf_journal.pdf).
+             * For the computation happening inside a single thread, see [A Learning-rate Schedule for Stochastic Gradient Methods to Matrix Factorization](https://www.csie.ntu.edu.tw/~cjlin/papers/libmf/mf_adaptive_pakdd.pdf).
+             * For the parallel coordinate descent method used and one-class matrix factorization formula, see [Selection of Negative Samples for One-class Matrix Factorization](https://www.csie.ntu.edu.tw/~cjlin/papers/one-class-mf/biased-mf-sdm-with-supp.pdf).
+             * For details in the underlying library used, see [LIBMF: A Library for Parallel Matrix Factorization in Shared-memory Systems](https://www.csie.ntu.edu.tw/~cjlin/papers/libmf/libmf_open_source.pdf).
+            
+             Check the See Also section for links to usage examples.
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(System.String,System.String,System.String,System.Int32,System.Double,System.Int32)"/>
+             <seealso cref="M:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType">
+            <summary>
+            Type of loss function.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression">
+            <summary>
+            Used in traditional collaborative filtering problem with squared loss.
+            </summary>
+            <remarks>
+            See <a href="https://www.csie.ntu.edu.tw/~cjlin/papers/libmf/mf_adaptive_pakdd.pdf">Equation</a> (1).
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass">
+            <summary>
+            Used in implicit-feedback recommendation problem.
+            </summary>
+            <remarks>
+            See <a href="http://yifanhu.net/PUB/cf.pdf">Equation</a> (3).
+            </remarks>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/> as used in [MatrixFactorization(Options)](xref:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.MatrixColumnIndexColumnName">
+            <summary>
+            The name of variable (i.e., Column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used as matrix's column index.
+            The column data must be <see cref="T:System.Single"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.MatrixRowIndexColumnName">
+            <summary>
+            The name of variable (i.e., column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used as matrix's row index.
+            The column data must be <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LabelColumnName">
+            <summary>
+            The name variable (i.e., column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used as matrix's element value.
+            The column data must be <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LossFunction">
+            <summary>
+            Loss function minimized for finding factor matrices.
+            </summary>
+            <remarks>
+            Two values are allowed, <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression"/> or <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass"/>.
+            The <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression"/> means traditional collaborative filtering problem with squared loss.
+            The <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass"/> triggers one-class matrix factorization for implicit-feedback recommendation problem.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.Lambda">
+            <summary>
+            Regularization parameter.
+            </summary>
+            <remarks>
+            It's the weight of factor matrices Frobenius norms in the objective function minimized by matrix factorization's algorithm. A small value could cause over-fitting.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.ApproximationRank">
+            <summary>
+            Rank of approximation matrices.
+            </summary>
+            <remarks>
+            If input data has size of m-by-n we would build two approximation matrices m-by-k and k-by-n where k is approximation rank.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.NumberOfIterations">
+            <summary>
+            Number of training iterations.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LearningRate">
+            <summary>
+             Initial learning rate. It specifies the speed of the training algorithm.
+            </summary>
+            <remarks>
+             Small value may increase the number of iterations needed to achieve a reasonable result.
+             Large value may lead to numerical difficulty such as a infinity value.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.Alpha">
+            <summary>
+            Importance of unobserved entries' loss in one-class matrix factorization. Applicable if <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LossFunction"/> set to <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass"/>
+            </summary>
+            <remarks>
+            Importance of unobserved (i.e., negative) entries' loss in one-class matrix factorization.
+            In general, only a few of matrix entries (e.g., less than 1%) in the training are observed (i.e., positive).
+            To balance the contributions from unobserved and observed in the overall loss function, this parameter is
+            usually a small value so that the solver is able to find a factorization equally good to unobserved and observed
+            entries. If only 10000 observed entries present in a 200000-by-300000 training matrix, one can try Alpha = 10000 / (200000*300000 - 10000).
+            When most entries in the training matrix are observed, one can use Alpha >> 1; for example, if only 10000 in previous
+            matrix is not observed, one can try Alpha = (200000 * 300000 - 10000) / 10000. Consequently,
+            Alpha = (# of observed entries) / (# of unobserved entries) can make observed and unobserved entries equally important
+            in the minimized loss function. However, the best setting in machine learning is always data-dependent so user still needs to
+            try multiple values.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.C">
+            <summary>
+            Desired negative entries value in one-class matrix factorization. Applicable if <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.LossFunction"/> set to <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass"/>
+            </summary>
+            <remarks>
+            In one-class matrix factorization, all matrix values observed are one (which can be viewed as positive cases in binary classification)
+            while unobserved values (which can be viewed as negative cases in binary classification) need to be specified manually using this option.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.NumberOfThreads">
+            <summary>
+            Number of threads will be used during training. If unspecified all available threads will be use.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.Quiet">
+            <summary>
+            Suppress writing additional information to output.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options.NonNegative">
+            <summary>
+            Force the factor matrices to be non-negative.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Info">
+            <summary>
+            The <see cref="T:Microsoft.ML.TrainerInfo"/> contains general parameters for this trainer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.MatrixColumnIndexName">
+            <summary>
+            The row index, column index, and label columns needed to specify the training matrix. This trainer uses tuples of (row index, column index, label value) to specify a matrix.
+            For example, a 2-by-2 matrix
+              [9, 4]
+              [8, 7]
+            can be encoded as tuples (0, 0, 9), (0, 1, 4), (1, 0, 8), and (1, 1, 7). It means that the row/column/label column contains [0, 0, 1, 1]/
+            [0, 1, 0, 1]/[9, 4, 8, 7].
+            </summary>
+            <summary>
+            The name of variable (i.e., Column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used be as matrix's column index.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.MatrixRowIndexName">
+            <summary>
+            The name of variable (i.e., column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used as matrix's row index.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LabelName">
+            <summary>
+            The name variable (i.e., column in a <see cref="T:Microsoft.ML.IDataView"/> type system) used as matrix's element value.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/> through the <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options"/> class.
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="options">An instance of <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options"/> to apply advanced parameters to the algorithm.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.Int32,System.Double,System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/>.
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="labelColumnName">The name of the label column.</param>
+            <param name="matrixColumnIndexColumnName">The name of the column hosting the matrix's column IDs.</param>
+            <param name="matrixRowIndexColumnName">The name of the column hosting the matrix's row IDs.</param>
+            <param name="approximationRank">Rank of approximation matrices.</param>
+            <param name="learningRate">Initial learning rate. It specifies the speed of the training algorithm.</param>
+            <param name="numIterations">Number of training iterations.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Train(Microsoft.ML.TrainContext)">
+            <summary>
+            Train a matrix factorization model based on training data, validation data, and so on in the given context.
+            </summary>
+            <param name="context">The information collection needed for training. <see cref="T:Microsoft.ML.TrainContext"/> for details.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/> using both training and validation data, returns a <see cref="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer"/>.
+            </summary>
+            <param name="trainData">The training data set.</param>
+            <param name="validationData">The validation data set.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Fit(Microsoft.ML.IDataView)">
+            <summary>
+            <summary> Trains and returns a <see cref="T:Microsoft.ML.Trainers.Recommender.MatrixFactorizationPredictionTransformer"/>.</summary>
+            </summary>
+            <param name="input">The training data set.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.MatrixFactorizationTrainer.GetOutputSchema(Microsoft.ML.SchemaShape)">
+            <summary>
+            Schema propagation for transformers. Returns the output schema of the data, if
+            the input schema is like the one provided.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.RecommenderCatalog.Recommendation(Microsoft.ML.MLContext)">
+            <summary>
+            Trainers and tasks specific to recommendation problems.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.RecommendationCatalog">
+            <summary>
+            The central catalog for recommendation trainers and tasks.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.RecommendationCatalog.Trainers">
+            <summary>
+            The list of trainers for performing recommendation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(System.String,System.String,System.String,System.Int32,System.Double,System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/>, which predicts element values in a matrix using matrix factorization.
+            </summary>
+            <remarks>
+            <para>The basic idea of matrix factorization is finding two low-rank factor matrices to approximate the training matrix.</para>
+            <para>In this module, the expected training data is a list of tuples. Every tuple consists of a column index, a row index,
+            and the value at the location specified by the two indexes.
+            </para>
+            </remarks>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Single"/>.</param>
+            <param name="matrixColumnIndexColumnName">The name of the column hosting the matrix's column IDs.
+            The column data must be <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.</param>
+            <param name="matrixRowIndexColumnName">The name of the column hosting the matrix's row IDs.
+            The column data must be <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.</param>
+            <param name="approximationRank">Rank of approximation matrices.</param>
+            <param name="learningRate">Initial learning rate. It specifies the speed of the training algorithm.</param>
+            <param name="numberOfIterations">Number of training iterations.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+             [!code-csharp[MatrixFactorization](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Recommendation/MatrixFactorization.cs)]
+            ]]></format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.RecommendationCatalog.RecommendationTrainers.MatrixFactorization(Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer"/> with advanced options, which predicts element values in a matrix using matrix factorization.
+            </summary>
+            <remarks>
+            <para>The basic idea of matrix factorization is finding two low-rank factor matrices to approximate the training matrix.</para>
+            <para>In this module, the expected training data is a list of tuples. Every tuple consists of a column index, a row index,
+            and the value at the location specified by the two indexes. The training configuration is encoded in <see cref="T:Microsoft.ML.Trainers.MatrixFactorizationTrainer.Options"/>.
+            To invoke one-class matrix factorization, user needs to specify <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass"/>.
+            The default setting <see cref="F:Microsoft.ML.Trainers.MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression"/> is for standard matrix factorization problem.
+            </para>
+            </remarks>
+            <param name="options">Trainer options.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+             [!code-csharp[MatrixFactorization](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Recommendation/MatrixFactorizationWithOptions.cs)]
+             [!code-csharp[MatrixFactorization](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Recommendation/OneClassMatrixFactorizationWithOptions.cs)]
+            ]]></format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.RecommendationCatalog.Evaluate(Microsoft.ML.IDataView,System.String,System.String)">
+            <summary>
+            Evaluates the scored recommendation data.
+            </summary>
+            <param name="data">The scored data.</param>
+            <param name="labelColumnName">The name of the label column in <paramref name="data"/>.</param>
+            <param name="scoreColumnName">The name of the score column in <paramref name="data"/>.</param>
+            <returns>The evaluation results for these calibrated outputs.</returns>
+        </member>
+        <member name="M:Microsoft.ML.RecommendationCatalog.CrossValidate(Microsoft.ML.IDataView,Microsoft.ML.IEstimator{Microsoft.ML.ITransformer},System.Int32,System.String,System.String,System.Nullable{System.Int32})">
+            <summary>
+            Run cross-validation over <paramref name="numberOfFolds"/> folds of <paramref name="data"/>, by fitting <paramref name="estimator"/>,
+            and respecting <paramref name="samplingKeyColumnName"/> if provided.
+            Then evaluate each sub-model against <paramref name="labelColumnName"/> and return metrics.
+            </summary>
+            <param name="data">The data to run cross-validation on.</param>
+            <param name="estimator">The estimator to fit.</param>
+            <param name="numberOfFolds">Number of cross-validation folds.</param>
+            <param name="labelColumnName">The label column (for evaluation).</param>
+            <param name="samplingKeyColumnName">Optional name of the column to use as a stratification column. If two examples share the same value of the <paramref name="samplingKeyColumnName"/>
+            (if provided), they are guaranteed to appear in the same subset (train or test). Use this to make sure there is no label leakage from train to the test set.
+            If this optional parameter is not provided, a stratification columns will be generated, and its values will be random numbers .</param>
+            <param name="seed">Optional parameter used in combination with the <paramref name="samplingKeyColumnName"/>.
+            If the <paramref name="samplingKeyColumnName"/> is not provided, the random numbers generated to create it, will use this seed as value.
+            And if it is not provided, the default value will be used.</param>
+            <returns>Per-fold results: metrics, models, scored datasets.</returns>
+        </member>
+        <member name="M:Microsoft.ML.Recommender.RecommenderUtils.CheckAndGetMatrixIndexColumns(Microsoft.ML.Data.RoleMappedData,Microsoft.ML.DataViewSchema.Column@,Microsoft.ML.DataViewSchema.Column@,System.Boolean)">
+            <summary>
+            Check if the considered data, <see cref="T:Microsoft.ML.Data.RoleMappedData"/>, contains column roles specified by <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixColumnIndexKind"/> and <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixRowIndexKind"/>.
+            If the column roles, <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixColumnIndexKind"/> and <see cref="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixRowIndexKind"/>, uniquely exist in data, their <see cref="T:Microsoft.ML.DataViewSchema.Column"/> would be assigned
+            to the two out parameters below.
+            </summary>
+            <param name="data">The considered data being checked</param>
+            <param name="matrixColumnIndexColumn">The schema column as the row in the input data</param>
+            <param name="matrixRowIndexColumn">The schema column as the column in the input data</param>
+            <param name="isDecode">Whether a non-user error should be thrown as a decode</param>
+        </member>
+        <member name="M:Microsoft.ML.Recommender.RecommenderUtils.TryMarshalGoodRowColumnType(Microsoft.ML.Data.DataViewType,Microsoft.ML.Data.KeyDataViewType@)">
+            <summary>
+            Returns whether a type is a U4 key of known cardinality, and if so, sets
+            <paramref name="keyType"/> to a non-null value.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Recommender.RecommenderUtils.CheckRowColumnType(Microsoft.ML.Data.RoleMappedData,Microsoft.ML.Data.RoleMappedSchema.ColumnRole,Microsoft.ML.DataViewSchema.Column@,System.Boolean)">
+            <summary>
+            Checks whether a column kind in a <see cref="T:Microsoft.ML.Data.RoleMappedData"/> is unique, and its type
+            is a <see cref="F:Microsoft.ML.Data.InternalDataKind.U4"/> key of known cardinality.
+            </summary>
+            <param name="data">The training examples</param>
+            <param name="role">The column role to try to extract</param>
+            <param name="col">The extracted schema column</param>
+            <param name="isDecode">Whether a non-user error should be thrown as a decode</param>
+            <returns>The type cast to a key-type</returns>
+        </member>
+        <member name="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixColumnIndexKind">
+            <summary>
+            The column role that is treated as column index in matrix factorization problem
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Recommender.RecommenderUtils.MatrixRowIndexKind">
+            <summary>
+            The column role that is treated as row index in matrix factorization problem
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer">
+            <summary>
+            Contains mirrors of unmanaged struct import extern functions from mf.h / mf.cpp, which implements Matrix Factorization in native C++.
+            It also wraps/bridges the train, traintest and cv interfaces ready for ML.NET infra.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFNode.U">
+            <summary>
+            Row index.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFNode.V">
+            <summary>
+            Column index;
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFNode.R">
+            <summary>
+            Matrix element's value at <see cref="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFNode.U"/>-th row and <see cref="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFNode.V"/>-th column.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFProblem.M">
+            <summary>
+            Number of rows.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFProblem.N">
+            <summary>
+            Number of columns.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFProblem.Nnz">
+            <summary>
+            Number of specified matrix elements in <see cref="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFProblem.R"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFProblem.R">
+            <summary>
+            Specified matrix elements.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.Fun">
+            <summary>
+            Enum of loss functions which can be minimized.
+             0: square loss for regression.
+             1: absolute loss for regression.
+             2: KL-divergence for regression.
+             5: logistic loss for binary classification.
+             6: squared hinge loss for binary classification.
+             7: hinge loss for binary classification.
+             10: row-wise Bayesian personalized ranking.
+             11: column-wise Bayesian personalized ranking.
+             12: squared loss for implicit-feedback matrix factorization.
+            Fun 12 is solved by a coordinate descent method while other functions invoke
+            a stochastic gradient method.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.K">
+            <summary>
+            Rank of factor matrices.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.NrThreads">
+            <summary>
+            Number of threads which can be used for training.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.NrBins">
+            <summary>
+            Number of blocks that the training matrix is divided into. The parallel stochastic gradient
+            method in LIBMF processes assigns each thread a block at one time. The ratings in one block
+            would be sequentially accessed (not randomaly accessed like standard stochastic gradient methods).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.NrIters">
+            <summary>
+            Number of training iteration. At one iteration, all values in the training matrix are roughly accessed once.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.LambdaP1">
+            <summary>
+            L1-norm regularization coefficient of left factor matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.LambdaP2">
+            <summary>
+            L2-norm regularization coefficient of left factor matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.LambdaQ1">
+            <summary>
+            L1-norm regularization coefficient of right factor matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.LambdaQ2">
+            <summary>
+            L2-norm regularization coefficient of right factor matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.Eta">
+            <summary>
+            Learning rate of LIBMF's stochastic gradient method.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.Alpha">
+            <summary>
+            Coefficient of loss function on unobserved entries in the training matrix. It's used only with fun=12.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.C">
+            <summary>
+            Desired value of unobserved entries in the training matrix. It's used only with fun=12.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.DoNmf">
+            <summary>
+            Specify if the factor matrices should be non-negative.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.Quiet">
+            <summary>
+            Set to true so that LIBMF may produce less information to STDOUT.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.CopyData">
+            <summary>
+            Set to false so that LIBMF may reuse and modifiy the data passed in.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.Fun">
+            <summary>
+            See <see cref="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFParameter.Fun"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.M">
+            <summary>
+            Number of rows in the training matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.N">
+            <summary>
+            Number of columns in the training matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.K">
+            <summary>
+            Rank of factor matrices.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.B">
+            <summary>
+            Average value in the training matrix.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.P">
+            <summary>
+            Left factor matrix. Its shape is M-by-K stored in row-major format.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Recommender.Internal.SafeTrainingAndModelBuffer.MFModel.Q">
+            <summary>
+            Right factor matrix. Its shape is N-by-K stored in row-major format.
+            </summary>
+        </member>
+    </members>
+</doc>

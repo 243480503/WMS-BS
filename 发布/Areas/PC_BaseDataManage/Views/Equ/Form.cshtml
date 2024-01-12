@@ -1,0 +1,113 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_BaseDataManage/Equ/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+
+        $.hideBaseData();
+    });
+
+    function initControl() {
+        $("#EquType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Equ&fieldName=EquType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Equ&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+    }
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+
+        $.submitForm({
+            url: "/PC_BaseDataManage/Equ/SubmitForm?keyValue=" + keyValue,
+            param: data,
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">设备名称</th>
+                <td class="formValue">
+                    <input id="EquName" name="EquName" type="text" class="form-control required" placeholder="请输入设备名称" />
+                </td>
+                <th class="formTitle">设备编码</th>
+                <td class="formValue">
+                    <input id="EquCode" name="EquCode" type="text" class="form-control required" placeholder="请输入设备编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">设备类型</th>
+                <td class="formValue">
+                    <select id="EquType" name="EquType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">设备状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+               
+                <th class="formTitle">故障消息</th>
+                <td class="formValue">
+                    <input id="ErrMsg" name="ErrMsg" type="text" class="form-control" readonly="readonly" placeholder="" />
+                </td>
+            </tr>
+
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsEnable" name="IsEnable" type="checkbox" checked="checked"><label for="IsEnable">启用</label>
+                    </div>
+                    <div class="ckbox"  >
+                        <input id="IsBase" name="IsBase" sysbasedata="yes" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

@@ -1,0 +1,251 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_BaseDataManage/Station/GetGridJson",
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '站台名称', name: 'StationName', width: 100, align: 'left' },
+                { label: '站台编码', name: 'StationCode', width: 150, align: 'left' },
+                {
+                    label: '当前单据类型', name: 'OrderType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.OrderType == "") return "";
+                        else return rowObject.CurOrderTypeName;
+                    }
+                },
+                {
+                    label: '当前单据编码', name: 'CurOrderID', width: 150, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.CurOrderID == "") return "";
+                        else return rowObject.CurOrderCode;;
+                    }
+                },
+                { label: '当前容器条码', name: 'BarCode', width: 200, align: 'left' },
+                {
+                    label: "站台模式", name: "CurModel", width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.CurModelName;
+                    }
+                },
+                //{
+                //    label: "打印模式", name: "CurModelName", width: 100, align: 'left',
+                //    formatter: function (cellvalue, options, rowObject) {
+                //        var detail = "";
+                //        if (rowObject.CurModel == "Empty") //空容器入库模式
+                //        {
+                //            detail = rowObject.CurModelName +"&nbsp;&nbsp;&nbsp;&nbsp;<div  onclick=\"PrintPage(\'" + rowObject.F_Id + "\')\" title='标签打印' class='fa fa-print' style='color:#336699;cursor:pointer;'></div>";
+                //        }
+                //        else if (rowObject.CurModel == "Normal") {
+                //            detail = rowObject.CurModelName;
+                //        }
+                //        return detail;
+                //    }
+                //},
+                { label: "到达地址", name: "TagAddress", width: 80, align: 'left' },
+                { label: "离开地址", name: "LeaveAddress", width: 80, align: 'left' },
+                {
+                    label: '是否启用', name: 'IsEnable', width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '是否故障', name: 'IsErr', width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '系统数据', name: 'IsBase', width: 60, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                { label: '故障消息', name: 'ErrMsg', width: 200, align: 'left' },
+                { label: '备注', name: 'Remark', width: 150, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'StationCode asc',
+            viewrecords: true,
+        });
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function PrintPage() {
+        $.modalOpen({
+            id: "Form",
+            title: "打印条码",
+            url: "/PC_BaseDataManage/Station/PrintPage",
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增站台",
+            url: "/PC_BaseDataManage/Station/Form",
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_bind() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "单据绑定",
+            url: "/PC_BaseDataManage/Station/BindForm?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "修改站台",
+            url: "/PC_BaseDataManage/Station/Form?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_delete() {
+        $.deleteForm({
+            url: "/PC_BaseDataManage/Station/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看站台",
+            url: "/PC_BaseDataManage/Station/Details?keyValue=" + keyValue,
+            width: "600px",
+            height: "480px",
+            btn: null,
+        });
+    }
+
+    function btn_changemodel() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == "" || keyValue == null) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        $.ajaxWMS({
+            url: "/PC_BaseDataManage/Station/ChangeModel",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            type: "Post",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    $.modalMsg(data.message, data.state);
+                } else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+
+    function btn_clear() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.ajaxWMS({
+            url: "/PC_BaseDataManage/Station/ClearStation",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            type: "Post",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.currentWindow().$("#gridList").trigger("reloadGrid");
+                    $.modalMsg(data.message, data.state);
+                } else {
+                    $.modalAlert(data.message, data.state);
+                }
+
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建站台</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改站台</a></li>
+                <li><a id="NF-checkmodel" authorize="yes" onclick="btn_changemodel()"><i class="fa fa-pencil-square-o"></i>模式切换</a></li>
+                <li><a id="NF-clear" authorize="yes" onclick="btn_clear()"><i class="fa fa-pencil-square-o"></i>清空站台</a></li>
+                <li><a id="NF-bind" authorize="yes" onclick="btn_bind()"><i class="fa fa-pencil-square-o"></i>单据绑定</a></li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除站台</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看站台</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="站台名称 / 站台编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

@@ -1,0 +1,101 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+
+    var keyValue = $.request("keyValue");
+
+    $(function () {
+        $("#CountModel").select2();
+    });
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+
+        var equList = "";
+        if (data.CTU2001 == true) {
+            equList = equList == "" ? "2001" : (equList + ",2001");
+        }
+        if (data.CTU2002 == true) {
+            equList = equList == "" ? "2002" : (equList + ",2002");
+        }
+        if (data.CTU2003 == true) {
+            equList = equList == "" ? "2003" : (equList + ",2003");
+        }
+        if (data.CTU2004 == true) {
+            equList = equList == "" ? "2004" : (equList + ",2004");
+        }
+        if (data.AGV1001 == true) {
+            equList = equList == "" ? "1001" : (equList + ",1001");
+        }
+        if (data.AGV1002 == true) {
+            equList = equList == "" ? "1002" : (equList + ",1002");
+        }
+
+        $.submitForm({
+            loading: "正在处理...",
+            url: "/PC_CountManage/Count/GenReCount",
+            param: { countID: keyValue, countModel: data.CountModel, agvCodeStr: equList, remark: data.Remark},
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>注意：</strong>&nbsp;异常记录将被修正为正常，并重新产生盘点任务！
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">模式</th>
+                <td class="formValue" colspan="3">
+                    <select id="CountModel" name="CountModel" class="form-control required">
+                        <option value="2">仅异常</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 11px;">
+                    备注
+                </th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行设备</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="CTU2001" name="CTU2001" type="checkbox"><label for="CTU2001">CTU-2001</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="CTU2002" name="CTU2002" type="checkbox"><label for="CTU2002">CTU-2002</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="CTU2003" name="CTU2003" type="checkbox"><label for="CTU2003">CTU-2003</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="CTU2004" name="CTU2004" type="checkbox"><label for="CTU2004">CTU-2004</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="AGV1001" name="AGV1001" type="checkbox"><label for="AGV1001">AGV-1001</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="AGV1002" name="AGV1002" type="checkbox"><label for="AGV1002">AGV-1002</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

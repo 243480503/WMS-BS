@@ -1,0 +1,117 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_MoveManage/Move/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                    $("#State").attr("disabled", "disabled");
+                    //$("#AreaCode").attr("disabled", "disabled");
+                    //$("#IsAuto").attr("disabled", "disabled");
+                    if ($("#State").val() != 'New' || data.IsHaveDetail == "true") { //要么不是新建，要么有明细
+                        $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                    }
+                }
+            });
+        }
+        else {
+            $.ajax({
+                url: "/PC_MoveManage/Move/GenNum",
+                data: { ruleCode: "MoveRule" },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    var dataSer = { "MoveCode": data.Code, "State": "New", "AreaCode": "NormalArea" };
+                    $("#form1").formSerialize(dataSer);
+                    $("#State").attr("disabled", "disabled");
+                }
+            });
+        }
+    });
+
+    function initControl() {
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Move&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#AreaCode").bindSelect({
+            url: "/PC_MoveManage/Move/GetAreaDicList",
+            id: "AreaCode",
+            text: "AreaName"
+        });
+    }
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+
+        $.submitForm({
+            url: "/PC_MoveManage/Move/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">移库编码</th>
+                <td class="formValue">
+                    <input id="MoveCode" name="MoveCode" readonly="readonly" type="text" class="form-control required" placeholder="请输入移库编码" />
+                </td>
+                <th class="formTitle">移库状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">区域</th>
+                <td class="formValue">
+                    <select id="AreaCode" name="AreaCode" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsAuto" name="IsAuto" type="checkbox"><label for="IsAuto">是否自动</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsReverse" name="IsReverse" type="checkbox"><label for="IsReverse">逆向整理</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

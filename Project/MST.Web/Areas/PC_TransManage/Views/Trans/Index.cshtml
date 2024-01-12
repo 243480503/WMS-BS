@@ -1,0 +1,149 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    var queryJson = "";
+
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        queryJson = { resultType: $("#result_horizon a.active").attr('data-value') }
+        $gridList.dataGrid({
+            url: "/PC_TransManage/Trans/GetGridJson",
+            postData: { queryJson: JSON.stringify(queryJson) },
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '单据编号', name: 'OrderCode', width: 150, align: 'left' },
+                {
+                    label: '单据类型', name: 'OrderType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.OrderTypeName;
+                    }
+                },
+                { label: '最大过账次数', name: 'MaxTransCount', width: 150, align: 'left' },
+                { label: "失败次数", name: "ErrCount", width: 150, align: 'left' },
+                { label: "最后过账时间", name: "LastTime", width: 160, align: 'left' },
+                {
+                    label: "是否忽略", name: "IsIgnore", width: 100, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: "状态", name: "State", width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.StateName;
+                    }
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'LastTime desc',
+            viewrecords: true,
+        });
+
+        $("#btn_search").click(function () {
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                resultType: $("#result_horizon a.active").attr('data-value')
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "修改过账",
+            url: "/PC_TransManage/Trans/Form?keyValue=" + keyValue,
+            width: "750px",
+            height: "580px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_send() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.ajaxWMS({
+            url: "/PC_TransManage/Trans/SendByHand?keyValue=" + keyValue,
+            data: {},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改</a></li>
+                <li><a id="NF-send" authorize="yes" onclick="btn_send()"><i class="fa fa-send-o"></i>推送</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="单据编号" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default active" data-value="1">全部</a>
+                        <a class="btn btn-default" data-value="2">未过账</a>
+                        <a class="btn btn-default" data-value="3">成功</a>
+                        <a class="btn btn-default" data-value="4">失败</a>
+                        <a class="btn btn-default" data-value="5">忽略</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>
+
+
+

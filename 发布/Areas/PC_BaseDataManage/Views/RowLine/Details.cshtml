@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue"); //行ID（新增则无，修改则有）
+    var devRowID = $.request("devRowID"); //巷道ID
+    var areaID = $.request("areaID"); //区域ID
+
+    $(function () {
+
+        initControl();
+        $("#SplitLowLayer_In").bindSelect();
+
+
+        $.ajax({
+            url: "/PC_BaseDataManage/RowLine/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+
+                if (keyValue != "") {
+                    $("#Line").attr("disabled", "disabled");
+                    bindSplitLowLayer(data.Line);
+                    $("#SplitLowLayer_In").val(data.SplitLowLayer_In).trigger("change");
+                    $("#SplitLowLayer_In").attr("disabled", "disabled");
+                    if (data.SplitLowLayer_In == 0) {
+                        $(".IsLowPriorityBox").hide();
+                    }
+                }
+
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+                $("#Line").attr("disabled", "disabled");
+            }
+        });
+
+        //高低分层为0，则不需要低层优先选项
+        $("#SplitLowLayer_In").change(function () {
+            var layer = $("#SplitLowLayer_In option:checked").val();
+            if (layer == 0) {
+                $(".IsLowPriorityBox").hide();
+            }
+            else {
+                $(".IsLowPriorityBox").show();
+            }
+        });
+
+        //切换行，变更层下拉列表
+        $("#Line").change(function () {
+            var line = $("#Line option:checked").val();
+            bindSplitLowLayer(line);
+        });
+
+        $.hideBaseData();
+    });
+
+
+    function initControl() {
+        $("#Line").bindSelect({
+            url: "/PC_BaseDataManage/RowLine/GetLineDicList?areaID=" + areaID + "&devRowID=" + devRowID,
+            id: "Line",
+            text: "Line",
+            search: true
+        });
+    }
+
+    function bindSplitLowLayer(line) {
+        $("#SplitLowLayer_In").bindSelect({
+            url: "/PC_BaseDataManage/RowLine/GetLayerDicList?areaID=" + areaID + "&line=" + line,
+            id: "Layer",
+            text: "Layer",
+            search: true
+        });
+    }
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">行号</th>
+                <td class="formValue">
+                    <select id="Line" name="Line" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">连续分配</th>
+                <td class="formValue">
+                    <input id="ContinuityCount_In" name="ContinuityCount_In" type="number" min="1" class="form-control required" placeholder="连续分配到此行数(最小为1)" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">已分配数</th>
+                <td class="formValue">
+                    <input id="CurOverCount_In" name="CurOverCount_In" type="number" min="0" class="form-control required" placeholder="已连续分配数(可为0)" />
+                </td>
+                <th class="formTitle">高低分层</th>
+                <td class="formValue">
+                    <select id="SplitLowLayer_In" name="SplitLowLayer_In" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+
+                    <div class="ckbox">
+                        <input id="IsCursor" name="IsCursor" type="checkbox"><label for="IsCursor">当前游标</label>
+                    </div>
+                    <div class="ckbox IsLowPriorityBox">
+                        <input id="IsLowPriority_In" name="IsLowPriority_In" type="checkbox" checked="checked"><label for="IsLowPriority_In">低层优先</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsColumnDesc_In" name="IsColumnDesc_In" type="checkbox"><label for="IsColumnDesc_In">列倒序</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsLayerDesc_In" name="IsLayerDesc_In" type="checkbox"><label for="IsLayerDesc_In">层倒序</label>
+                    </div>
+
+                    <div class="ckbox">
+                        <input id="IsEnable" name="IsEnable" type="checkbox" checked="checked"><label for="IsEnable">是否启用</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" sysbasedata="yes" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

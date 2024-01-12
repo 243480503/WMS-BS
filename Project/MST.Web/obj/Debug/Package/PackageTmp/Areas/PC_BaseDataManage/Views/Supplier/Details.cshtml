@@ -1,0 +1,85 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $.ajax({
+            url: "/PC_BaseDataManage/Supplier/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">供应商名称</th>
+                <td class="formValue">
+                    <input id="SupplierName" name="SupplierName" type="text" class="form-control required" placeholder="请输入供应商名称" />
+                </td>
+                <th class="formTitle">供应商编码</th>
+                <td class="formValue">
+                    <input id="SupplierCode" name="SupplierCode" type="text" class="form-control required" placeholder="请输入供应商编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">电话</th>
+                <td class="formValue">
+                    <input id="SupplierPho" name="SupplierPho" type="text" class="form-control required" placeholder="请输入电话" />
+                </td>
+                <th class="formTitle">地址</th>
+                <td class="formValue">
+                    <input id="SupplierAddr" name="SupplierAddr" type="text" class="form-control required" placeholder="请输入地址" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsEnable" name="IsEnable" type="checkbox" checked="checked"><label for="IsEnable">有效</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

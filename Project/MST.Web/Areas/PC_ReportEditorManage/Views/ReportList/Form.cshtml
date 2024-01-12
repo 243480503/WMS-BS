@@ -1,0 +1,108 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_ReportEditorManage/ReportList/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                    $("#AreaCode").attr("disabled", "disabled");
+                }
+            });
+        }
+
+        $.hideBaseData();
+    });
+    function initControl() {
+        $("#ParentID").bindSelect({
+            url: "/PC_BaseDataManage/Area/GetTreeSelectJson"
+        });
+
+        $("#AreaType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Area&fieldName=AreaType",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/PC_BaseDataManage/Area/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                top.ItemsType.$("#gridList").resetSelection();
+                top.ItemsType.$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div class="widget-body">
+        <div id="wizard" class="wizard" data-target="#wizard-steps" style="border-left: none; border-top: none; border-right: none;">
+            <ul class="steps">
+                <li data-target="#step-1" class="active"><span class="step">1</span>基本信息<span class="chevron"></span></li>
+                <li data-target="#step-2"><span class="step">2</span>功能权限<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content" id="wizard-steps" style="border-left: none; border-bottom: none; border-right: none;">
+            <div class="step-pane active" id="step-1" style="margin: 10px; margin-bottom: 0px;">
+                <div class="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table class="form">
+                            <tr>
+                                <th class="formTitle">配置名称</th>
+                                <td class="formValue">
+                                    <input id="F_FullName" name="F_FullName" type="text" class="form-control required" placeholder="请输入角色名称" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">配置编码</th>
+                                <td class="formValue">
+                                    <input id="F_EnCode" name="F_EnCode" type="text" class="form-control required" placeholder="请输入角色编号" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">数据源</th>
+                                <td class="formValue">
+                                    <select id="DataSourceID" name="F_OrganizeId" class="form-control required">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                                    备注
+                                </th>
+                                <td class="formValue">
+                                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-2">
+                <div id="permissionTree"></div>
+            </div>
+        </div>
+        <div class="form-button" id="wizard-actions">
+            <a id="btn_last" disabled class="btn btn-default btn-prev">上一步</a>
+            <a id="btn_next" class="btn btn-default btn-next">下一步</a>
+            <a id="btn_finish" class="btn btn-default" style="display: none;" onclick="submitForm()">完成</a>
+        </div>
+    </div>
+</form>

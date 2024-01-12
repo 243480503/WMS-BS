@@ -1,0 +1,302 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<script>
+    $(function () {
+        $('#layout').layout();
+        treeView();
+        $($("#AreaTree>div>div>ul>li>div")[0]).trigger("click");
+        var id = $("#AreaTree").getCurrentNode().id;
+        gridList(id);
+        //gridList();
+    });
+    function treeView() {
+        $("#AreaTree").treeview({
+            url: "/PC_BaseDataManage/Location/GetTreeJson",
+            onnodeclick: function (loc) {
+                $("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+    function gridList(id) {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            height: $(window).height() - 130,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '区域名称', name: 'AreaName', width: 100, align: 'left' },
+                {
+                    label: '货位类型', name: 'LocationType', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.LocationTypeName;
+                    }
+                },
+                { label: '货位编码', name: 'LocationCode', width: 150, align: 'left' },
+                { label: 'WCS货位编码', name: 'WCSLocCode', width: 150, align: 'left' },
+                { label: '货位高度', name: 'High', width: 80, align: 'left' },
+                { label: '货位宽度', name: 'Width', width: 80, align: 'left' },
+                { label: '行', name: 'Line', width: 80, align: 'left' },
+                { label: '列', name: 'ColNum', width: 80, align: 'left' },
+                { label: '层', name: 'Layer', width: 80, align: 'left' },
+                {
+                    label: '货位状态', name: 'State', width: 80, align: 'center', formatter: function (cellvalue, options, rowObject) {
+                        return rowObject.StateName;
+                    }
+                },
+                {
+                    label: '禁用状态', name: 'ForbiddenState', width: 100, align: 'center',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.ForbiddenState == "Normal") { //正常
+                            return '<span class=\"label label-success\">' + rowObject.ForbiddenStateName + '</span>';
+                        } else if (rowObject.ForbiddenState == "Lock") { //锁定
+                            return '<span class=\"label label-danger\">' + rowObject.ForbiddenStateName + '</span>';
+                        } else if (rowObject.ForbiddenState == "OnlyIn") { //可入不可出
+                            return '<span class=\"label label-info\">' + rowObject.ForbiddenStateName + '</span>';
+                        }
+                        else if (rowObject.ForbiddenState == "OnlyOut") { //可出不可入
+                            return '<span class=\"label label-warning\">' + rowObject.ForbiddenStateName + '</span>';
+                        }
+                        else {
+                            return cellvalue;
+                        }
+                    }
+                },
+                {
+                    label: '系统数据', name: 'IsBase', width: 80, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'LocationCode asc',
+            viewrecords: true,
+            url: "/PC_BaseDataManage/Location/GetGridJson",
+            postData: { areaId: id, keyword: "" },
+        });
+
+        $("#loc_horizon a.btn-default").click(function () {
+            $("#loc_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        $("#loc_state a.btn-default").click(function () {
+            $("#loc_state a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        $("#loc_forb a.btn-default").click(function () {
+            $("#loc_forb a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        //查询按钮
+        $("#btn_search").click(function () {
+
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                locationType: $("#loc_horizon a.active").attr('data-value'),
+                state: $("#loc_state a.active").attr('data-value'),
+                forb: $("#loc_forb a.active").attr('data-value')
+            }
+
+            $gridList.jqGrid('setGridParam', {
+                url: "/PC_BaseDataManage/Location/GetGridJson",
+                postData: { areaId: $("#AreaTree").getCurrentNode().id, queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    //新建立库货位弹出窗
+    function btn_cube_add() {
+        var areaId = $("#AreaTree").getCurrentNode().id;
+        var areaName = $("#AreaTree").getCurrentNode().text;
+        if (!areaId) {
+            return false;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: areaName + " > 新建立库货位",
+            url: "/PC_BaseDataManage/Location/CubeForm?areaId=" + areaId + "&areaName=" + escape(areaName),
+            width: "700px",
+            height: "550px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //新建平库货位弹出窗
+    function btn_flat_add() {
+        var areaId = $("#AreaTree").getCurrentNode().id;
+        var areaName = $("#AreaTree").getCurrentNode().text;
+
+        if (!areaId) {
+            return false;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: areaName + " > 新建平库货位",
+            url: "/PC_BaseDataManage/Location/FlatForm?areaId=" + areaId + "&areaName=" + escape(areaName),
+            width: "650px",
+            height: "470px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //修改货位
+    function btn_edit() {
+        var areaName = $("#AreaTree").getCurrentNode().text;
+        var areaId = $("#AreaTree").getCurrentNode().id;
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == undefined) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: areaName + " > 修改货位",
+            url: "/PC_BaseDataManage/Location/Form?areaId=" + areaId + "&keyValue=" + keyValue,
+            width: "650px",
+            height: "500px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    //删除货位
+    function btn_delete() {
+        $.deleteForm({
+            url: "/PC_BaseDataManage/Location/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $("#gridList").resetSelection();
+                $("#gridList").trigger("reloadGrid");
+            }
+        })
+    }
+
+    //查看货位明细
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        if (keyValue == undefined) {
+            $.modalMsg("未选中数据", "error");
+            return;
+        }
+        $.modalOpen({
+            id: "Details",
+            title: "查看货位",
+            url: "/PC_BaseDataManage/Location/Details?keyValue=" + keyValue,
+            width: "650px",
+            height: "520px",
+            btn: null,
+        });
+    }
+
+    //区域管理
+    function btn_itemstype() {
+        $.modalOpen({
+            id: "ItemsType",
+            title: "区域管理",
+            url: "/PC_BaseDataManage/Area/Index",
+            width: "1000px",
+            height: "650px",
+            btn: null,
+        });
+    }
+</script>
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-west">
+        <div id="AreaTree"></div>
+    </div>
+
+    <div class="ui-layout-center">
+
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+
+                <div class="btn-group">
+                    <a id="NF-Imp" class="btn btn-primary dropdown-text"><i class="fa fa-plus"></i>新建货位</a>
+                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                    <ul class="dropdown-menu pull-right">
+                        <li> <a id="NF-cube-add" authorize="yes" onclick="btn_cube_add()" href="javascript:void()">立库货位</a></li>
+                        <li><a id="NF-flat-add" authorize="yes" onclick="btn_flat_add()" href="javascript:void()">平库货位</a></li>
+                    </ul>
+                </div>
+
+                <div class="btn-group">
+                    <a id="NF-itemstype" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_itemstype()" href="javascript:void()">区域管理</a>
+                </div>
+                <div class="operate">
+                    <ul class="nav nav-pills">
+                        <li class="first">已选中<span>1</span>项</li>
+                        <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>修改货位</a></li>
+                        <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除货位</a></li>
+                        <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看货位</a></li>
+                    </ul>
+                    <a href="javascript:;" class="close"></a>
+                </div>
+                <script>$('.toolbar').authorizeButton()</script>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="货位编码" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                            <div id="loc_horizon" class="btn-group">
+                                <a class="btn btn-default active" data-value="0">全部</a>
+                                <a class="btn btn-default" data-value="1">立库</a>
+                                <a class="btn btn-default" data-value="2">平库</a>
+                            </div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                            <div id="loc_state" class="btn-group">
+                                <a class="btn btn-default active" data-value="0">全部</a>
+                                <a class="btn btn-default" data-value="1">已存储</a>
+                                <a class="btn btn-default" data-value="2">空</a>
+                                <a class="btn btn-default" data-value="3">待入库</a>
+                                <a class="btn btn-default" data-value="4">待出库</a>
+                            </div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                            <div id="loc_forb" class="btn-group">
+                                <a class="btn btn-default active" data-value="0">全部</a>
+                                <a class="btn btn-default" data-value="1">禁用</a>
+                                <a class="btn btn-default" data-value="2">正常</a>
+                            </div>
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+
+        </div>
+        <div class="gridPanel">
+            <table id="gridList"></table>
+            <div id="gridPager"></div>
+        </div>
+    </div>
+</div>

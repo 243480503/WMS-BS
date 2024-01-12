@@ -1,0 +1,281 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+
+    $(function () {
+        //初始化标题与来源单据号
+        $(".title").text(parentName + " - " + curName);
+        //获取库存信息
+
+        initControl();
+        //$("#form1").formSerialize({ TagStation: "1a380c3e-06e1-4cbe-b472-f3c0f9ddfb77" });
+        //$("#TagStation").select2({ disabled: "readonly" });
+
+        //在切换标签事件时
+        $("#tab2").bind("shown.bs.tab", function () {
+            //gridList();
+
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: {}
+            //}).trigger('reloadGrid');
+            BindRFList();
+        });
+
+        $("#BarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                scanBarCode();
+            }
+        });
+
+        $("#BarCode").bind("blur", function () {
+            scanBarCode();
+        });
+
+        $("#isPointLoc").bind("change", function () {
+            if (!$(this).is(":checked")) {
+                $("#PointLocCode").show();
+            }
+            else {
+                $("#PointLocCode").hide();
+            }
+        });
+
+
+        $("#isExceptionContainer").bind("change", function () {
+            if (!$(this).is(":checked")) {
+                $(".NotException").show();
+            }
+            else {
+                $(".NotException").hide();
+            }
+        });
+
+    });
+
+    function scanBarCode() {
+        var barCode = $("#BarCode").val();
+        if (barCode == "") {
+            return;
+        }
+
+        var stationID = $("#TagStation option:selected").val();
+        if (stationID == undefined || stationID == "") {
+            $.modalMsg("请先选定站台", "warning");
+            return;
+        }
+
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFScan/GetBarTask",
+            data: { barCode: barCode },
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+
+                if (data != null) {
+                    if (data.IsCanExec == "true") {
+                        if (data.IsHandPointLoc == "true") { //手动指定
+                            $("#isPointLoc").attr("check", "checked");
+                            $("#isPointLoc").attr("readonly", "readonly");
+                            $("#PointLocCode").show();
+                            $("#PointLocCode").val(data.SrcLocationCode);
+                            $("#PointLocCode").attr("readonly", "readonly");
+                        }
+                        else {
+                            $("#isPointLoc").removeAttr("check");
+                            $("#isPointLoc").removeAttr("readonly");
+                            $("#PointLocCode").hide();
+                            $("#PointLocCode").val("");
+                            $("#PointLocCode").removeAttr("readonly");
+                        }
+                    }
+                    else {
+                        $.modalMsg("存在任务，但状态为不可执行", "warning");
+                    }
+                }
+            }
+        });
+    }
+
+    //初始化站台信息
+    function initControl() {
+        $("#TagStation").bindSelect({
+            url: "/RF_OtherManage/RFScan/GetStationDicList",
+            id: "F_Id",
+            text: "StationName"
+        });
+    }
+
+    //function gridList() {
+    //    var $gridList = $("#gridList");
+    //    $gridList.dataGrid({
+    //        url: "/RF_OtherManage/RFScan/GetTask",
+    //        shrinkToFit: true,
+    //        colModel: [
+    //            { label: "主键", name: "F_Id", hidden: true, key: true },
+    //            { label: '任务编码', name: 'TaskNo', width: "30", align: 'left' },
+    //            { label: '任务类型', name: 'TaskTypeName', width: "20", align: 'left' },
+    //            { label: '目标地址', name: 'TagLocationCodeName', width: "30", align: 'left' },
+    //            { label: '状态', name: 'StateName', width: "30", align: 'left' }
+    //        ],
+    //        datatype: "local",
+    //        unwritten: false
+    //    });
+    //}
+
+    function BindRFList() {
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: {},
+            url: "/RF_OtherManage/RFScan/GetTask",
+            colModel: [
+                { label: '任务编码', name: 'TaskNo', width: "30", align: 'left', br: true },
+                { label: '容器条码', name: 'BarCode', width: "30", align: 'left', br: true },
+                { label: '目标地址', name: 'TagLocationCodeName', width: "30", align: 'left', br: true },
+                { label: '任务类型', name: 'TaskTypeName', width: "20", align: 'left', br: true },
+                { label: '任务状态', name: 'StateName', width: "30", align: 'left' }
+            ],
+            delbtn: false
+        });
+    }
+
+
+    //开始申请入库
+    function callin() {
+        var stationID = $("#TagStation option:selected").val();
+        if (stationID == undefined || stationID == "") {
+            $.modalMsg("请先选定站台", "warning");
+            return;
+        }
+
+        var barCode = $("#BarCode").val();
+        if (barCode == undefined || barCode == "") {
+            $.modalMsg("请扫容器条码", "warning");
+            return;
+        }
+
+        var locCode = "";
+        if (!$("#isPointLoc").is(":checked")) { //选中为自动，非选中为手动
+            var locCode = $("#PointLocCode").val();
+            if (locCode == "" || locCode == null) {
+                $.modalMsg("请指定货位", "warning");
+                return;
+            }
+        }
+
+        var sendToAGV;
+        if (!$("#sendToAGV").is(":checked")) { //选中为发送，非选中为不发送
+            sendToAGV = false;
+        }
+        else {
+            sendToAGV = true;
+        }
+
+        var isExceptionContainer = false;
+        if (!$("#isExceptionContainer").is(":checked")) { //选中为发送，非选中为不发送
+            isExceptionContainer = false;
+        }
+        else {
+            isExceptionContainer = true;
+        }
+
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFScan/RFScanConBar",
+            data: { stationID: stationID, BarCode: barCode, PointLocCode: locCode, IsSendToAGV: sendToAGV, IsExceptionContainer: isExceptionContainer },
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.modalMsg(data.message, data.state);
+                if (data.state == "success") {
+                    $("#BarCode").val("");
+                    $("#isPointLoc").removeAttr("check");
+                    $("#isPointLoc").removeAttr("readonly");
+                    $("#PointLocCode").hide();
+                    $("#PointLocCode").val("");
+                    $("#PointLocCode").removeAttr("readonly");
+
+                    //$("#gridList").trigger('reloadGrid');
+                    BindRFList();
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">扫码申请</a></li>
+    <li style="width: 50%;"><a id="tab2" href="#tabB" data-toggle="tab">所有任务</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <form id="form1">
+            <div class="RF">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">申请站台:</th>
+                        <td class="formValue">
+                            <select id="TagStation" name="TagStation" class="form-control required">
+                                <option value="">==请选择==</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">容器条码:</th>
+                        <td class="formValue">
+                            <input id="BarCode" name="BarCode" type="text" class="form-control required" placeholder="容器条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">异常容器：</th>
+                        <td class="formValue">
+                            <span style="float: left; line-height: 3rem;margin-right:1rem;"><input id="isExceptionContainer" type="checkbox" /><span>是</span></span>
+                        </td>
+                    </tr>
+                    <tr class="NotException">
+                        <th class="formTitle">货位分配：</th>
+                        <td class="formValue">
+                            <span style="float: left; line-height: 3rem;margin-right:1rem;"><input id="isPointLoc" type="checkbox" checked="checked" value="自动" /><span>自动</span></span><span style="float: left"><input id="PointLocCode" name="ItemBarCode" type="text" style="width:12rem;display:none;" class="form-control" placeholder="指定货位" /></span>
+                        </td>
+                    </tr>
+                    <tr class="NotException">
+                        <th class="formTitle">发送到AGV：</th>
+                        <td class="formValue">
+                            <span style="float: left; line-height: 3rem;margin-right:1rem;"><input id="sendToAGV" type="checkbox" checked="checked" value="是" /><span>是</span></span>
+                        </td>
+                    </tr>
+                </table>
+
+
+            </div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="callin()">确定</a>
+            </div>
+        </form>
+    </div>
+    <div id="tabB" class="tab-pane">
+        @*<div class="gridPanel">
+                <table id="gridList"></table>
+            </div>*@
+        <div id="RFList"></div>
+        <div class="btn-group RFboot" style="margin-top:3rem">
+            <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+        </div>
+    </div>
+</div>

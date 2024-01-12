@@ -1,0 +1,84 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/PC_MoveManage/Move/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Move&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">移库编码</th>
+                <td class="formValue">
+                    <input id="MoveCode" name="MoveCode" type="text" class="form-control required" placeholder="请输入移库编码" />
+                </td>
+                <th class="formTitle">移库状态</th>
+                <td class="formValue">
+                    <input id="StateName" name="StateName" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsAuto" name="IsAuto" type="checkbox"><label for="IsAuto">是否自动</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsReverse" name="IsReverse" type="checkbox"><label for="IsReverse">逆向整理</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

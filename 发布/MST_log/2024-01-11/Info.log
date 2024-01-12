@@ -1,0 +1,96 @@
+时间：2024-01-11 17:12:10,
+线程Id：1,
+日志级别：INFO 
+对象：
+描述：{"Path":"Application_Start","Parms":null,"Message":"应用程序启动初始化","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:17:10,
+线程Id：97,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:22:10,
+线程Id：101,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:27:10,
+线程Id：92,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:32:10,
+线程Id：86,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:37:10,
+线程Id：71,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:42:10,
+线程Id：49,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:47:10,
+线程Id：149,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:52:10,
+线程Id：153,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 17:57:10,
+线程Id：167,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 18:02:10,
+线程Id：188,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+
+时间：2024-01-11 18:07:10,
+线程Id：188,
+日志级别：INFO 
+对象：
+描述：{"Path":"MST.Web.Global","Parms":null,"Message":"操作成功","ReturnData":null,"CurTime":null} 
+
+ ----------------------------------- 
+

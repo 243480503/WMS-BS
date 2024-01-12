@@ -1,0 +1,69 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $.ajax({
+            url: "/PC_CountManage/Count/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">盘点单号</th>
+                <td class="formValue">
+                    <input id="CountCode" name="CountCode" readonly="readonly" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">来源单号</th>
+                <td class="formValue">
+                    <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">区域类型</th>
+                <td class="formValue">
+                    <input id="AreaTypeName" name="AreaTypeName" readonly="readonly" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">ERP仓库</th>
+                <td class="formValue">
+                    <input id="ERPHouseName" name="ERPHouseName" readonly="readonly" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">盘点单状态</th>
+                <td class="formValue">
+                    <input id="StateName" name="StateName" type="text" class="form-control" />
+                </td>          
+            </tr>
+            <tr>
+                <th class="formTitle">备注</th>
+                <td class="formValue" colspan="3">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsOpen" name="IsOpen" type="checkbox"><label for="IsOpen">是否明盘</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

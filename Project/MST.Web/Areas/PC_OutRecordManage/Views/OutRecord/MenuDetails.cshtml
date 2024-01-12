@@ -1,0 +1,190 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_OutRecord&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#OutBoundType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_OutRecord&fieldName=OutBoundType",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#TransState").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_OutRecord&fieldName=TransState",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PC_OutRecordManage/OutRecord/GetMenuFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    $("#form1").formSerialize(data);
+                    $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                    $("#form1").find('div.ckbox label').attr('for', '');
+                }
+            });
+        }
+    });
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">出库单据</th>
+                <td class="formValue">
+                    <input id="OrderCode" name="OrderCode" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">来源单据</th>
+                <td class="formValue">
+                    <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">物料编码</th>
+                <td class="formValue">
+                    <input id="ItemCode" name="ItemCode" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">规格</th>
+                <td class="formValue">
+                    <input id="Spec" name="Spec" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">批号</th>
+                <td class="formValue">
+                    <input id="Lot" name="Lot" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">出货数量</th>
+                <td class="formValue">
+                    <input id="PickedQty" name="PickedQty" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">计量单位</th>
+                <td class="formValue">
+                    <input id="ItemUnitText" name="ItemUnitText" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">出货日期</th>
+                <td class="formValue">
+                    <input id="PickDate" name="PickDate" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">失效日期</th>
+                <td class="formValue">
+                    <input id="OverdueDate" name="OverdueDate" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">单据类型</th>
+                <td class="formValue">
+                    <select id="OutBoundType" name="OutBoundType" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">出货站台</th>
+                <td class="formValue">
+                    <input id="StationName" name="StationName" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器大类</th>
+                <td class="formValue">
+                    <input id="ContainerKindName" name="ContainerKindName" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">容器类型</th>
+                <td class="formValue">
+                    <input id="ContainerTypeName" name="ContainerTypeName" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器条码</th>
+                <td class="formValue">
+                    <input id="BarCode" name="BarCode" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">标签条码</th>
+                <td class="formValue">
+                    <input id="ItemBarCode" name="ItemBarCode" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">生产厂家</th>
+                <td class="formValue">
+                    <input id="Factory" name="Factory" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">供应商</th>
+                <td class="formValue">
+                    <input id="SupplierName" name="SupplierName" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">生产日期</th>
+                <td class="formValue">
+                    <input id="ProductDate" name="ProductDate" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">ERP仓库</th>
+                <td class="formValue">
+                    <input id="ERPHouseCode" name="ERPHouseCode" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">出货人名称</th>
+                <td class="formValue">
+                    <input id="PickUserName" name="PickUserName" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">过账状态</th>
+                <td class="formValue">
+                    <select id="TransState" name="TransState" disabled class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

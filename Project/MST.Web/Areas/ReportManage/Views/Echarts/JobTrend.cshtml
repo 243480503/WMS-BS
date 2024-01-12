@@ -1,0 +1,392 @@
+﻿<!DOCTYPE html>
+
+<html style="height: 100%">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>库内作业</title>
+    <link href="~/Content/css/framework-theme.css" rel="stylesheet" />
+    <script src="~/Content/js/jquery/jquery-2.1.1.min.js"></script>
+    <script src="~/Content/js/echarts/echarts.min.js"></script>
+</head>
+<body style="height: 100%; margin: 0">
+    <div id="main" style="width:100%; height:400px;"></div>
+    <script type="text/javascript">
+
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        var dataMap = {};
+        function dataFormatter(obj) {
+            var pList = ['入库', '出库', '质检', '盘点'];
+            var temp;
+            for (var month = 1; month <= 12; month++) {
+                var max = 0;
+                var sum = 0;
+                temp = obj[month];
+                for (var i = 0, l = temp.length; i < l; i++) {
+                    max = Math.max(max, temp[i]);
+                    sum += temp[i];
+                    obj[month][i] = {
+                        name: pList[i],
+                        value: temp[i]
+                    };
+                }
+                obj[month + 'max'] = Math.floor(max / 100) * 100;
+                obj[month + 'sum'] = sum;
+            }
+            return obj;
+        }
+
+        dataMap.dataIn = dataFormatter({
+            //max : 60000,
+            12: [16251.93, 11307.28, 24515.76, 11237.55],
+            11: [14113.58, 9224.46, 20394.26, 9200.86],
+            10: [12153.03, 7521.85, 17235.48, 7358.31],
+            9: [11115, 6719.01, 16011.97, 7315.4],
+            8: [9846.81, 5252.76, 13607.32, 6024.45],
+            7: [8117.78, 4462.74, 11467.61, 4878.61],
+            6: [6969.52, 3905.64, 10012.11, 4230.53],
+            5: [6033.21, 3110.97, 8477.63, 3571.37],
+            4: [5007.21, 2578.03, 6921.29, 2855.23],
+            3: [4315.28, 2150.76, 6018.28, 2324.8],
+            2: [3973.85, 3512.24, 2569.3, 2768.03],
+            1: [3258.09, 2147, 2325.5, 2286.98]
+        });
+
+        dataMap.dataOut = dataFormatter({
+            //max : 4000,
+            12: [136.27, 159.72, 2905.73, 641.42],
+            11: [124.36, 145.58, 2562.81],
+            10: [12153.03, 7521.85, 17235.48, 7358.31],
+            9: [118.29, 128.85, 2207.34, 477.59],
+            8: [112.83, 122.58, 2034.59, 313.58],
+            7: [101.26, 110.19, 1804.72, 311.97],
+            6: [88.8, 103.35, 1461.81, 276.77],
+            5: [88.68, 112.38, 1400, 262.42],
+            4: [87.36, 105.28, 1370.43, 276.3],
+            3: [84.11, 89.91, 1064.05, 215.19],
+            2: [82.44, 84.21, 956.84, 197.8],
+            1: [684.6, 90.26, 1461.51, 892.83]
+        });
+
+        dataMap.dataQA = dataFormatter({
+            //max : 26600,
+            12: [3752.48, 5928.32, 13126.86, 6635.26],
+            11: [3388.38, 4840.23, 10707.68, 5234],
+            10: [2855.55, 3987.84, 8959.83, 3993.8],
+            9: [2626.41, 3709.78, 8701.34, 4242.36],
+            8: [2509.4, 2892.53, 7201.88, 3454.49],
+            7: [2191.43, 2457.08, 6110.43, 2755.66],
+            6: [2026.51, 2135.07, 5271.57, 2357.04],
+            5: [1853.58, 1685.93, 4301.73, 1919.4],
+            4: [1487.15, 1337.31, 3417.56, 1463.38],
+            3: [1249.99, 1069.08, 2911.69, 1134.31],
+            2: [1580.83, 2971.68, 4381.2, 10524.96],
+            1: [4090.48, 1337.04, 2036.97, 941.77]
+        });
+
+        dataMap.dataCnt = dataFormatter({
+            //max : 25000,
+            12: [12363.18, 5219.24, 8483.17, 3960.87],
+            11: [10600.84, 4238.65, 7123.77, 3412.38],
+            10: [9179.19, 3405.16, 6068.31, 2886.92],
+            9: [8375.76, 2886.65, 5276.04, 2759.46],
+            8: [7236.15, 2250.04, 4600.72, 2257.99],
+            7: [5837.55, 1902.31, 3895.36, 1846.18],
+            6: [4854.33, 1658.19, 3340.54, 1611.07],
+            5: [4092.27, 1319.76, 2805.47, 1375.67],
+            4: [3435.95, 1150.81, 2439.68, 1176.65],
+            3: [2982.57, 997.47, 2149.75, 992.69],
+            2: [6821.11, 9730.91, 7613.46, 2789.78],
+            1: [3890.79, 1638.42, 1949.91, 1043.08]
+        });
+
+
+        option = {
+            baseOption: {
+                timeline: {
+                    axisType: 'category',
+                    // realtime: false,
+                    // loop: false,
+                    autoPlay: true,
+                    // currentIndex: 2,
+                    playInterval: 1000,
+                    // controlStyle: {
+                    //     position: 'left'
+                    // },
+                    data: [
+                        '2002-01-01', '2003-01-01', '2004-01-01',
+                        {
+                            value: '2005-01-01',
+                            tooltip: {
+                                formatter: '{b} Out达到一个高度'
+                            },
+                            symbol: 'diamond',
+                            symbolSize: 16
+                        },
+                        '2006-01-01', '2007-01-01', '2008-01-01', '2009-01-01', '2010-01-01',
+                        {
+                            value: '2011-01-01',
+                            tooltip: {
+                                formatter: function (params) {
+                                    return params.name + 'Out达到又一个高度';
+                                }
+                            },
+                            symbol: 'diamond',
+                            symbolSize: 18
+                        },
+                    ],
+                    label: {
+                        formatter: function (s) {
+                            return (new Date(s)).getFullYear();
+                        }
+                    }
+                },
+                title: {
+                    subtext: '数据来自成都血站仓库'
+                },
+                tooltip: {
+                },
+                legend: {
+                    left: 'right',
+                    data: ['In', 'Out', 'QA', 'Cnt'],
+                    selected: {
+                        'In': false, 'Out': false, 'Cnt': false
+                    }
+                },
+                calculable: true,
+                grid: {
+                    top: 80,
+                    bottom: 100,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow',
+                            label: {
+                                show: true,
+                                formatter: function (params) {
+                                    return params.value.replace('\n', '');
+                                }
+                            }
+                        }
+                    }
+                },
+                xAxis: [
+                    {
+                        'type': 'category',
+                        'axisLabel': { 'interval': 0 },
+                        'data': [
+                            '入库', '\n出库', '质检', '\n盘点'
+                        ],
+                        splitLine: { show: false }
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: 'In（个）'
+                    }
+                ],
+                series: [
+                    { name: 'In', type: 'bar' },
+                    { name: 'Out', type: 'bar' },
+                    { name: 'QA', type: 'bar' },
+                    { name: 'Cnt', type: 'bar' },
+                    {
+                        name: 'In占比',
+                        type: 'pie',
+                        center: ['75%', '35%'],
+                        radius: '28%',
+                        z: 100
+                    }
+                ]
+            },
+            options: [
+                {
+                    title: { text: '2021年1月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['1'] },
+                        { data: dataMap.dataOut['1'] },
+                        { data: dataMap.dataQA['1'] },
+                        { data: dataMap.dataCnt['1'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['1sum'] },
+                                { name: '出库', value: dataMap.dataOut['1sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年2月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['2'] },
+                        { data: dataMap.dataOut['2'] },
+                        { data: dataMap.dataQA['2'] },
+                        { data: dataMap.dataCnt['2'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['2sum'] },
+                                { name: '出库', value: dataMap.dataOut['2sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年3月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['3'] },
+                        { data: dataMap.dataOut['3'] },
+                        { data: dataMap.dataQA['3'] },
+                        { data: dataMap.dataCnt['3'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['3sum'] },
+                                { name: '出库', value: dataMap.dataOut['3sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年4月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['4'] },
+                        { data: dataMap.dataOut['4'] },
+                        { data: dataMap.dataQA['4'] },
+                        { data: dataMap.dataCnt['4'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['4sum'] },
+                                { name: '出库', value: dataMap.dataOut['4sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年5月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['5'] },
+                        { data: dataMap.dataOut['5'] },
+                        { data: dataMap.dataQA['5'] },
+                        { data: dataMap.dataCnt['5'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['5sum'] },
+                                { name: '出库', value: dataMap.dataOut['5sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年6月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['6'] },
+                        { data: dataMap.dataOut['6'] },
+                        { data: dataMap.dataQA['6'] },
+                        { data: dataMap.dataCnt['6'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['6sum'] },
+                                { name: '出库', value: dataMap.dataOut['6sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年7月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['7'] },
+                        { data: dataMap.dataOut['7'] },
+                        { data: dataMap.dataQA['7'] },
+                        { data: dataMap.dataCnt['7'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['7sum'] },
+                                { name: '出库', value: dataMap.dataOut['7sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年8月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['8'] },
+                        { data: dataMap.dataOut['8'] },
+                        { data: dataMap.dataQA['8'] },
+                        { data: dataMap.dataCnt['8'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['8sum'] },
+                                { name: '出库', value: dataMap.dataOut['8sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年9月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['9'] },
+                        { data: dataMap.dataOut['9'] },
+                        { data: dataMap.dataQA['9'] },
+                        { data: dataMap.dataCnt['9'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['9sum'] },
+                                { name: '出库', value: dataMap.dataOut['9sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年10月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['10'] },
+                        { data: dataMap.dataOut['10'] },
+                        { data: dataMap.dataQA['10'] },
+                        { data: dataMap.dataCnt['10'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['10sum'] },
+                                { name: '出库', value: dataMap.dataOut['10sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年11月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['11'] },
+                        { data: dataMap.dataOut['11'] },
+                        { data: dataMap.dataQA['11'] },
+                        { data: dataMap.dataCnt['11'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['11sum'] },
+                                { name: '出库', value: dataMap.dataOut['11sum'] },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: { text: '2021年12月仓库作业' },
+                    series: [
+                        { data: dataMap.dataIn['12'] },
+                        { data: dataMap.dataOut['12'] },
+                        { data: dataMap.dataQA['12'] },
+                        { data: dataMap.dataCnt['12'] },
+                        {
+                            data: [
+                                { name: '入库', value: dataMap.dataIn['12sum'] },
+                                { name: '出库', value: dataMap.dataOut['12sum'] },
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        option && myChart.setOption(option);
+    </script>
+</body>
+</html>

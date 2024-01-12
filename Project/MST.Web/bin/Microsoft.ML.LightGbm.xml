@@ -1,0 +1,902 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ML.LightGbm</name>
+    </assembly>
+    <members>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.MinimumSplitGain">
+            <summary>
+            The minimum loss reduction required to make a further partition on a leaf node of the tree.
+            </summary>
+            <value>
+            Larger values make the algorithm more conservative.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.MaximumTreeDepth">
+            <summary>
+            The maximum depth of a tree.
+            </summary>
+            <value>
+            0 means no limit.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.MinimumChildWeight">
+            <summary>
+            The minimum sum of instance weight needed to form a new node.
+            </summary>
+            <value>
+            If the tree partition step results in a leaf node with the sum of instance weight less than <see cref="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.MinimumChildWeight"/>,
+            the building process will give up further partitioning. In linear regression mode, this simply corresponds to minimum number
+            of instances needed to be in each node. The larger, the more conservative the algorithm will be.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.SubsampleFrequency">
+            <summary>
+            The frequency of performing subsampling (bagging).
+            </summary>
+            <value>
+            0 means disable bagging. N means perform bagging at every N iterations.
+            To enable bagging, <see cref="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.SubsampleFraction"/> should also be set to a value less than 1.0.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.SubsampleFraction">
+            <summary>
+            The fraction of training data used for creating trees.
+            </summary>
+            <value>
+            Setting it to 0.5 means that LightGBM randomly picks half of the data points to grow trees.
+            This can be used to speed up training and to reduce over-fitting. Valid range is (0,1].
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.FeatureFraction">
+            <summary>
+            The fraction of features used when creating trees.
+            </summary>
+            <value>
+            If <see cref="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.FeatureFraction"/> is smaller than 1.0, LightGBM will randomly select fraction of features to train each tree.
+            For example, if you set it to 0.8, LightGBM will select 80% of features before training each tree.
+            This can be used to speed up training and to reduce over-fitting. Valid range is (0,1].
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.L2Regularization">
+            <summary>
+            The L2 regularization term on weights.
+            </summary>
+            <value>
+            Increasing this value could help reduce over-fitting.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase.L1Regularization">
+            <summary>
+            The L1 regularization term on weights.
+            </summary>
+            <value>
+            Increasing this value could help reduce over-fitting.
+            </value>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.BuildFactory">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.IBoosterParameterFactory"/> for supporting legacy infra built upon <see cref="T:Microsoft.ML.Runtime.IComponentFactory"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.GradientBooster">
+            <summary>
+            Gradient boosting decision tree.
+            </summary>
+            <remarks>
+            For details, please see <a href="https://en.wikipedia.org/wiki/Gradient_boosting#Gradient_tree_boosting">gradient tree boosting</a>.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.GradientBooster.Options">
+            <summary>
+            The options for <see cref="T:Microsoft.ML.Trainers.LightGbm.GradientBooster"/>, used for setting <see cref="T:Microsoft.ML.Trainers.LightGbm.Booster"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.DartBooster">
+            <summary>
+            DART booster (Dropouts meet Multiple Additive Regression Trees)
+            </summary>
+            <remarks>
+            For details, please see <a href="https://arxiv.org/abs/1505.01866">here</a>.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.DartBooster.Options">
+            <summary>
+            The options for <see cref="T:Microsoft.ML.Trainers.LightGbm.DartBooster"/>, used for setting <see cref="T:Microsoft.ML.Trainers.LightGbm.Booster"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.DartBooster.Options.TreeDropFraction">
+            <summary>
+            The dropout rate, i.e. the fraction of previous trees to drop during the dropout.
+            </summary>
+            <value>
+            Valid range is [0,1].
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.DartBooster.Options.MaximumNumberOfDroppedTreesPerRound">
+            <summary>
+            The maximum number of dropped trees in a boosting round.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.DartBooster.Options.SkipDropFraction">
+            <summary>
+            The probability of skipping the dropout procedure during a boosting iteration.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.DartBooster.Options.XgboostDartMode">
+            <summary>
+            Whether to enable xgboost dart mode.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.DartBooster.Options.UniformDrop">
+            <summary>
+            Whether to enable uniform drop.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.GossBooster">
+            <summary>
+            Gradient-based One-Side Sampling booster.
+            </summary>
+            <remarks>
+            For details, please see <a href="https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree.pdf">here</a>.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.GossBooster.Options">
+            <summary>
+            The options for <see cref="T:Microsoft.ML.Trainers.LightGbm.GossBooster"/>, used for setting <see cref="T:Microsoft.ML.Trainers.LightGbm.Booster"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.GossBooster.Options.TopRate">
+            <summary>
+            The retain ratio of large gradient data.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.GossBooster.Options.OtherRate">
+            <summary>
+            The retain ratio of small gradient data.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryModelParameters">
+            <summary>
+            Model parameters for <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a boosted decision tree binary classification model using LightGBM.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [LightGbm](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)) or
+             [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-binary-classification.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Binary classification |
+             | Is normalization required? | No |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.LightGbm |
+             | Exportable to ONNX | Yes |
+            
+             [!include[algorithm](~/../docs/samples/docs/api-reference/algo-details-lightgbm.md)]
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)"/>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options)"/>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options.UnbalancedSets">
+            <summary>
+            Whether training data is unbalanced.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options.WeightOfPositiveExamples">
+            <summary>
+            Controls the balance of positive and negative weights in <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/>.
+            </summary>
+            <value>
+            This is useful for training on unbalanced data. A typical value to consider is sum(negative cases) / sum(positive cases).
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options.Sigmoid">
+            <summary>
+            Parameter for the sigmoid function.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options.EvaluationMetric">
+            <summary>
+            Determines what evaluation metric to use.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/>
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="labelColumnName">The name of The label column.</param>
+            <param name="featureColumnName">The name of the feature column.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The number of leaves to use.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points allowed in a leaf of the tree, out of the subsampled data.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">Number of iterations.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/> using both training and validation data, returns
+            a <see cref="T:Microsoft.ML.Data.BinaryPredictionTransformer`1"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbm">
+            <summary>
+            A component to train a LightGBM model.
+            </summary>
+            <summary>
+            A component to train a LightGBM model.
+            </summary>
+            <summary>
+            The entry point for the LightGbmRankingTrainer.
+            </summary>
+            <summary>
+            A component to train a LightGBM model.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a boosted decision tree multi-class classification model using LightGBM.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [LightGbm](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32))
+             or [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-multiclass-classification.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Multiclass classification |
+             | Is normalization required? | No |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.LightGbm |
+             | Exportable to ONNX | Yes |
+            
+             [!include[algorithm](~/../docs/samples/docs/api-reference/algo-details-lightgbm.md)]
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)"/>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer"/> as used in
+             [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options)).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options.UnbalancedSets">
+            <summary>
+            Whether training data is unbalanced.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options.UseSoftmax">
+            <summary>
+            Whether to use softmax loss.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options.Sigmoid">
+            <summary>
+            Parameter for the sigmoid function.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options.EvaluationMetric">
+            <summary>
+            Determines what evaluation metric to use.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer"/>
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="labelColumnName">The name of The label column.</param>
+            <param name="featureColumnName">The name of the feature column.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The number of leaves to use.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points allowed in a leaf of the tree, out of the subsampled data.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">The number of iterations to use.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer"/> using both training and validation data, returns
+            a <see cref="T:Microsoft.ML.Data.MulticlassPredictionTransformer`1"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingModelParameters">
+            <summary>
+            Model parameters for <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a boosted decision tree ranking model using LightGBM.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [LightGbm](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,System.String,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32))
+             or [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-ranking.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Ranking |
+             | Is normalization required? | No |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.LightGbm |
+             | Exportable to ONNX | No |
+            
+             [!include[algorithm](~/../docs/samples/docs/api-reference/algo-details-lightgbm.md)]
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,System.String,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)"/>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/> as used in
+            [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options)).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options.CustomGains">
+            <summary>
+            Comma-separated list of gains associated with each relevance label.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options.Sigmoid">
+            <summary>
+            Parameter for the sigmoid function.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options.EvaluationMetric">
+            <summary>
+            Determines what evaluation metric to use.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/>
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="labelColumnName">The name of the label column.</param>
+            <param name="featureColumnName">The name of the feature column.</param>
+            <param name="rowGroupIdColumnName">The name of the column containing the group ID. </param>
+            <param name="weightsColumnName">The name of the optional column containing the initial weights.</param>
+            <param name="numberOfLeaves">The number of leaves to use.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points allowed in a leaf of the tree, out of the subsampled data.</param>
+            <param name="numberOfIterations">The number of iterations to use.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/> using both training and validation data, returns
+            a <see cref="T:Microsoft.ML.Data.RankingPredictionTransformer`1"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionModelParameters">
+            <summary>
+            Model parameters for <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a boosted decision tree regression model using LightGBM.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [LightGbm](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32))
+             or [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-regression.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Regression |
+             | Is normalization required? | No |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.LightGbm |
+             | Exportable to ONNX | Yes |
+            
+             [!include[algorithm](~/../docs/samples/docs/api-reference/algo-details-lightgbm.md)]
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)"/>
+             <seealso cref="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/> as used in
+            [LightGbm(Options)](xref:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options)).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options.EvaluationMetric">
+            <summary>
+            Determines what evaluation metric to use.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/>
+            </summary>
+            <param name="env">The private instance of <see cref="T:Microsoft.ML.Runtime.IHostEnvironment"/>.</param>
+            <param name="labelColumnName">The name of the label column.</param>
+            <param name="featureColumnName">The name of the feature column.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The number of leaves to use.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points allowed in a leaf of the tree, out of the subsampled data.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">Number of iterations.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.IDataView)">
+            <summary>
+            Trains a <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/> using both training and validation data, returns
+            a <see cref="T:Microsoft.ML.Data.RegressionPredictionTransformer`1"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmShared">
+            <summary>
+            Lock for LightGBM trainer.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4">
+            <summary>
+            Base class for all training with LightGBM.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.NumberOfIterations">
+            <summary>
+            The number of boosting iterations. A new tree is created in each iteration, so this is equivalent to the number of trees.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.LearningRate">
+            <summary>
+            The shrinkage rate for trees, used to prevent over-fitting.
+            </summary>
+            <value>
+            Valid range is (0,1].
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.NumberOfLeaves">
+            <summary>
+            The maximum number of leaves in one tree.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.MinimumExampleCountPerLeaf">
+            <summary>
+            The minimal number of data points required to form a new tree leaf.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.MaximumBinCountPerFeature">
+            <summary>
+            The maximum number of bins that feature values will be bucketed in.
+            </summary>
+            <remarks>
+            The small number of bins may reduce training accuracy but may increase general power (deal with over-fitting).
+            </remarks>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.BoosterFactory">
+            <summary>
+            Determines which booster to use.
+            </summary>
+            <value>
+            Available boosters are <see cref="T:Microsoft.ML.Trainers.LightGbm.DartBooster"/>, <see cref="T:Microsoft.ML.Trainers.LightGbm.GossBooster"/>, and <see cref="T:Microsoft.ML.Trainers.LightGbm.GradientBooster"/>.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.Verbose">
+            <summary>
+            Determines whether to output progress status during training and evaluation.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.Silent">
+            <summary>
+            Controls the logging level in LighGBM.
+            </summary>
+            <value>
+            <see langword="true"/> means only output Fatal errors. <see langword="false"/> means output Fatal, Warning, and Info level messages.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.NumberOfThreads">
+            <summary>
+            Determines the number of threads used to run LightGBM.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.EarlyStoppingRound">
+            <summary>
+            Determines the number of rounds, after which training will stop if validation metric doesn't improve.
+            </summary>
+            <value>
+            0 means disable early stopping.
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.BatchSize">
+            <summary>
+            Number of data points per batch, when loading data.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.UseCategoricalSplit">
+            <summary>
+            Whether to enable categorical split or not.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.HandleMissingValue">
+            <summary>
+            Whether to enable special handling of missing value or not.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.UseZeroAsMissingValue">
+            <summary>
+            Whether to enable the usage of zero (0) as missing value.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.MinimumExampleCountPerGroup">
+            <summary>
+            The minimum number of data points per categorical group.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.MaximumCategoricalSplitPointCount">
+            <summary>
+            Maximum categorical split points to consider when splitting on a categorical feature.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.CategoricalSmoothing">
+            <summary>
+            Laplace smooth term in categorical feature split.
+            This can reduce the effect of noises in categorical features, especially for categories with few data.
+            </summary>
+            <value>
+            Constraints: <see cref="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.CategoricalSmoothing"/> >= 0.0
+            </value>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.L2CategoricalRegularization">
+            <summary>
+            L2 regularization for categorical split.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.Seed">
+            <summary>
+            The random seed for LightGBM to use.
+            </summary>
+            <value>
+            If not specified, <see cref="T:Microsoft.ML.MLContext"/> will generate a random seed to be used.
+            </value>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.OptionsBase.Booster">
+            <summary>
+            Booster parameter to use
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.GbmOptions">
+            <summary>
+            Stores arguments as objects to convert them to invariant string type in the end so that
+            the code is culture agnostic. When retrieving key value from this dictionary as string
+            please convert to string invariant by string.Format(CultureInfo.InvariantCulture, "{0}", Option[key]).
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.DetectDensity(Microsoft.ML.Trainers.FloatLabelCursor.Factory,System.Int32)">
+            <summary>
+            Calculate the density of data. Only use top 1000 rows to calculate.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.GetMetainfo(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Trainers.FloatLabelCursor.Factory,System.Int32@,System.Single[]@,System.Single[]@,System.Int32[]@)">
+            <summary>
+            Compute row count, list of labels, weights and group counts of the dataset.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.ConvertNaNLabels(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Data.RoleMappedData,System.Single[])">
+            <summary>
+            Convert Nan labels. Default way is converting them to zero.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.CreateDatasetFromSamplingData(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Trainers.FloatLabelCursor.Factory,System.Int32,System.String,System.Single[],System.Single[],System.Int32[],Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase{`0,`1,`2,`3}.CategoricalMetaData,Microsoft.ML.Trainers.LightGbm.Dataset@)">
+            <summary>
+            Create a dataset from the sampling data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.LoadDataset(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Trainers.FloatLabelCursor.Factory,Microsoft.ML.Trainers.LightGbm.Dataset,System.Int32,System.Int32,Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase{`0,`1,`2,`3}.CategoricalMetaData)">
+            <summary>
+            Load dataset. Use row batch way to reduce peak memory cost.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmTrainerBase`4.CheckAndUpdateParametersBeforeTraining(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Data.RoleMappedData,System.Single[],System.Int32[])">
+            <summary>
+            This function will be called before training. It will check the label/group and add parameters for specific applications.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.SignatureParallelTrainer">
+            <summary>
+            Signature of LightGBM IAllreduce
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.ReduceFunction">
+            <summary>
+            Reduce function define in LightGBM Cpp side
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.ReduceScatterFunction">
+            <summary>
+            Definition of ReduceScatter funtion
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.AllgatherFunction">
+            <summary>
+            Definition of Allgather funtion
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.ParallelType">
+            <summary>
+            Type of parallel
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.NumMachines">
+            <summary>
+            Number of machines
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.Rank">
+            <summary>
+            Rank of local machine
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.GetReduceScatterFunction">
+            <summary>
+            ReduceScatter Function
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.GetAllgatherFunction">
+            <summary>
+            Allgather Function
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.IParallel.AdditionalParams">
+            <summary>
+            Additional parameteres
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.Booster">
+            <summary>
+            Wrapper of Booster object of LightGBM.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.Dataset">
+            <summary>
+            Wrapper of Dataset object of LightGBM.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.Dataset.#ctor(System.Double[][],System.Int32[][],System.Int32,System.Int32[],System.Int32,System.Int32,System.String,System.Single[],System.Single[],System.Int32[])">
+            <summary>
+            Create a <see cref="T:Microsoft.ML.Trainers.LightGbm.Dataset"/> for storing training and prediction data under LightGBM framework. The main goal of this function
+            is not marshaling ML.NET data set into LightGBM format but just creates a (unmanaged) container where examples can be pushed into by calling
+            <see cref="M:Microsoft.ML.Trainers.LightGbm.Dataset.PushRows(System.Single[],System.Int32,System.Int32,System.Int32)"/>. It also pre-allocates memory so the actual size (number of examples and number of features)
+            of the data set is required. A sub-sampled version of the original data set is passed in to compute some statistics needed by the training
+            procedure. Note that we use "original" to indicate a property from the unsampled data set.
+            </summary>
+            <param name="sampleValuePerColumn">A 2-D array which encodes the sub-sampled data matrix. sampleValuePerColumn[i] stores
+            all the non-zero values of the i-th feature. sampleValuePerColumn[i][j] is the j-th non-zero value of i-th feature encountered when scanning
+            the values row-by-row (i.e., example-by-example) in the matrix and column-by-column (i.e., feature-by-feature) within one row. It is similar
+            to CSC format for storing sparse matrix.</param>
+            <param name="sampleIndicesPerColumn">A 2-D array which encodes sub-sampled example indexes of non-zero features stored in sampleValuePerColumn.
+            The sampleIndicesPerColumn[i][j]-th example has a non-zero i-th feature whose value is sampleValuePerColumn[i][j].</param>
+            <param name="numCol">Total number of features in the original data.</param>
+            <param name="sampleNonZeroCntPerColumn">sampleNonZeroCntPerColumn[i] is the size of sampleValuePerColumn[i].</param>
+            <param name="numSampleRow">The number of sampled examples in the sub-sampled data matrix.</param>
+            <param name="numTotalRow">The number of original examples added using <see cref="M:Microsoft.ML.Trainers.LightGbm.Dataset.PushRows(System.Single[],System.Int32,System.Int32,System.Int32)"/>.</param>
+            <param name="param">LightGBM parameter used in https://github.com/Microsoft/LightGBM/blob/c920e6345bcb41fc1ec6ac338f5437034b9f0d38/src/c_api.cpp#L421. </param>
+            <param name="labels">Labels of the original data. labels[i] is the label of the i-th original example.</param>
+            <param name="weights">Example weights of the original data. weights[i] is the weight of the i-th original example.</param>
+            <param name="groups">Group identifiers of the original data. groups[i] is the group ID of the i-th original example.</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.Dataset.PushRows(System.Single[],System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Append examples to LightGBM dataset.
+            </summary>
+            <param name="data">Dense (# of rows)-by-(# of columns) matrix flattened in a row-major format. One row per example.
+            The value at the i-th row and j-th column is stored in data[j + i * (# of columns)].</param>
+            <param name="numRow"># of rows of the data matrix.</param>
+            <param name="numCol"># of columns of the data matrix.</param>
+            <param name="startRowIdx">The actual row index of the first row pushed in. If it's 36, the first row in data would be the 37th row in <see cref="T:Microsoft.ML.Trainers.LightGbm.Dataset"/>.</param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.WrappedLightGbmInterface">
+            <summary>
+            Wrapper of the c interfaces of LightGBM.
+            Refer to https://github.com/Microsoft/LightGBM/blob/master/include/LightGBM/c_api.h to get the details.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmInterfaceUtils.Check(System.Int32)">
+            <summary>
+            Checks if LightGBM has a pending error message. Raises an exception in that case.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmInterfaceUtils.JoinParameters(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Join the parameters to key=value format.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmInterfaceUtils.GetOptionName(System.String)">
+            <summary>
+            Helper function used for generating the LightGbm argument name.
+            When given a name, this will convert the name to lower-case with underscores.
+            The underscore will be placed when an upper-case letter is encountered.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.LightGbmInterfaceUtils.GetString(System.IntPtr)">
+            <summary>
+            Convert the pointer of c string to c# string.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.LightGbm.WrappedLightGbmTraining">
+            <summary>
+            Helpers to train a booster with given parameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.LightGbm.WrappedLightGbmTraining.Train(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Runtime.IProgressChannel,System.Collections.Generic.Dictionary{System.String,System.Object},Microsoft.ML.Trainers.LightGbm.Dataset,Microsoft.ML.Trainers.LightGbm.Dataset,System.Int32,System.Boolean,System.Int32)">
+            <summary>
+            Train and return a booster.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.LightGbmExtensions">
+            <summary>
+            Collection of extension methods for the <see cref="T:Microsoft.ML.RegressionCatalog.RegressionTrainers"/>,
+             <see cref="T:Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers"/>, <see cref="T:Microsoft.ML.RankingCatalog.RankingTrainers"/>,
+             and <see cref="T:Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers"/> catalogs.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/>, which predicts a target using a gradient boosting decision tree regression model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RegressionCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Single"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The maximum number of leaves in one tree.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points required to form a new tree leaf.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">The number of boosting iterations. A new tree is created in each iteration, so this is equivalent to the number of trees.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmRegression](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Regression/LightGbm.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRegressionTrainer"/> using advanced options, which predicts a target using a gradient boosting decision tree regression model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RegressionCatalog"/>.</param>
+            <param name="options">Trainer options.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmRegression](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Regression/LightGbmWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/>, which predicts a target using a gradient boosting decision tree binary classification.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.BinaryClassificationCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Boolean"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The maximum number of leaves in one tree.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points required to form a new tree leaf.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">The number of boosting iterations. A new tree is created in each iteration, so this is equivalent to the number of trees.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmBinaryClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/BinaryClassification/LightGbm.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmBinaryTrainer"/> with advanced options, which predicts a target using a gradient boosting decision tree binary classification.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.BinaryClassificationCatalog"/>.</param>
+            <param name="options">Trainer options.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmBinaryClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/BinaryClassification/LightGbmWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,System.String,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/>, which predicts a target using a gradient boosting decision tree ranking model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RankingCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Single"/> or <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="rowGroupColumnName">The name of the group column.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The maximum number of leaves in one tree.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points required to form a new tree leaf.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">The number of boosting iterations. A new tree is created in each iteration, so this is equivalent to the number of trees.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmRanking](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Ranking/LightGbm.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.RankingCatalog.RankingTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmRankingTrainer"/> with advanced options, which predicts a target using a gradient boosting decision tree ranking model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RankingCatalog"/>.</param>
+            <param name="options">Trainer options.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmRanking](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Ranking/LightGbmWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Double},System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer"/>, which predicts a target using a gradient boosting decision tree multiclass classification model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.MulticlassClassificationCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:Microsoft.ML.Data.KeyDataViewType"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <param name="numberOfLeaves">The maximum number of leaves in one tree.</param>
+            <param name="minimumExampleCountPerLeaf">The minimal number of data points required to form a new tree leaf.</param>
+            <param name="learningRate">The learning rate.</param>
+            <param name="numberOfIterations">The number of boosting iterations. A new tree is created in each iteration, so this is equivalent to the number of trees.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmMulticlassClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/MulticlassClassification/LightGbm.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.LightGbmExtensions.LightGbm(Microsoft.ML.MulticlassClassificationCatalog.MulticlassClassificationTrainers,Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.LightGbm.LightGbmMulticlassTrainer"/> with advanced options, which predicts a target using a gradient boosting decision tree multiclass classification model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.MulticlassClassificationCatalog"/>.</param>
+            <param name="options">Trainer options.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[LightGbmMulticlassClassification](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/MulticlassClassification/LightGbmWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,57 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+
+    var keyValue = $.request("keyValue");
+
+    $(function () {
+        $("#CountModel").select2();
+    });
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data=$("#form1").formSerialize();
+        $.submitForm({
+            loading: "正在处理...",
+            url: "/PC_LocCountManage/LocCount/GenReCount",
+            param: { sourceID: keyValue, countModel: data.CountModel, remark: data.Remark},
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>注意：</strong>&nbsp;异常记录将被修正为正常，并产生一个新的校对单！
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">模式</th>
+                <td class="formValue">
+                    <select id="CountModel" name="CountModel" class="form-control required">
+                        <option value="1">全部</option>
+                        <option value="2">仅异常</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 11px;">备注
+                </th>
+                <td class="formValue">
+                    <textarea id="Remark" name="Remark" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

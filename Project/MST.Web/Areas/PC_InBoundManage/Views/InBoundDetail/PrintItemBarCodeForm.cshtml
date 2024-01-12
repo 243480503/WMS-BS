@@ -1,0 +1,262 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+</style>
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+
+        $(".btnPrint", top.window.document).hide();
+        $(".btnOk", top.window.document).show();
+
+        $.ajax({
+            url: "/PC_InBoundManage/InBoundDetail/GetPrintJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                if (data.OverdueDate == null) {
+                    data.OverdueDate = "永不过期";
+                }
+                $("#form1").formSerialize(data);
+                
+            }
+        });
+
+        //在切换标签事件时
+        $("#mark").bind("shown.bs.tab", function () {
+            gridList();
+        });
+
+        $("#tabForm,#tabList").bind("click", function (e) {
+            //var navID = $(".nav.nav-tabs>li.active").attr("id");
+            var navID = $(e.currentTarget).attr("id");
+            if (navID == "tabForm") {
+                $(".btnPrint", top.window.document).hide();
+                $(".btnOk", top.window.document).show();
+            }
+            else {
+                $(".btnPrint", top.window.document).show();
+                $(".btnOk", top.window.document).hide();
+
+            }
+        });
+    });
+
+    var oldNum = 0;
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_InBoundManage/InBoundDetail/GetPrintBarCodeList?InBoundDetailID=" + keyValue,
+            height: $(window).height() - 126,
+            width: $(window).width(),
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 100, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '批号', name: 'Lot', width: 70, align: 'left' },
+                { label: "数量", name: "Qty", width: 100, align: 'left' },
+                { label: '标签编码', name: 'BarCode', width: 100, align: 'left' },
+                {
+                    label: "是否使用", name: "IsUsed", width: 50, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == "true" ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '打印', name: '', width: 50, align: 'center', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "<div  onclick=\"btn_PrintItemOne(\'" + rowObject.F_Id + "\')\" title='标签打印' class='fa fa-print' style='color:#336699;cursor:pointer;'></div>";
+                        return detail;
+                    },
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            beforeSelectRow: function (rowid, e) {
+                var rows = $gridList.jqGrid("getRowData");
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+            },
+            customEdit: true
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    //单张打印
+    function btn_PrintItemOne(rowid) {
+        $.ajaxWMS({
+            url: "/PC_InBoundManage/InBoundDetail/PrintItemOne?recordID=" + rowid,
+            data: {},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    //批量打印（点击批量打印按钮）
+    function PrintAllItem() {
+        $.submitForm({
+            url: "/PC_InBoundManage/InBoundDetail/PrintAllItem?inBoundDetailID=" + keyValue,
+            param: {},
+            async: true,
+            success: function () {
+                $("#gridList", window.parent.frames[1].document).trigger("reloadGrid");
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+
+    //生成记录（点击批量生成按钮）
+    function submitForm() {
+        var navID = $(".nav.nav-tabs>li.active").attr("id");
+        if (navID == "tabForm") {
+            if (!$('#form1').formValid()) {
+                return false;
+            }
+            var data = $("#form1").formSerialize();
+            data["InBoundDetailID"] = keyValue;
+
+            if ((!$.isNumeric(data.PrintNum)) || (!Number.isInteger(parseFloat(data.PrintNum))) || parseFloat(data.PrintNum) <= 0) { //不是数字
+                $.modalMsg("打印张数不正确", "warning");
+                return;
+            }
+            $.submitForm({
+                url: "/PC_InBoundManage/InBoundDetail/GenPrintItem",
+                param: data,
+                async: true,
+                success: function () {
+                    $("#gridList", window.parent.frames[1].document).trigger("reloadGrid");
+                    $.loading(false);
+                },
+                error: function (data) {
+                    $.modalMsg(data.message, data.state);
+                }
+            })
+        }
+        else {
+
+        }
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+        <ul class="nav nav-tabs">
+            <li id="tabForm" class="active"><a href="#a" data-toggle="tab">打印设置</a></li>
+            <li id="tabList"><a id="mark" href="#b" data-toggle="tab">标签记录</a></li>
+        </ul>
+        <div class="tab-content" style="padding-top: 5px;">
+            <div id="a" class="tab-pane active" style="padding-top: 20px; ">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">物料编码</th>
+                        <td class="formValue">
+                            <input id="ItemCode" name="ItemCode" readonly="readonly" type="text" class="form-control required" placeholder="请输入物料编码" />
+                        </td>
+                        <th class="formTitle">物料名称</th>
+                        <td class="formValue">
+                            <input id="ItemName" name="ItemName" readonly="readonly" type="text" class="form-control required" placeholder="请输入物料名称" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">生产厂家</th>
+                        <td class="formValue">
+                            <input id="CreateCompany" name="CreateCompany" readonly="readonly" type="text" class="form-control" placeholder="请输入生产厂家" />
+                        </td>
+
+                        <th class="formTitle">批号</th>
+                        <td class="formValue">
+                            <input id="Lot" name="Lot" type="text" readonly="readonly" class="form-control " placeholder="请输入批号" />
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <th class="formTitle">生产日期</th>
+                        <td class="formValue">
+                            <input id="ProductDate" name="ProductDate" readonly="readonly" type="text" class="form-control " placeholder="请输入生产日期" />
+                        </td>
+                        <th class="formTitle">失效日期</th>
+                        <td class="formValue">
+                            <input id="OverdueDate" name="OverdueDate" readonly="readonly" type="text" class="form-control  " placeholder="请输入失效日期" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">单位</th>
+                        <td class="formValue">
+                            <input id="ItemUnitText" name="ItemUnitText" readonly="readonly" type="text" class="form-control " placeholder="请输入单位" />
+                        </td>
+                        <th class="formTitle">单位数量</th>
+                        <td class="formValue">
+                            <input id="UnitQty" name="UnitQty" readonly="readonly" type="text" class="form-control " placeholder="请输入单位数量" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">规格</th>
+                        <td class="formValue">
+                            <input id="Spec" name="Spec" readonly="readonly" type="text" class="form-control " placeholder="请输入规格" />
+                        </td>
+                        <th class="formTitle">入库总数</th>
+                        <td class="formValue">
+                            <input id="Qty" name="Qty" readonly="readonly" type="text" class="form-control " placeholder="请输入入库总数" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">打印张数</th>
+                        <td class="formValue">
+                            <input id="PrintNum" name="PrintNum" type="number" class="form-control " placeholder="请输入打印张数" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="b" class="tab-pane">
+                <table id="gridList"></table>
+                <div id="gridPager"></div>
+            </div>
+        </div>
+    </div>
+</form>
+
+

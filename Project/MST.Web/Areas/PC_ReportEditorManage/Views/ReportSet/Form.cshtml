@@ -1,0 +1,679 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script src="~/Content/js/codemirror/lib/codemirror.js"></script>
+<link href="~/Content/js/codemirror/lib/codemirror.css" rel="stylesheet" />
+<script src="~/Content/js/codemirror/mode/javascript/javascript.js"></script>
+<link href="~/Content/js/codemirror/theme/neo.css" rel="stylesheet" />
+<script src="~/Content/js/codemirror/addon/display/autorefresh.js"></script>
+<style>
+    .steptable {
+        border-left: solid 1px #d0d0d0;
+        border-right: solid 1px #d0d0d0;
+        border-bottom: solid 1px #d0d0d0;
+    }
+
+        .steptable thead tr {
+            text-align: center;
+            font-size: 12px;
+            background-color: #f1f1f1;
+            height: 40px;
+            line-height: 40px;
+        }
+
+        .steptable tbody tr td {
+            text-align: center;
+        }
+
+    .divRow {
+        border: solid 1px #d0d0d0;
+        height: 90px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+    }
+
+    .OrderBtn {
+        color: #d0d0d0;
+    }
+
+        .OrderBtn:hover {
+            font-size: 13px;
+            color: #336699;
+            cursor: pointer;
+        }
+
+    .CodeMirror {
+        border: 1px solid #eee;
+        height: 500px;
+        width: 100%;
+    }
+</style>
+<script>
+    var keyValue = $.request("keyValue"); //ReportSetID
+    var ReportSetModel = {};
+    ReportSetModel.ReportSetConfigModel = {};
+    ReportSetModel.ReportSetConfigModel.DefOwner = {};
+    ReportSetModel.ReportSetConfigModel.DefOwner.Role = { F_Id: "0", F_FullName: "通用" };
+    ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList = new Array();
+    ReportSetModel.ReportSetConfigModel.ReportOwnerList = new Array();//报表设置角色实体
+
+
+    $(function () {
+        initControl();
+        if (!!keyValue) { //修改，则初始化ReportSetModel
+            $.ajax({
+                url: "/PC_ReportEditorManage/ReportSet/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.checkLogin(data);
+                    ReportSetModel = data;
+                    $("#form1").formSerialize(data);
+                    $("#AreaCode").attr("disabled", "disabled");
+                }
+            });
+        }
+
+
+        $.hideBaseData();
+
+        //选择数据源对话框
+        $("#SourceBtn").bind("click", function () {
+            var url = $("#F_UrlAddress").val();
+            $.modalFixHightOpen({
+                id: "SourceChoose",
+                title: "选择数据源",
+                url: "/PC_ReportEditorManage/ReportSource/Index?Url=" + url,
+                width: "650px",
+                height: "500px",
+                callBack: function (iframeId) {
+
+                    var sourceGridList = $("#gridList_Source", top.frames[iframeId].document);
+                    var selectSourceRowID = sourceGridList.jqGrid("getGridParam", "selrow");
+                    if (selectSourceRowID != null) {
+                        var rowData = sourceGridList.jqGrid("getRowData", selectSourceRowID);
+                        $("#DataSourceID").val(rowData.SourceName);
+                        $("#DataSourceID").attr("chooseID", selectSourceRowID);
+                    }
+                    else {
+                        $("#DataSourceID").val("");
+                        $("#DataSourceID").attr("chooseID", "");
+                    }
+                    top.frames[iframeId].close();
+                }
+            });
+        });
+
+
+        //下一步
+        $('#wizard').wizard().on('change', function (e, data) {
+            var $finish = $("#btn_finish");
+            var $next = $("#btn_next");
+            if (data.direction == "next") {
+                switch (data.step) {
+                    case 1:  //基本 - 字段
+                        {
+                            if (!$('#form1').formValid()) {
+                                return false;
+                            }
+                            else {
+
+                                ReportSetModel.DataSourceID = $("#DataSourceID").attr("chooseID");
+
+                                //清空UI模型中数据库原有角色,添加UI选择的角色
+                                var oldReportOwnerList = ReportSetModel.ReportSetConfigModel.ReportOwnerList; //数据库中的原有角色
+                                ReportSetModel.ReportSetConfigModel.ReportOwnerList = new Array();
+                                var authList = $("#Auth").val();
+                                if (authList != null && authList.length > 0) {
+                                    $.each(authList, function (i, n) {
+                                        var isInOldReportOwner = false;
+                                        var owner = {};
+                                        $.each(oldReportOwnerList, function (j, k) {
+                                            if (k.Role.F_Id == n) {
+                                                isInOldReportOwner = true;
+                                                owner = k;
+                                            }
+                                        });
+
+                                        if (isInOldReportOwner) {
+                                            ReportSetModel.ReportSetConfigModel.ReportOwnerList.push(owner);
+                                        }
+                                        else {
+                                            owner.Role = {};
+                                            owner.Role.F_Id = n;
+                                            owner.ReportInPutList = new Array();
+                                            ReportSetModel.ReportSetConfigModel.ReportOwnerList.push(owner);
+                                        }
+                                    });
+                                }
+
+                                //清除没选中的角色Dom
+                                var roleMarkUI = $("#step-2").find(".nav.nav-tabs").find("li");
+                                $.each(roleMarkUI, function (i, n) {
+                                    var isInSelect = false;
+                                    var roleID = $(n).attr("RoleID");
+                                    if (roleID == "0") { //默认角色不用清理
+                                        return true;
+                                    }
+                                    $.each(ReportSetModel.ReportSetConfigModel.ReportOwnerList, function (j, k) {
+
+                                        if (k.Role.F_Id == roleID) {
+                                            isInSelect = true;
+                                        }
+                                    });
+                                    if (!isInSelect) {
+                                        $("#step-2").find(".FieldGen_Mark_" + roleID).remove();
+                                    }
+                                });
+
+
+
+                                $.ajax({
+                                    url: "/PC_ReportEditorManage/ReportSet/GetSetSourceInfo", //获取选中的数据源信息：数据库存在的角色配置,以及新选择的角色名称
+                                    data: { modelStr: JSON.stringify(ReportSetModel) },
+                                    dataType: "json",
+                                    async: false,
+                                    success: function (data) {
+                                        $.checkLogin(data);
+
+                                        ReportSetModel = data;
+
+                                        //初始化通用
+                                        if (data.ReportSetConfigModel.DefOwner != null) {
+                                            var ind = 0;
+                                            var containerClass = 'FieldGen_Mark_' + 0;
+                                            if ($("#step-2").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                                $("#step-2").find(".nav.nav-tabs").append('<li RoleID="' + 0 + '" class="' + containerClass + ' Tab active"><a href="#FieldGen_Tab_' + ind + '" data-toggle="tab">通用</a></li>');
+                                                $("#step-2").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane active" id="FieldGen_Tab_' + ind + '"><table class="form steptable"><thead><tr><td>列编码</td><td>别名</td><td style="width:50px;">显示</td><td style="width:50px;">导出</td><td>列宽</td><td>排序</td><td style="width:50px;">查询</td><td style="width:20px;"></td></tr></thead><tbody></tbody ></table></div >');
+                                                GenColEdit("FieldGen", containerClass, 0, data.ReportSetConfigModel.DefOwner.ReportHeadColList);
+                                            }
+                                            else {
+                                                $("#step-2").find(".nav.nav-tabs").find("." + containerClass + ".Tab").addClass("active");
+                                                $("#step-2").find("#mytab-content").find("." + containerClass + ".tab-pane").addClass("active");
+                                            }
+                                        }
+
+                                        //初始化其它角色
+                                        if (data.ReportSetConfigModel.ReportOwnerList != null) {
+                                            $.each(data.ReportSetConfigModel.ReportOwnerList, function (i, n) {
+                                                var ind = i + 1;
+                                                var containerClass = 'FieldGen_Mark_' + n.Role.F_Id;
+                                                if ($("#step-2").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                                    $("#step-2").find(".nav.nav-tabs").append('<li RoleID="' + n.Role.F_Id + '" class="' + containerClass + ' Tab "><a href="#FieldGen_Tab_' + ind + '" data-toggle="tab">' + n.Role.F_FullName + '</a></li>');
+                                                    $("#step-2").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane " id="FieldGen_Tab_' + ind + '"><table class="form steptable"><thead><tr><td>列编码</td><td>别名</td><td style="width:50px;">显示</td><td style="width:50px;">导出</td><td>列宽</td><td>排序</td><td style="width:50px;">查询</td><td style="width:20px;"></td></tr></thead><tbody></tbody ></table></div >');
+                                                    GenColEdit("FieldGen", containerClass, n.Role.F_Id, n.ReportHeadColList);
+                                                }
+                                                else {
+                                                    $("#step-2").find(".nav.nav-tabs").find("." + containerClass + ".Tab").removeClass("active");
+                                                    $("#step-2").find("#mytab-content").find("." + containerClass + ".tab-pane").removeClass("active");
+                                                }
+                                            });
+                                        }
+
+                                        //通用前移,并选中
+                                        var containerClass = 'FieldGen_Mark_' + 0;
+                                        var normal = $("#step-2").find(".nav.nav-tabs").find("." + containerClass);
+                                        normal.parent().prepend(normal);
+                                    }
+                                });
+                            }
+                            //$finish.show();
+                            //$next.hide();
+                        }
+                        break;
+                    case 2: //字段 - 查询
+                        {
+                            if (!$('#form1').formValid()) {
+                                return false;
+                            }
+                            else {
+                                var oldReportInPutList = ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList;
+                                if (oldReportInPutList == null) {
+                                    oldReportInPutList = [];
+                                }
+                                ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList = new Array();
+                                //默认角色的查询字段
+                                var SelectFiledDefDomList = $("#step-2").find(".FieldGen_Mark_0.tab-pane").find("tbody tr"); //[field = 'IsSelectFiled']
+                                $.each(SelectFiledDefDomList, function (i, n) {
+                                    var checkDom = $(n).find("[Field='IsSelectFiled']");
+                                    if ($(checkDom).prop('checked')) {
+                                        var curFiledCode = $(n).find("[field='FieldCode']").val();
+                                        var existsInPut = null;
+                                        $.each(oldReportInPutList, function (j, k) {
+                                            if (k.FieldCode == curFiledCode) {
+                                                existsInPut = k;
+                                            }
+                                        })
+                                        if (existsInPut == null) {
+                                            var reportInPut = {};
+                                            reportInPut.ReportSourceColumn = {};
+                                            reportInPut.FieldCode = curFiledCode;
+                                            reportInPut.ReName = $(n).find("[field='ReName']").val();
+                                            ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList.push(reportInPut);
+                                        }
+                                        else {
+                                            ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList.push(existsInPut);
+                                        }
+                                    }
+                                });
+
+                                //选中角色的查询字段
+                                $.each(ReportSetModel.ReportSetConfigModel.ReportOwnerList, function (i, n) {
+                                    var oldReportInPutList = n.ReportInPutList;
+                                    var SelectFiledDomList = $("#step-2").find(".FieldGen_Mark_" + n.Role.F_Id + ".tab-pane").find("tbody tr"); //[field = 'IsSelectFiled']
+                                    $.each(SelectFiledDomList, function (j, k) {
+                                        var checkDom = $(k).find("[Field='IsSelectFiled']");
+                                        if ($(checkDom).prop('checked')) {
+                                            var curFiledCode = $(k).find("[field='FieldCode']").val();
+                                            var existsInPut = null;
+                                            $.each(oldReportInPutList, function (l, m) {
+                                                if (m.FieldCode == curFiledCode) {
+                                                    existsInPut = m;
+                                                }
+                                            })
+                                            if (existsInPut == null) {
+                                                var reportInPut = {};
+                                                reportInPut.ReportSourceColumn = {};
+                                                reportInPut.FieldCode = curFiledCode;
+                                                reportInPut.ReName = $(k).find("[field='ReName']").val();
+                                                n.ReportInPutList.push(reportInPut);
+                                            }
+                                            else {
+                                                n.ReportInPutList.push(existsInPut);
+                                            }
+                                        }
+                                    });
+                                });
+
+
+                                //初始化通用
+                                if (ReportSetModel.ReportSetConfigModel.DefOwner != null) {
+                                    var ind = 0;
+                                    var containerClass = 'FieldSelect_Mark_' + 0;
+                                    if ($("#step-3").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                        $("#step-3").find(".nav.nav-tabs").append('<li RoleID="' + 0 + '" class="' + containerClass + ' Tab active"><a href="#FieldSelect_Tab_' + ind + '" data-toggle="tab">通用</a></li>');
+                                        $("#step-3").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane active" id="FieldSelect_Tab_' + ind + '"><table class="form steptable"><thead><tr><td>列编码</td><td>别名</td><td>查询类型</td><td>模糊</td><td style="width:80px;">控件宽度</td><td style="width:20px;"></td></tr></thead><tbody></tbody ></table></div >');
+
+                                        GenColEdit("FieldSelect", containerClass, 0, ReportSetModel.ReportSetConfigModel.DefOwner.ReportInPutList);
+                                    }
+                                    else {
+                                        $("#step-3").find(".nav.nav-tabs").find("." + containerClass + ".Tab").addClass("active");
+                                        $("#step-3").find("#mytab-content").find("." + containerClass + ".tab-pane").addClass("active");
+                                    }
+                                }
+
+                                //初始化其它角色
+                                if (ReportSetModel.ReportSetConfigModel.ReportOwnerList != null) {
+                                    $.each(ReportSetModel.ReportSetConfigModel.ReportOwnerList, function (i, n) {
+                                        var ind = i + 1;
+                                        var containerClass = 'FieldSelect_Mark_' + n.Role.F_Id;
+                                        if ($("#step-3").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                            $("#step-3").find(".nav.nav-tabs").append('<li RoleID="' + n.Role.F_Id + '" class="' + containerClass + ' Tab "><a href="#FieldSelect_Tab_' + ind + '" data-toggle="tab">' + n.Role.F_FullName + '</a></li>');
+                                            $("#step-3").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane " id="FieldSelect_Tab_' + ind + '"><table class="form steptable"><thead><tr><td>列编码</td><td>别名</td><td>查询类型</td><td>模糊</td><td style="width:80px;">控件宽度</td><td style="width:20px;"></td></tr></thead><tbody></tbody ></table></div >');
+                                            GenColEdit("FieldSelect", containerClass, n.Role.F_Id, n.ReportInPutList);
+                                        }
+                                        else {
+                                            $("#step-3").find(".nav.nav-tabs").find("." + containerClass + ".Tab").removeClass("active");
+                                            $("#step-3").find("#mytab-content").find("." + containerClass + ".tab-pane").removeClass("active");
+                                        }
+                                    });
+                                }
+
+                                //通用前移
+                                var containerClass = 'FieldSelect_Mark_' + 0;
+                                var normal = $("#step-3").find(".nav.nav-tabs").find("." + containerClass);
+                                normal.parent().prepend(normal);
+                            }
+                            //$finish.show();
+                            //$next.hide();
+                        }
+                        break;
+                    case 3: //查询-脚本
+                        {
+                            if (!$('#form1').formValid()) {
+                                return false;
+                            }
+                            else {
+                                var ReportScript = ReportSetModel.ReportSetConfigModel.DefOwner.ReportScript;
+                                //初始化通用
+                                if (ReportSetModel.ReportSetConfigModel.DefOwner != null) {
+                                    var ind = 0;
+                                    var containerClass = 'Script_Mark_' + 0;
+                                    if ($("#step-4").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                        $("#step-4").find(".nav.nav-tabs").append('<li RoleID="' + 0 + '" class="' + containerClass + ' Tab active"><a href="#Script_Tab_' + ind + '" data-toggle="tab">通用</a></li>');
+                                        $("#step-4").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane active" id="Script_Tab_' + ind + '"><textarea id="Script_Edit_0" style="width: 100%;height:490px;"></textarea></div >');
+
+                                        let editor = CodeMirror.fromTextArea(document.getElementById("Script_Edit_0"), {
+                                            //mode: "application/json",
+                                            lineNumbers: true,  //显示行号
+                                            lineWrapping: true, //代码折叠
+                                            foldGutter: true,
+                                            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                                            matchBrackets: true,  //括号匹配
+                                            autoCloseBrackets: true,
+                                            autoRefresh: true,
+                                            indentUnit: 4,         // 缩进单位为4
+                                            styleActiveLine: true, // 当前行背景高亮
+                                            //mode: 'htmlmixed',     // HMTL混合模式
+                                            //theme: 'monokai',      // 编辑器主题
+                                            extraKeys: { "Ctrl-Space": "autocomplete" }//ctrl-space唤起智能提示
+                                        });
+                                    }
+                                    else {
+                                        $("#step-4").find(".nav.nav-tabs").find("." + containerClass + ".Tab").addClass("active");
+                                        $("#step-4").find("#mytab-content").find("." + containerClass + ".tab-pane").addClass("active");
+                                    }
+                                }
+
+                                //初始化其它角色
+                                if (ReportSetModel.ReportSetConfigModel.ReportOwnerList != null) {
+                                    $.each(ReportSetModel.ReportSetConfigModel.ReportOwnerList, function (i, n) {
+                                        var ind = i + 1;
+                                        var containerClass = 'Script_Mark_' + n.Role.F_Id;
+                                        if ($("#step-4").find(".nav.nav-tabs").find("." + containerClass).length < 1) {
+                                            $("#step-4").find(".nav.nav-tabs").append('<li RoleID="' + n.Role.F_Id + '" class="' + containerClass + ' Tab "><a href="#Script_Tab_' + ind + '" data-toggle="tab">' + n.Role.F_FullName + '</a></li>');
+                                            $("#step-4").find("#mytab-content").append('<div class="' + containerClass + ' tab-pane " id="Script_Tab_' + ind + '"><textarea id="Script_Edit_' + n.Role.F_Id + '" style="width: 100%;height:490px;">213</textarea></div >');
+
+                                            let editor = CodeMirror.fromTextArea(document.getElementById("Script_Edit_" + n.Role.F_Id), {
+                                                //mode: "application/json",
+                                                lineNumbers: true,  //显示行号
+                                                lineWrapping: true, //代码折叠
+                                                foldGutter: true,
+                                                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                                                matchBrackets: true,  //括号匹配
+                                                autoCloseBrackets: true,
+                                                autoRefresh: true,
+                                                indentUnit: 4,         // 缩进单位为4
+                                                styleActiveLine: true, // 当前行背景高亮
+                                                //mode: 'htmlmixed',     // HMTL混合模式
+                                                //theme: 'monokai',      // 编辑器主题
+                                                extraKeys: { "Ctrl-Space": "autocomplete" }//ctrl-space唤起智能提示
+                                            });
+                                        }
+                                        else {
+                                            $("#step-4").find(".nav.nav-tabs").find("." + containerClass + ".Tab").removeClass("active");
+                                            $("#step-4").find("#mytab-content").find("." + containerClass + ".tab-pane").removeClass("active");
+                                        }
+                                    });
+                                }
+
+
+
+                                //通用前移
+                                var containerClass = 'Script_Mark_' + 0;
+                                var normal = $("#step-4").find(".nav.nav-tabs").find("." + containerClass);
+                                normal.parent().prepend(normal);
+                            }
+                            $finish.show();
+                            $next.hide();
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                $finish.hide();
+                $next.show();
+            }
+        });
+
+
+    });
+
+    function submitForm() {
+
+    }
+
+    //变更排序类型
+    function ChangeSortType(curObj) {
+        var val = $(curObj).val();
+        var indexObj = $(curObj).parents(".formValue").find("[Field='SortIndex']");
+        if (val == "0") { //无排序
+            $(indexObj).hide();
+        }
+        else if (val == "1") { //顺序
+            $(indexObj).show();
+        }
+        else if (val == "2") { //倒序
+            $(indexObj).show();
+        }
+    }
+
+    //排序按钮-向上移动
+    function MoveUp(curObj) {
+        var row = $(curObj).parents("tr");
+        row.prev().before(row);
+    }
+
+    //排序按钮-向下移动
+    function MoveDown(curObj) {
+        var row = $(curObj).parents("tr");
+        row.next().after(row);
+    }
+
+    //字段
+    function GenColEdit(StepType, tabClass, RoleID, data) {
+        switch (StepType) {
+            case "FieldGen":
+                {
+                    $.each(data, function (i, n) {
+                        var html = '<tr>' +
+                            '<td class= "formValue">' +
+                            '<input RoleID="' + RoleID + '" Field="FieldCode"  value="' + n.FieldCode + '" readonly="readonly" type="text" class="form-control" placeholder="列编码" />' + //列编码
+                            '</td>' +
+                            '<td class="formValue">' +
+                            '<input RoleID="' + RoleID + '" Field="ReName"  value="' + (n.ReName == null ? "" : n.ReName) + '" type="text" class="form-control required " placeholder="别名" />' + //别名
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<div class= "ckbox"> ' +
+                            '<input RoleID="' + RoleID + '" Field="IsShow" id="FieldGen_IsShow_' + RoleID + '_' + i + '" type = "checkbox" ' + (n.IsShow == 'true' ? 'checked ="checked"' : "") + '> <label for="FieldGen_IsShow_' + RoleID + '_' + i + '"></label>' + //显示
+                            '</div> ' +
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<div class= "ckbox"> ' +
+                            '<input RoleID="' + RoleID + '" Field="IsCanExport" id="FieldGen_IsCanExport_' + RoleID + '_' + i + '"  type = "checkbox" ' + (n.IsCanExport == 'true' ? 'checked ="checked"' : "") + ' > <label for="FieldGen_IsCanExport_' + RoleID + '_' + i + '"></label>' +//导出
+                            '</div>' +
+                            '</td>' +
+                            '<td class= "formValue"> ' +
+                            '<input RoleID="' + RoleID + '" Field="ColWidth"  value="' + (n.ColWidth == null ? "" : n.ColWidth) + '" type="text" class="form-control required " placeholder="列宽" />' + //列宽
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<div class= "ckbox"> ' +
+                            '<select RoleID="' + RoleID + '" Field="SortType" onchange="ChangeSortType(this)" class="form-control required " ><option value="0">无</option><option value="1">顺序</option><option value="2">倒序</option></select>' + //排序类型
+                            '</div> ' +
+                            '<input RoleID="' + RoleID + '" Field="SortIndex"  class="SelectIndexMark form-control required" value="' + (n.SortIndex == null ? "" : n.SortIndex) + '" type="text" style="width:60px;display:none"  placeholder="索引" />' + //排序索引
+                            '</td> ' +
+                            '<td class= "formValue">' +
+                            '<div class= "ckbox"> ' +
+                            '<input RoleID="' + RoleID + '" Field="IsSelectFiled" id="FieldGen_IsSelectFiled_' + RoleID + '_' + i + '" type = "checkbox" ' + (n.IsSelectFiled == 'true' ? 'checked ="checked"' : "") + '> <label for="FieldGen_IsSelectFiled_' + RoleID + '_' + i + '"></label>' + //显示
+                            '</div> ' +
+                            '</td>' +
+                            '<td class= "formValue">' +
+                            '<span onclick="MoveUp(this)" class="OrderBtnUPMark OrderBtn fa fa-caret-up"></span><span onclick="MoveDown(this)" class="OrderBtnDownMark OrderBtn fa fa-caret-down"></span>' + //列排序按钮
+                            '</td>' +
+                            '</tr>'
+                        $("." + tabClass + ".tab-pane").find("tbody").append(html);
+                    });
+
+                    //select2样式
+                    var selectList = $("." + tabClass + ".tab-pane").find("tbody").find("select");
+                    $.each(selectList, function (i, n) {
+                        $(n).select2({ minimumResultsForSearch: -1 });
+                    });
+                } break;
+            case "FieldSelect":
+                {
+                    $.each(data, function (i, n) {
+                        //列编码,别名,查询类型,模糊,排序,宽度
+                        var html = '<tr>' +
+                            '<td class= "formValue">' +
+                            '<input RoleID="' + RoleID + '" Field="FieldCode"  value="' + n.FieldCode + '" readonly="readonly" type="text" class="form-control" placeholder="列编码" />' + //列编码
+                            '</td>' +
+                            '<td class="formValue">' +
+                            '<input RoleID="' + RoleID + '" Field="ReName"  readonly="readonly" value="' + (n.ReName == null ? "" : n.ReName) + '" type="text" class="form-control required " placeholder="别名" />' + //别名
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<div class= "ckbox"> ' +
+                            '<select RoleID="' + RoleID + '" Field="InPutType" onchange="ChangeInPutType(this)" class="form-control required " ><option value="0">单值</option><option value="1">区间</option><option value="2">序列</option></select>' + //查询类型
+                            '</div> ' +
+                            '<input RoleID="' + RoleID + '" Field="SortIndex"  class="SelectIndexMark form-control required" value="' + (n.SortIndex == null ? "" : n.SortIndex) + '" type="text" style="width:60px;display:none"  placeholder="索引" />' + //排序索引
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<div class= "ckbox"> ' +
+                            '<input RoleID="' + RoleID + '" Field="IsLike" id="FieldGen_IsLike_' + RoleID + '_' + i + '" type = "checkbox" ' + (n.IsLike == 'true' ? 'checked ="checked"' : "") + '> <label for="FieldGen_IsLike_' + RoleID + '_' + i + '"></label>' + //模糊查询
+                            '</div> ' +
+                            '</td> ' +
+                            '<td class= "formValue"> ' +
+                            '<input RoleID="' + RoleID + '" Field="ColWidth"  value="' + (n.ColWidth == null ? "" : n.ColWidth) + '" type="text" class="form-control required " placeholder="控件宽度" />' + //控件宽度
+                            '</td> ' +
+                            '<td class= "formValue">' +
+                            '<span onclick="MoveUp(this)" class="OrderBtnUPMark OrderBtn fa fa-caret-up"></span><span onclick="MoveDown(this)" class="OrderBtnDownMark OrderBtn fa fa-caret-down"></span>' + //列排序按钮
+                            '</td>' +
+                            '</tr>'
+                        $("." + tabClass + ".tab-pane").find("tbody").append(html);
+                    });
+
+                    //select2样式
+                    var selectList = $("." + tabClass + ".tab-pane").find("tbody").find("select");
+                    $.each(selectList, function (i, n) {
+                        $(n).select2({ minimumResultsForSearch: -1 });
+                    });
+                } break;
+            default:
+                {
+
+                }
+        };
+    }
+
+    function initControl() {
+        $("#ReportType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_ReportSet&fieldName=ReportType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+        $("#Auth").bindSelect({
+            url: "/PC_ReportEditorManage/ReportSet/GetAuthJson",
+            id: "F_Id",
+            text: "F_FullName",
+            search: true
+        });
+    }
+
+
+
+</script>
+
+<form id="form1">
+    <div class="widget-body" style="height:600px;">
+        <div id="wizard" class="wizard" data-target="#wizard-steps" style="border-left: none; border-top: none; border-right: none;">
+            <ul class="steps">
+                <li data-target="#step-1" class="active"><span class="step">1</span>基本<span class="chevron"></span></li>
+                <li data-target="#step-2"><span class="step">2</span>字段<span class="chevron"></span></li>
+                <li data-target="#step-3"><span class="step">3</span>查询<span class="chevron"></span></li>
+                <li data-target="#step-4"><span class="step">4</span>脚本<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content" id="wizard-steps" style="border-left: none; border-bottom: none; border-right: none;">
+            <div class="step-pane active" id="step-1" style="margin: 10px; margin-bottom: 0px;">
+                <div class="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table class="form">
+                            <tr>
+                                <th class="formTitle">配置名称</th>
+                                <td class="formValue">
+                                    <input id="F_FullName" name="F_FullName" type="text" class="form-control required" placeholder="请输入角色名称" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">配置编码</th>
+                                <td class="formValue">
+                                    <input id="F_EnCode" name="F_EnCode" type="text" class="form-control required" placeholder="请输入角色编号" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">报表类型</th>
+                                <td class="formValue">
+                                    <select id="ReportType" name="ReportType" class="form-control required">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">数据源</th>
+                                <td class="formValue">
+                                    <div class="input-group">
+                                        <input id="DataSourceID" name="DataSourceID" chooseID="" type="text" readonly="readonly" class="form-control required" placeholder="请选则数据源" />
+                                        <span id="SourceBtn" class="input-group-btn" title="数据源">
+                                            <a class="btn  btn-primary"><i class="fa fa-table"></i></a>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">权限</th>
+                                <td class="formValue">
+                                    <select id="Auth" name="Auth" type="select2" multiple="multiple" class="selectpicker form-control">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle" style="height: 35px;">其它</th>
+                                <td class="formValue" style="padding-top: 1px;">
+                                    <div class="ckbox">
+                                        <input id="Export" name="Export" type="checkbox" checked="checked"><label for="Export">导出</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                                    备注
+                                </th>
+                                <td class="formValue">
+                                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-2">
+                <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+                    <ul class="nav nav-tabs">
+                    </ul>
+                    <div id="mytab-content" class="tab-content">
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-3">
+                <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+                    <ul class="nav nav-tabs">
+                    </ul>
+                    <div id="mytab-content" class="tab-content">
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-4">
+                <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+                    <ul class="nav nav-tabs">
+                    </ul>
+                    <div id="mytab-content" class="tab-content">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="form-button" id="wizard-actions">
+            <a id="btn_last" disabled class="btn btn-default btn-prev">上一步</a>
+            <a id="btn_next" class="btn btn-default btn-next">下一步</a>
+            <a id="btn_finish" class="btn btn-default" style="display: none;" onclick="submitForm()">完成</a>
+        </div>
+    </div>
+</form>
+
+
+

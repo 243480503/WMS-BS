@@ -1,0 +1,148 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+
+        $.ajax({
+            url: "/PC_TaskManage/Task/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#TaskInOutType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Task&fieldName=TaskInOutType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: false
+        });
+
+        $("#TaskType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Task&fieldName=TaskType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+        $("#State").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Task&fieldName=State",
+            id: "F_ItemCode",
+            text: "F_ItemName"
+        });
+
+        $("#OrderType").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=T_Task&fieldName=OrderType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">任务编码</th>
+                <td class="formValue">
+                    <input id="TaskNo" name="TaskNo" type="text" class="form-control required" placeholder="请输入任务编码" />
+                </td>
+                <th class="formTitle">出入库类型</th>
+                <td class="formValue">
+                    <select id="TaskInOutType" name="TaskInOutType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">任务类型</th>
+                <td class="formValue">
+                    <select id="TaskType" name="TaskType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">容器条码</th>
+                <td class="formValue">
+                    <input id="BarCode" name="BarCode" type="text" class="form-control" placeholder="请输入容器条码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">起始地址</th>
+                <td class="formValue">
+                        <input id="SrcLocationCode" name="SrcLocationCode" type="text" class="form-control required" placeholder="请输入起始地址编码" />
+                </td>
+                <th class="formTitle">目标地址</th>
+                <td class="formValue">
+                        <input id="TagLocationCode" name="TagLocationCode" type="text" class="form-control required" placeholder="请输入目标地址编码" />
+                </td>
+            </tr>
+
+            <tr>
+                <th class="formTitle">任务状态</th>
+                <td class="formValue">
+                    <select id="State" name="State" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">单据类型</th>
+                <td class="formValue">
+                    <select id="OrderType" name="OrderType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">单据编码</th>
+                <td class="formValue">
+                        <input id="OrderCode" name="OrderCode" type="text" class="form-control required" placeholder="请输入单据编码" />
+                </td>
+                <th class="formTitle">项次</th>
+                <td class="formValue">
+                        <input id="SEQ" name="SEQ" type="text" class="form-control" placeholder="请输入项次" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue">
+                    <div class="ckbox">
+                        <input id="IsCanExec" name="IsCanExec" type="checkbox" checked="checked"><label for="IsCanExec">可执行</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+         
+
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>          
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

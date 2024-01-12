@@ -1,0 +1,326 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+
+<style>
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .cbox.checkbox {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+
+    select[multiple], select[size] {
+        height: 20px;
+    }
+</style>
+
+<script src="~/Content/js/jqgrid/jqgrid.min.js"></script>
+<link href="~/Content/js/jqgrid/jqgrid.css" rel="stylesheet" />
+<script src="~/Content/js/jqgrid/grid.locale-cn.js"></script>
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+<link href="~/Content/js/datepicker/skin/whyGreen/datepicker.css" rel="stylesheet" />
+<script src="~/Content/js/select2/select2.min.js"></script>
+<link href="~/Content/js/select2/select2.min.css" rel="stylesheet" />
+<script>
+    var selectRowLeft = [];
+    var keyValue = $.request("CountID");
+
+    $(function () {
+        $('#layout').layout({
+            north: { size: 400, resizable: false },
+            center: { size: 40, resizable: false },
+            south: { size: 240, resizable: false }
+        });
+
+        gridList_Bottom();
+
+        $("#layoutChild").layout();
+        gridList_Top('0');
+        treeView();
+        $($("#kindTree>div>div>ul>li>div")[0]).trigger("click");
+
+        //穿梭添加
+        $("#toright").bind("click", function () {
+            var leftSelectRows = $("#gridList_Big").jqGridTransferRowValue();
+            $.each(leftSelectRows, function (i, n) {
+                n.SEQ = GenSEQ();
+                n.SupplierUserID = n.SupplierID;
+                $("#gridList_Right").addRowData(n.F_Id, n, "last");
+                $("#gridList_Big").delRowData(n.F_Id);
+            });
+        });
+
+        //穿梭移除
+        $("#toleft").bind("click", function () {
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                $("#gridList_Right").jqGrid("restoreRow", n.F_Id);
+            });
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                n.SupplierID = n.SupplierUserID;
+                $("#gridList_Big").addRowData(n.F_Id, n, "last");
+                $("#gridList_Right").delRowData(n.F_Id);
+            });
+        });
+
+        $("#btn_search").click(function () {
+            var kindID = $("#kindTree").getCurrentNode().id;
+            $("#gridList_Big").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), kindID: kindID },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    });
+
+    //初始化树
+    function treeView() {
+        $("#kindTree").treeview({
+            url: "/PC_BaseDataManage/Item/GetTreeJson",
+            onnodeclick: function (item) {
+                //$("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+
+    function GenSEQ() {
+        var rightRows = $("#gridList_Right").jqGrid('getRowData');
+        var SEQArray = [];
+        var first = {};
+        first.SEQ = 0;
+        SEQArray.push(first);
+
+        $.each(rightRows, function (i, n) {
+            var cell = {};
+            cell.SEQ = parseInt(n.SEQ);
+            SEQArray.push(cell);
+        });
+
+        SEQArray = SEQArray.sort(function (a, b) { return a.SEQ - b.SEQ });
+
+        var lastSEQ = 0;
+        for (var i = 0; i < SEQArray.length - 1; i++) {
+            if (SEQArray[i].SEQ + 1 != SEQArray[i + 1].SEQ) {
+                lastSEQ = SEQArray[i].SEQ + 1;
+                return lastSEQ;
+            }
+        }
+        if (lastSEQ == 0) {
+            if (SEQArray.length == 0) {
+                lastSEQ = 1;
+            } else {
+                lastSEQ = SEQArray[SEQArray.length - 1].SEQ + 1;
+            }
+        }
+        return lastSEQ;
+    }
+
+    function gridList_Bottom() {
+        //右侧->
+        var $gridList_Right = $("#gridList_Right");
+        $gridList_Right.dataGrid({
+            url: "/PC_CountManage/CountDetail/GetGridJson?CountID=" + keyValue,
+            height: 200,
+            colModel: [
+                { label: "物料+批号", name: "F_Id", hidden: true, key: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: '盘点单ID', name: 'CountID', hidden: true },
+                { label: '供应商ID', name: 'SupplierID', hidden: true },
+                { label: '供应商ID', name: 'SupplierUserID', hidden: true },
+                { label: '供应商', name: 'SupplierUserName', hidden: true },
+                { label: "项次", name: "SEQ", width: 80, align: 'left' },
+                { label: '物料编码', name: 'ItemCode', width: 100, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 240, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 100, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 60, align: 'left' },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    } },
+            ],
+            //pager: "#gridPager3",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+                var rows = $gridList_Right.jqGrid("getRowData");
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList_Right.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+            },
+            customEdit: true,
+            loadonce: true,
+            rowNum: 999999
+        });
+    }
+
+    function gridList_Top(id) {
+        //左侧 <-
+        var $gridList_Big = $("#gridList_Big");
+        $gridList_Big.dataGrid({
+            url: "/PC_CountManage/CountDetail/GetItemList?keyValue=" + keyValue,
+            postData: { kindID: id },
+            height: 300,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: '供应商ID', name: 'SupplierID', hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 70, align: 'left' },
+                { label: "物料名称", name: "ItemName", width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 240, align: 'left' },
+                { label: "规格", name: "Spec", width: 100, align: 'left' },
+                { label: "批号", name: "Lot", width: 80, align: 'left' },
+                { label: '数量', name: 'Qty', width: 70, align: 'left', sortable: false },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                { label: '箱数', name: 'ContainerCount', width: 55, align: 'left', sortable: false },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 80, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    } },
+                { label: '供应商名称', name: 'SupplierName', width: 250, align: 'left' },
+            ],
+            //pager: "#gridPager2",
+            viewrecords: true,
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            loadComplete: function () {
+                //排除已存在右侧的数据
+                var dataListMini = $gridList_Big.getRowData();
+                var $gridList_Right = $("#gridList_Right");
+                var dataListRight = $gridList_Right.getRowData();
+                $.each(dataListMini, function (i, n) {
+                    $.each(dataListRight, function (j, m) {
+                        if (n.F_Id == m.ItemID + m.Lot) {
+                            $gridList_Big.delRowData(n.F_Id);
+                        }
+                    });
+                });
+            },
+            //pager: "#gridPager3",
+            sortname: 'ItemCode,Lot asc',
+            viewrecords: true,
+            rowNum: 999999
+        });
+    }
+
+
+    //确定按钮
+    function submitForm(fun) {
+        //if (!$('#form1').formValid()) {
+        //    return false;
+        //}
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList_Right").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList_Right").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        //还原后重新获取数据
+        rows = $("#gridList_Right").jqGrid("getRowData");
+
+        var jsonStr = JSON.stringify(rows);
+        postdata["CountDetailEntityListStr"] = jsonStr;
+        $.submitForm({
+            url: "/PC_CountManage/CountDetail/SubmitFormList?CountID=" + keyValue,
+            param: postdata,
+            success: function () {
+                //$("#gridList", window.parent.frames[2].document).trigger("reloadGrid");
+                fun();
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-north" style="height:60%">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码/物料名称/批号" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+        <div>
+
+            <div class="ui-layout" id="layoutChild" style="height: 348px; width: 100%;">
+                <div class="ui-layout-west" style="height:60%">
+                    <div id="kindTree"></div>
+                </div>
+                <div class="ui-layout-center" style="height:60%">
+                    <table id="gridList_Big"></table>
+                    <div id="gridPager2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-center" style="height:40%">
+        <div class="topPanel">
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <button id="toright" type="button" class="btn  btn-primary"><i class="fa fa-angle-down"></i></button>
+                            <button id="toleft" type="button" class="btn  btn-primary"><i class="fa fa-angle-up"></i></button>
+                            <div class="input-group">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-south" style="height:35%">
+        <table id="gridList_Right"></table>
+        <div id="gridPager3"></div>
+    </div>
+</div>

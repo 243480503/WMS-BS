@@ -1,0 +1,191 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script src="~/Content/js/framework-clientdata.js"></script>
+<script>
+    var queryJson = "";
+
+    $(function () {
+        gridList();
+    })
+    function gridList() {
+        var $gridList = $("#gridList");
+
+        top.clients = $.clientsInit();
+
+        //queryJson = { resultType: $("#result_horizon a.active").attr('data-value') };
+        queryJson = {
+            keyword: $("#txt_keyword").val(),
+            timeType: $("#time_horizon a.active").attr('data-value'),
+            resultType: $("#result_horizon a.active").attr('data-value')
+        };
+        $gridList.dataGrid({
+            url: "/SystemSecurity/Log/GetGridJson",
+            postData: { queryJson: JSON.stringify(queryJson) },
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '日期', name: 'F_Date', width: 120, align: 'left',
+                    formatter: "date", formatoptions: { srcformat: 'Y-m-d H:i:s', newformat: 'Y-m-d H:i:s' }
+                },
+                { label: '账户', name: 'F_Account', width: 80, align: 'left' },
+                { label: '姓名', name: 'F_NickName', width: 80, align: 'left' },
+                { label: '操作菜单', name: 'F_ModuleName', width: 100, align: 'left' },
+                {
+                    label: '操作类型', name: 'F_Type', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DbLogType"][cellvalue] == undefined ? "" : top.clients.dataItems["DbLogType"][cellvalue]
+                    }
+                },
+                {
+                    label: 'IP地址', name: 'F_IPAddress', width: 150, align: 'left',
+                    formatter: function (cellvalue, options, rowObject) {
+                        return cellvalue + ";" + rowObject.F_IPAddressName;
+                    }
+                },
+                { label: '日志内容', name: 'F_Description', width: 300, align: 'left' },
+                {
+                    label: '查看日志', name: '', width: 50, align: 'left', sortable: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "<div onclick=\"btn_details(\'" + rowObject.F_Id + "\')\" title='日志详情' class='fa fa-envelope-o' style='color:#336699;cursor:pointer;'></div>";
+                        return detail;
+                    },
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_Date desc',
+            viewrecords: true,
+        });
+
+        $("#btn_search").click(function () {
+            var queryJson = {
+                keyword: $("#txt_keyword").val(),
+                timeType: $("#time_horizon a.active").attr('data-value'),
+                resultType: $("#result_horizon a.active").attr('data-value'),
+                roleType: $("#role_horizon a.active").attr('data-value')
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $("#time_horizon a.btn-default").click(function () {
+            $("#time_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+
+        $("#role_horizon a.btn-default").click(function () {
+            $("#role_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_removelog() {
+        $.modalOpen({
+            id: "removelog",
+            title: "清空日志",
+            url: "/SystemSecurity/Log/RemoveLog",
+            width: "400px",
+            height: "180px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_details(rowID) {
+        var keyValue = "";
+        if (rowID == "" || rowID == undefined) {
+            keyValue = $("#gridList").jqGridRowValue().F_Id;
+        }
+        else {
+            keyValue = rowID;
+        }
+
+        $.modalOpen({
+            id: "Details",
+            title: "查看日志",
+            url: "/SystemSecurity/Log/Details?keyValue=" + keyValue,
+            width: "600px",
+            height: "450px",
+            btn: null,
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-removelog" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_removelog()"><i class="fa fa-eraser"></i>清空日志</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-details" authorize="yes" onclick="btn_details()"><i class="fa fa-trash-o"></i>查看明细</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="请输入要查询关键字" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="time_horizon" class="btn-group">
+                        <a class="btn btn-default active" data-value="1">今天</a>
+                        <a class="btn btn-default" data-value="2">近7天</a>
+                        <a class="btn btn-default" data-value="3">近1个月</a>
+                        <a class="btn btn-default" data-value="4">近3个月</a>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="role_horizon" class="btn-group">
+                        <a class="btn btn-default  active" data-value="1">全部</a>
+                        <a class="btn btn-default" data-value="2">用户</a>
+                        <a class="btn btn-default" data-value="3">ERP</a>
+                        <a class="btn btn-default" data-value="4">WCS</a>
+                        <a class="btn btn-default" data-value="5">系统</a>
+                    </div>
+                </td>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default  active" data-value="1">全部</a>
+                        <a class="btn btn-default" data-value="2">失败</a>
+                        <a class="btn btn-default" data-value="3">成功</a>
+                    </div>
+                </td>
+
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

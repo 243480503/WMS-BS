@@ -1,0 +1,256 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+    var isScan = false;
+    var curConDetail = null;
+
+    $(function () {
+        //初始化标题与来源单据号
+        $(".title").text(parentName + " - " + curName);
+        //$("#ItemBarCode_Div").hide();
+        $("#ConDetailLocationCode,#BarCode,#ItemBarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                var valueType = $(this).prop("id");
+                scan(valueType);
+            }
+        });
+    });
+
+    function scan(valueType) {
+        var ConDetailLocationCode = $("#ConDetailLocationCode").val();
+        var BarCode = $("#BarCode").val();
+        var ItemBarCode = $("#ItemBarCode").val();
+        if (ConDetailLocationCode == "" && BarCode == "" && ItemBarCode == "") {
+            $.modalMsg("请扫货位编码或容器条码或子条码", "warning");
+            return;
+        }
+
+        
+
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFClearConDetail/GetLocInfo",
+            data: { locCode: ConDetailLocationCode, barCode: BarCode, valueType: valueType, ItemBarCode: ItemBarCode },
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+                if (data.Loc == null && valueType == "ConDetailLocationCode") {
+                    $.modalMsg("没有查询到货位", "warning");
+                }
+                else if (data.Container == null && valueType == "BarCode") {
+                    $.modalMsg("没有查询到容器", "warning");
+                }
+                else if (data.ContainerDetailList == null || data.ContainerDetailList.length < 1) {
+                    $.modalMsg("没有查询到库存", "warning");
+                }
+                else {
+                    if (valueType == "ConDetailLocationCode") { //扫货位，则更新容器条码
+                        $("#BarCode").val(data.Container == null ? "" : data.Container.BarCode);
+                    }
+                    else if (valueType == "BarCode") { //扫容器条码，则更新货位
+                        $("#ConDetailLocationCode").val(data.Loc == null ? "" : data.Loc.LocationCode);
+                    }
+                    else if (valueType = "ItemBarCode") {
+                        $("#BarCode").val(data.Container == null ? "" : data.Container.BarCode);
+                        $("#ConDetailLocationCode").val(data.Loc == null ? "" : data.Loc.LocationCode);
+                    }
+
+                    $("#LocState").val(data.Loc == null ? "" : data.Loc.StateName);
+                    $("#KindName").val(data.Container == null ? "" : data.Container.ContainerKindName);
+
+                    $(".RF_Row").remove();
+                    $("#Qty").val("");
+                    BindRFList(data.ContainerDetailList);
+
+                    if (ItemBarCode != "") //本身扫的是子条码
+                    {
+                        $("#ItemBarCode_Div").show();
+                        if (data.ContainerDetailList.length > 1) {
+                            $.modalMsg("库存不唯一", "warning");
+                        }
+                        else if (data.ContainerDetailList.length < 1) {
+                            $.modalMsg("没有查询到库存", "warning");
+                        }
+                        else {
+                            curConDetail = data.ContainerDetailList[0];
+                            $("#Qty").val(curConDetail.Qty);
+                        }
+                    }
+                    else {
+                        //如果库存不唯一则显示扫子条码
+                        if (data.ContainerDetailList.length > 1) {
+                            $("#ItemBarCode_Div").show();
+                        }
+                        else if (data.ContainerDetailList.length < 1) {
+                            $("#ItemBarCode_Div").hide();
+                            $.modalMsg("没有查询到库存", "warning");
+                        }
+                        else {
+                            $("#ItemBarCode_Div").hide();
+                            curConDetail = data.ContainerDetailList[0];
+                            $("#Qty").val(curConDetail.Qty);
+                        }
+                    }
+                    
+
+                    isScan = true;
+                }
+            }
+        });
+    }
+
+
+    function BindRFList(data) {
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: data,
+            datatype: "local",
+            colModel: [
+                { label: '物料名称', name: 'ItemName', width: "30", align: 'left', br: true },
+                { label: '物料编码', name: 'ItemCode', width: "30", align: 'left', br: true },
+                { label: '贴标编码', name: 'ItemBarCode', width: "30", align: 'left', br: true },
+                { label: '规格', name: 'Spec', width: "20", align: 'left' },
+                { label: '批号', name: 'Lot', width: "30", align: 'left', br: true },
+                { label: '数量', name: 'Qty', width: "20", align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: "20", align: 'left', br: true },
+                { label: '失效日期', name: 'OverdueDate', width: "30", align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+            ],
+            delbtn: false
+        });
+    }
+
+    function ClearConDetail() {
+        var ConDetailLocationCode = $("#ConDetailLocationCode").val();
+        var barCode = $("#BarCode").val();
+        var ItemBarCode = $("#ItemBarCode").val();
+        var Qty = $("#Qty").val();
+        if (ConDetailLocationCode == "" || barCode == "") {
+            $.modalMsg("请扫货位编码或容器条码", "warning");
+            return;
+        }
+
+        if (isScan == false) {
+            $.modalMsg("请先获取数据", "warning");
+            return;
+        }
+
+        if ($(".RF_Row").length > 1) { //库存不唯一的情况下，应扫子条码
+            if (ItemBarCode == "") {
+                $.modalMsg("请扫子条码", "warning");
+                return;
+            }
+        }
+
+        if (Qty == "") {
+            $.modalMsg("扣减数量必填", "warning");
+            return;
+        }
+
+        if (curConDetail.Qty < parseFloat(Qty)) {
+            $.modalMsg("扣减数量超出库存", "warning");
+            return;
+        }
+
+        var data = $("#form1").formSerialize();
+        $.ajaxWMS({
+            url: "/RF_OtherManage/RFClearConDetail/ClearConDetail",
+            data: data,
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+                if (data.state == "success") {
+                    $.modalMsg("扣减成功", "success");
+                    $("#ConDetailLocationCode").val("");
+                    $("#LocState").val("");
+                    $("#ItemBarCode").val("");
+                    $("#BarCode").val("");
+                    $("#KindName").val("");
+                    $("#Qty").val("");
+                    $("#RFList").empty();
+                    curConDetail = null;
+                    isScan = false;
+                }
+                else {
+                    $.modalMsg(data.message, "error");
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">库存扣减</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+            该功能在无单据下扣除库存信息(保留空容器)
+        </div>
+        <form id="form1">
+            <div class="RF">
+
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">货位条码:</th>
+                        <td class="formValue">
+                            <input id="ConDetailLocationCode" name="ConDetailLocationCode" type="text" class="form-control required" placeholder="货位条码" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th class="formTitle">容器条码:</th>
+                        <td class="formValue">
+                            <input id="BarCode" name="BarCode" type="text" class="form-control required" placeholder="容器条码" />
+                        </td>
+                    </tr>
+                    <tr id="ItemBarCode_Div">
+                        <th class="formTitle">标签条码:</th>
+                        <td class="formValue">
+                            <input id="ItemBarCode" name="ItemBarCode" type="text" class="form-control required" placeholder="标签条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">货位状态:</th>
+                        <td class="formValue">
+                            <input id="LocState" name="LocState" readonly="readonly" type="text" class="form-control required" placeholder="货位状态" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">容器类型:</th>
+                        <td class="formValue">
+                            <input id="KindName" name="KindName" readonly="readonly" type="text" class="form-control required" placeholder="容器类型" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">扣减数量:</th>
+                        <td class="formValue">
+                            <input id="Qty" name="Qty" type="text" class="form-control required isFloatGtZero isFloat" placeholder="扣减数量" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="RFList"></div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="ClearConDetail()">确定</a>
+            </div>
+        </form>
+    </div>
+
+</div>

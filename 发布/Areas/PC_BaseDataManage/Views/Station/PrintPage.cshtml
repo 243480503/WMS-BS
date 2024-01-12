@@ -1,0 +1,63 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $("#IsAuto").bind("click", function (e) {
+            if ($(this).prop("checked")) {
+                $("#Code").attr("readonly", "readonly").removeClass("required");
+                $("#CodeLable").removeClass("has-error");
+                $("#CodeLable").find(".form-control-feedback").remove();
+            } else {
+                $("#Code").removeAttr("readonly").addClass("required");
+            }
+        });
+    });
+
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+        $.ajaxWms({
+            url: "/PC_InBoundManage/Station/GenLabel?num=" + data.PrintNum,
+            param: {},
+            async: true,
+            success: function (data) {
+                
+            }
+        })
+    }
+</script>
+
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">指定条码</th>
+                <td id="CodeLable" class="formValue">
+                    <input id="Code" name="Code" readonly="readonly" type="text" class="form-control " placeholder="请输入指定条码" />
+                </td>
+                <th class="formTitle">打印张数</th>
+                <td class="formValue">
+                    <input id="PrintNum" name="PrintNum" type="number" class="form-control required" placeholder="请输入打印张数" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsAuto" name="IsAuto" type="checkbox" checked="checked"><label for="IsAuto">自动编号</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</form>
+
+

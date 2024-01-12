@@ -1,0 +1,105 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+
+    var upFileName = "";
+    $(function () {
+        $("#UploadFile").change(function (e) {
+            $("#msgPanle").empty();
+        });
+    });
+
+    //导入ItemUpload
+    function submitForm() {
+        UpAndCheckExcel();
+
+    };
+
+    //上传并检查
+    function UpAndCheckExcel() {
+        if ($("#UploadFile").val() == "") {
+            $.modalMsg("请先选择上传文件", "warning");
+            return false;
+        }
+
+        $("#msgPanle").empty().append("<div>正在上传...</div>");
+
+        var file = new FormData(document.getElementById("form1")); //必须是form的ID，否则报错
+        $.ajax({
+            type: "post",
+            url: "/PC_BaseDataManage/Item/UploadAndCheckItemExcel",
+            data: file,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                data = JSON.parse(data);
+                if (data.state == "success") {
+                    $("#msgPanle").empty().append("<div>已选择，请点击确定进行导入</div>");
+                    upFileName = data.data;
+                }
+                else {
+                    $("#msgPanle").empty().append("<div>上传失败:" + data.message + "</div>");
+                    $("#UploadFile").val("");
+                    upFileName = null;
+                }
+
+                if (upFileName == "" || upFileName == null) {
+                    $.modalMsg("请上传正确文件", "warning");
+                    return false;
+                }
+
+                $("#msgPanle").empty().append("<div>正在导入...</div>");
+                $.ajax({
+                    type: "post",
+                    url: "/PC_BaseDataManage/Item/DoItemExcel",
+                    data: { upFileName: upFileName },
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        if (data.state == "success") {
+                            $.modalMsg("导入成功", "success");
+                            $("#msgPanle").empty().append("<div>导入成功</div>");
+                            upFileName = null;
+                        }
+                        else {
+                            $("#msgPanle").empty().append("<div>导入失败:" + data.message + "</div>");
+                        }
+                        $("#UploadFile").val("");
+                    },
+                    error: function (data) {
+                        $("#UploadFile").val("");
+                        data = JSON.parse(data);
+                        $.modalMsg("导入失败:" + data.message, "error");
+                    }
+                })
+            },
+            error: function (data) {
+                $("#UploadFile").val("");
+                data = JSON.parse(data);
+                $("#msgPanle").empty().append("<div>" + data.message + "</div>");
+            }
+        })
+    };
+</script>
+
+<form id="form1">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>注意：</strong>&nbsp;存在的物料更新，不存在的则新建！
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">文件:</th>
+                <td class="formValue">
+                    <input id="UploadFile" name="F_FileName" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" type="file" class="form-control" placeholder="请选择上传文件" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle"></th>
+                <td id="msgPanle" class="formValue">
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

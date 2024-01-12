@@ -1,0 +1,114 @@
+﻿@{
+    ViewBag.Title = "手持设备";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+<style>
+
+
+    body .mainmenu:after {
+        clear: both;
+        content: " ";
+        display: block;
+    }
+
+    body .mainmenu li {
+        float: left;
+        margin-left: 2.5%;
+        margin-top: 2.5%;
+        width: 21.9%;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        body .mainmenu li a {
+            display: block;
+            color: #FFF;
+            text-align: center
+        }
+
+            body .mainmenu li a b {
+                display: block;
+                height: 58px;
+            }
+
+            body .mainmenu li a div {
+                margin: 10px auto 15px auto;
+                width: 50px;
+                height: 50px;
+                font-size: 40px;
+            }
+
+            body .mainmenu li a span {
+                display: block;
+                height: 25px;
+                line-height: 25px;
+                background-color: #FFF;
+                color: #999;
+                font-size: 12px;
+            }
+
+        body .mainmenu li:nth-child(8n+1) {
+            background-color: #36A1DB
+        }
+
+        body .mainmenu li:nth-child(8n+2) {
+            background-color: #678ce1
+        }
+
+        body .mainmenu li:nth-child(8n+3) {
+            background-color: #8c67df
+        }
+
+        body .mainmenu li:nth-child(8n+4) {
+            background-color: #84d018
+        }
+
+        body .mainmenu li:nth-child(8n+5) {
+            background-color: #14c760
+        }
+
+        body .mainmenu li:nth-child(8n+6) {
+            background-color: #f3b613
+        }
+
+        body .mainmenu li:nth-child(8n+7) {
+            background-color: #ff8a4a
+        }
+
+        body .mainmenu li:nth-child(8n+8) {
+            background-color: #fc5366
+        }
+</style>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+<ul class="mainmenu" style="margin-top:4em;">
+</ul>
+
+<script>
+    $(function () {
+        GetLoadNav();
+        $("body").css("background-image", "url(../../Content/RF/img/PdaBackground3.jpg)");
+        $("body").css("background-position", "center center");
+        $("body").css("background-repeat", "no-repeat");
+        $("body").css("background-attachment", "fixed");
+        $("body").css("background-size", "cover");
+    });
+    function GetLoadNav() {
+        var data = top.clients.authorizeMenu;
+        $.each(data, function (i) {
+            var row = data[i];
+            if (row.F_ParentId == "0" && row.F_Target == "expand") { //无页面
+                $(".mainmenu").append('<li><a href="Child?F_Id=' + row.F_Id + '"><b><div class="' + row.F_Icon + '" /></b><span>' + row.F_FullName + '</span></a></li>');
+            }
+            else {
+                //$(".mainmenu").append('<li><a href="' + row.F_UrlAddress + '"><b><div class="' + row.F_Icon + '" /></b><span>' + row.F_FullName + '</span></a></li>');
+                $(".mainmenu").append('<li><a href="' + row.F_UrlAddress + '?parentName=' + escape(row.F_FullName) + "&curName=" + escape(row.F_FullName) + '"><b><div class="' + row.F_Icon + '" /></b><span>' + row.F_FullName + '</span></a></li>');
+            }
+        });
+    }
+</script>

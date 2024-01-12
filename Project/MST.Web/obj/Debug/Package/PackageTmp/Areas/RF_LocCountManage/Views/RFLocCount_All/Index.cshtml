@@ -1,0 +1,309 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+    var refOrderCode = "";
+    var locCountRecordID = "";
+    var locCountID = "";
+    var stationID = "";
+    var curBarCode = "";
+    var curContainerType = "";
+    var isScanBarCodeOK = false;
+    var barCode = "";
+
+    $(function () {
+        //初始化标题
+        $(".title").text(curName);
+        //获取盘点明细信息
+        $("#FactBarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                barCode = $("#FactBarCode").val();
+                if (barCode == "") {
+                    $.modalMsg("请先扫描容器条码", "warning");
+                    return;
+                }
+                GetOutDetailInfo(barCode);
+            }
+        });
+
+        $("#FactBarCode").blur(function (e) {
+            if (!isScanBarCodeOK) {
+                if (barCode == "") {
+                    barCode = $("#FactBarCode").val();
+                }
+                if (barCode != "") {
+                    GetOutDetailInfo(barCode);
+                }
+            }
+        });
+
+        $("#FactBarCode").bind("input propertychange", function (e) {
+            Clear();
+            isScanBarCodeOK = false;
+        });
+
+
+        //在切换标签事件之前
+        $("#tab2").bind("show.bs.tab", function () {
+            if (barCode == "") {
+                $.modalMsg("请先扫描容器条码", "warning");
+                return false;
+            }
+
+            if (curContainerType == "Box") {
+                $.modalMsg("纸箱无需盘点", "warning");
+                return false;
+            }
+        });
+
+        //在切换标签事件时
+        $("#tab2").bind("shown.bs.tab", function () {
+
+            //gridList();
+
+            $("#tabB_BarCode").val(barCode);
+            $("#tabB_LocCountCode").val(refOrderCode);
+            //barCode = $("#tabB_BarCode").val();
+
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: { barCode: barCode }
+            //}).trigger('reloadGrid', { fromServer: true, page: 1 });
+            BindRFList();
+        });
+
+        //搜素按钮
+        $(".input-group-btn").bind("click", function () {
+            //barCode = $("#tabB_BarCode").val();
+
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: { barCode: barCode }
+            //}).trigger('reloadGrid', { fromServer: true, page: 1 });
+            BindRFList();
+        });
+
+        $("#FactBarCode").focus();
+    });
+
+    function Clear() {
+        //$("#BarCode").val("");
+        $("#ContainerKindName").val("");
+        $("#RefOrderCode").val("");
+        $("#LocationCode").val("");
+        //$("#ReadyConfirmAndOrderNeed").val("");
+        $("#ErrorMsg").val("");
+        $("#ErrSolution").val("");
+        curContainerType = "";
+        curBarCode = "";
+        countRecordID = "";
+        $("#orderNeeddiv").hide();
+    }
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/RF_LocCountManage/RFLocCount_All/GetLocCountRecordList",
+            shrinkToFit: true,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '货位编码', name: 'LocationCode', width: "40", align: 'left' },
+                { label: '库存容器条码', name: 'BarCode', width: "40", align: 'left' },
+                { label: '实际容器条码', name: 'FactBarCode', width: "40", align: 'left' },
+                { label: "盘点结果", name: "CountResultName", width: "40", align: 'left' },
+            ],
+            datatype: "local",
+            loadComplete: function (data) {
+                if (data.state == "error") {
+                    $.modalMsg(data.message, data.state);
+                }
+            }
+        });
+    }
+
+    function BindRFList() {
+        var barCode = $("#tabB_BarCode").val();
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: { barCode: barCode },
+            url: "/RF_LocCountManage/RFLocCount_All/GetLocCountRecordList",
+            colModel: [
+                { label: '库存容器条码', name: 'BarCode', width: "40", align: 'left', br: true },
+                { label: '实际容器条码', name: 'FactBarCode', width: "40", align: 'left', br: true },
+                { label: '货位编码', name: 'LocationCode', width: "40", align: 'left' },
+                { label: "盘点结果", name: "CountResultName", width: "40", align: 'left' }
+            ],
+            delbtn: false
+        });
+    }
+
+
+    //扫描容器条码，获取容器异常信息
+    function GetOutDetailInfo(barCode) {
+        var postdata = {};
+        postdata["barCode"] = barCode;
+        $.ajaxWMS({
+            url: "/RF_LocCountManage/RFLocCount_All/GetLocCountJson",
+            data: postdata,
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data.state == "error") {
+                    $.modalMsg(data.message, data.state);
+                    isScanBarCodeOK = false;
+                }
+                else {
+                    $("#form1").formSerialize(data);
+                    curContainerType = data.ContainerKind;
+                    curBarCode = data.FactBarCode;
+                    countRecordID = data.F_Id;
+                    stationID = data.StationID;
+                    locCountID = data.LocCountID;
+                    isScanBarCodeOK = true;
+                    refOrderCode = data.RefOrderCode;
+                }
+            }
+        });
+    }
+
+    //提交异常处理信息
+    function btn_add() {
+        if ($("#FactBarCode").val() == null) {
+            $.modalMsg("请先扫描容器条码", "warning");
+            return;
+        }
+
+        //纸箱直接提交
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+        data["F_Id"] = locCountRecordID;
+        data["StationID"] = stationID;
+
+        $.submitForm({
+            url: "/RF_LocCountManage/RFLocCount_All/SubmitLocCountRecordForm",
+            param: data,
+            success: function (data) {
+                if (data.state == "success") {
+                    Clear();
+                    $("#FactBarCode").val("");
+                    $("#ReadyConfirmAndOrderNeed").val(data.data.ReadyConfirmAndOrderNeed);
+                    $("#NoCountTimes").val(data.data.NoCountTimes);
+                    $.modalMsg("已处理", data.state);
+                    $("#FactBarCode").focus();
+                    isScanBarCodeOK = false;
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">异常处理</a></li>
+    <li style="width: 50%;"><a id="tab2" href="#tabB" data-toggle="tab">待处理</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <form id="form1">
+            <div class="RF">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">容器条码:</th>
+                        <td class="formValue">
+                            <input id="FactBarCode" name="FactBarCode" type="text" class="form-control required" placeholder="容器条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">容器类型:</th>
+                        <td class="formValue">
+                            <input id="ContainerKindName" name="ContainerKindName" type="text" class="form-control required" disabled="disabled" placeholder="容器类型" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">盘点单编码:</th>
+                        <td class="formValue">
+                            <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control" disabled="disabled" placeholder="盘点单编码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">货位编码:</th>
+                        <td class="formValue">
+                            <input id="LocationCode" name="LocationCode" type="text" class="form-control" disabled="disabled" placeholder="货位编码" />
+                        </td>
+                    </tr>
+                    <tr id="orderNeeddiv" style="display:none">
+                        <th class="formTitle">已处理/总异常数:</th>
+                        <td class="formValue">
+                            <input id="ReadyConfirmAndOrderNeed" name="ReadyConfirmAndOrderNeed" type="text" disabled="disabled" class="form-control" placeholder="已处理/总异常数" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">本次异常:</th>
+                        <td class="formValue">
+                            <input id="ErrorMsg" name="ErrorMsg" type="text" class="form-control" disabled="disabled" placeholder="本次异常" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">处理方案:</th>
+                        <td class="formValue">
+                            <input id="ErrSolution" name="ErrSolution" type="text" class="form-control" disabled="disabled" placeholder="处理方案" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <!--提交异常处理信息-->
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="btn_add()">确定</a>
+            </div>
+        </form>
+    </div>
+    <div id="tabB" class="tab-pane">
+        <div class="RF" style="padding-top:0rem;">
+            <table class="form savehistory">
+                <tr>
+                    <th class="formTitle">容器条码：</th>
+                    <td class="formValue input-group">
+                        <input type="text" id="tabB_BarCode" name="tabB_BarCode" style="width:13rem" class="form-control required" />
+
+                        <span class="input-group-btn">
+                            <button id="tabB_BarCode" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="formTitle">所属单据:</th>
+                    <td class="formValue">
+                        <input id="tabB_LocCountCode" name="tabB_LocCountCode" type="text" style="width:13rem" class="form-control" disabled="disabled" placeholder="所属单据" />
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
+        <div id="RFList"></div>
+        <div class="btn-group RFboot" style="margin-top:3rem">
+            <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+        </div>
+    </div>
+</div>

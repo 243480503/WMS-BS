@@ -1,0 +1,107 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/PC_InBoundManage/InBoundDetail/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                if (data.IsMustLot != "true") {
+                    $("#Lot").removeClass("required");
+                }
+            }
+        });
+    });
+
+    function initControl() {
+
+        $("#StationID").bindSelect({
+            url: "/PC_InBoundManage/InBoundDetail/GetInPostionSelect?inbounddetailID=" + keyValue,
+            id: "F_Id",
+            text: "StationName"
+        });
+
+        $("#StoreAreaID").bindSelect({
+            url: "/PC_InBoundManage/InBoundDetail/GetStoreAreaSelect?inbounddetailID=" + keyValue,
+            id: "F_Id",
+            text: "AreaName"
+        });
+    }
+
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+
+        $.submitForm({
+            url: "/PC_InBoundManage/InBoundDetail/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $("#gridList", window.parent.frames[1].document).trigger("reloadGrid");
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">物料编码</th>
+                <td class="formValue">
+                    <input id="ItemCode" name="ItemCode" readonly="readonly" type="text" class="form-control required" placeholder="请输入物料编码" />
+                </td>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" readonly="readonly" type="text" class="form-control required" placeholder="请输入物料名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">生产厂家</th>
+                <td class="formValue">
+                    <input id="CreateCompany" name="CreateCompany" readonly="readonly" type="text" class="form-control required" placeholder="请输入生产厂家" />
+                </td>
+
+                <th class="formTitle">入库地点</th>
+                <td class="formValue">
+                    <select id="StationID" name="StationID" disabled="disabled"  class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">存放区域</th>
+                <td class="formValue">
+                    <select id="StoreAreaID" name="StoreAreaID" disabled="disabled"  class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">批号</th>
+                <td class="formValue">
+                    <input id="Lot" name="Lot" type="text" class="form-control required" placeholder="请输入批号" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">生产日期</th>
+                <td class="formValue">
+                    <input id="ProductDate" name="ProductDate" type="text" class="form-control required input-wdatepicker" onfocus="WdatePicker({maxDate:'%y-%M-%d'})" placeholder="请输入生产日期" />
+                </td>
+
+            </tr>
+
+        </table>
+    </div>
+</form>

@@ -1,0 +1,487 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+<style>
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+
+    .cbox.checkbox {
+        padding-top: 8px;
+    }
+
+    .form-control {
+        height: 20px;
+        padding: 3px 6px;
+        margin: 2px 0px;
+        width: 80%;
+    }
+
+    select[multiple], select[size] {
+        height: 20px;
+    }
+</style>
+<script src="~/Content/js/jqgrid/jqgrid.min.js"></script>
+<link href="~/Content/js/jqgrid/jqgrid.css" rel="stylesheet" />
+<script src="~/Content/js/jqgrid/grid.locale-cn.js"></script>
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+<link href="~/Content/js/datepicker/skin/whyGreen/datepicker.css" rel="stylesheet" />
+<script src="~/Content/js/select2/select2.min.js"></script>
+<link href="~/Content/js/select2/select2.min.css" rel="stylesheet" />
+<script>
+    var selectRowLeft = [];
+    var keyValue = $.request("QAID");
+
+    $(function () {
+        $('#layout').layout({
+            north: { size: 400, resizable: false },
+            center: { size: 40, resizable: false },
+            south: { size: 240, resizable: false }
+        });
+
+        gridList_Bottom();
+
+        $("#layoutChild").layout();
+        gridList_Top('0');
+        treeView();
+        $($("#kindTree>div>div>ul>li>div")[0]).trigger("click");
+
+        //穿梭添加
+        $("#toright").bind("click", function () {
+            var leftSelectRows = $("#gridList_Big").jqGridTransferRowValue();
+            $.each(leftSelectRows, function (i, n) {
+                n.IsAppearQA = "false";
+                n.IsAppearQAStr = "false";
+                n.SampleSumCnt = 0;
+                n.IsBroken = "false";
+                $("#gridList_Right").addRowData(n.F_Id, n, "last");
+                $("#gridList_Big").delRowData(n.F_Id);
+            });
+        });
+
+        //穿梭移除
+        $("#toleft").bind("click", function () {
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                $("#gridList_Right").jqGrid("restoreRow", n.F_Id);
+            });
+            var rightSelectRows = $("#gridList_Right").jqGridTransferRowValue();
+            $.each(rightSelectRows, function (i, n) {
+                $("#gridList_Big").addRowData(n.F_Id, n, "last");
+                $("#gridList_Right").delRowData(n.F_Id);
+            });
+        });
+
+        $("#btn_search").click(function () {
+            var kindID = $("#kindTree").getCurrentNode().id;
+            $("#gridList_Big").jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val(), kindID: kindID },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    })
+
+    //初始化树
+    function treeView() {
+        $("#kindTree").treeview({
+            url: "/PC_BaseDataManage/Item/GetTreeJson",
+            onnodeclick: function (item) {
+                //$("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+    }
+
+    function gridList_Bottom() {
+        //右侧->
+        var $gridList_Right = $("#gridList_Right");
+        $gridList_Right.dataGrid({
+            url: "/PC_QAManage/QAGet/GetGridJsonDetails?QAID=" + keyValue,
+            height: 200,
+            colModel: [
+                { label: "物料+批号", name: "F_Id", hidden: true, key: true },
+                { label: "物料ID", name: "ItemID", hidden: true },
+                { label: '出库单ID', name: 'OutBoundID', hidden: true },
+                { label: "供应商ID", name: "SupplierID", hidden: true, },
+                { label: "供应商编码", name: "SupplierCode", hidden: true },
+                { label: "供应商名称", name: "SupplierName", hidden: true },
+                { label: '项次', name: 'SEQ', width: 40, align: 'left', sorttype: "float" },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 230, align: 'left' },
+                { label: '规格', name: 'Spec', width: 100, align: 'left' },
+                { label: '批号', name: 'Lot', width: 100, align: 'left' },
+                { label: "计量单位", name: "ItemUnitText", width: 55, align: 'left' },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 70, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    } },
+                { label: "总数量", name: "QtySum", hidden: true, width: 50, align: 'left' },
+                { label: "质检类型", name: "IsAppearQA", hidden: true },
+                {
+                    label: '质检类型', name: 'IsAppearQAStr', width: 90, align: 'left', editable: true, edittype: "select", formatter: 'select',
+                    editoptions: {
+                        size: 1, width: 50, type: "select", class: "form-control required", value: "false:取样质检;true:外观质检", dataEvents: [{
+                            type: 'change', fn: function (e) {
+                                var selVal = this.value;
+                                var rowId = $(e.target).parents("tr").attr("id");
+                                if (selVal == "true") {
+                                    $(this).parents("tr").find("input[name='SampleSumNum']").attr("disabled", true);
+
+                                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumNum]").attr("disabled", true);
+                                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumCnt]").attr("disabled", false);
+                                    $gridList_Right.jqGrid('setCell', rowId, "IsAppearQA", "true");
+                                    $gridList_Right.jqGrid('setCell', rowId, "IsBroken", "false");
+                                    $(this).parents("tr").find("input[name='SampleSumNum']").val(0);
+                                }
+                                else {
+                                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumNum]").attr("disabled", false);
+                                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumCnt]").attr("disabled", true);
+                                    $gridList_Right.jqGrid('setCell', rowId, "IsAppearQA", "false");
+                                    $gridList_Right.jqGrid('setCell', rowId, "IsBroken", "false");
+                                    $(this).parents("tr").find("input[name='SampleSumCnt']").val(0);
+                                }
+                            }
+                        }]
+                    }
+                },
+                {
+                    label: "抽样数量", id: "SampleSumNum", name: "SampleSumNum", width: 60, align: 'left', editable: true,
+                    editoptions:
+                    {
+                        size: 1,
+                        width: 50,
+                        //type: "Number",
+                        class: "form-control required",
+                        dataEvents: [
+                            {
+                                type: "blur", data: this, fn: function (e) {
+                                    var rowid = $(e.target).parents("tr").attr("id");
+                                    var row = $gridList_Right.jqGrid("getRowData", rowid);
+                                    if (row.IsAppearQA == "true") return;
+
+                                    var val = $(e.target).val();
+
+                                    if (!$.isNumeric(val)) { //不是数字
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+                                    var valNum = parseFloat(val);
+                                    if (valNum <= 0) {  // 非正数
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+
+                                    $(e.target).css("border-color", "");
+                                    $(e.target).attr("err", false);
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    label: "抽样标签个数", id: "SampleSumCnt", name: "SampleSumCnt", width: 80, align: 'left', editable: true,
+                    editoptions:
+                    {
+                        size: 1,
+                        width: 50,
+                        //type: "Number",
+                        class: "form-control required",
+                        dataEvents: [
+                            {
+                                type: "blur", data: this, fn: function (e) {
+                                    var rowid = $(e.target).parents("tr").attr("id");
+                                    var row = $gridList_Right.jqGrid("getRowData", rowid);
+                                    if (row.IsAppearQA == "false") return;
+
+                                    var val = $(e.target).val();
+
+                                    if (!$.isNumeric(val)) { //不是数字
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+                                    var valNum = parseFloat(val);
+                                    if (valNum <= 0) {  // 非正数
+                                        $(e.target).css("border-color", "red");
+                                        $(e.target).attr("err", true);
+                                        return;
+                                    }
+
+                                    $(e.target).css("border-color", "");
+                                    $(e.target).attr("err", false);
+                                }
+                            }
+                        ]
+                    }
+                },
+                { label: '破坏质检', name: 'IsBroken', width: 55, align: 'center', editable: true, edittype: "checkbox", formatter: 'checkbox', formatoptions: { disabled: false }, editoptions: { value: "true:false" } },
+            ],
+            multiselect: true,
+            showcheck: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            beforeSelectRow: function (rowid, e) {
+                //还原其它行的编辑状态
+                var rows = $gridList_Right.jqGrid("getRowData");
+
+                //检查验证.
+                var isHasErr = false;
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $("#" + n.F_Id + ">td>input").each(function (j, k) {
+                            var iserr = $(k).attr("err");
+                            if (iserr == "true") {
+                                isHasErr = true;
+                            }
+                        });
+                    }
+                });
+
+                if (isHasErr) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                $.each(rows, function (i, n) {
+                    if (n.F_Id != rowid) {
+                        $gridList_Right.jqGrid('saveRow', n.F_Id, null, "clientArray");
+                    }
+                });
+            },
+            onSelectRow: function (rowid, e) {
+                var row = $gridList_Right.jqGrid("getRowData", rowid);
+                var rowId = rowid;
+                if (row.IsAppearQA == "true") {
+                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumNum]").attr("disabled", true);
+                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumCnt]").attr("disabled", false);
+                } else {
+                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumNum]").attr("disabled", false);
+                    $gridList_Right.find("#" + rowId + ">td>input[name=SampleSumCnt]").attr("disabled", true);
+                }
+            },
+            customEdit: true,
+            sortname: 'SEQ asc',
+            viewrecords: true,
+            loadonce: true,
+            rowNum: 999999
+        });
+    }
+
+    function gridList_Top(id) {
+        //左侧 <-
+        var $gridList_Big = $("#gridList_Big");
+        $gridList_Big.dataGrid({
+            url: "/PC_QAManage/QAGet/QALeftList?QAID=" + keyValue,
+            postData: { kindID: id },
+            height: 300,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: "项次", name: "SEQ", hidden: true },
+                { label: '物料ID', name: 'ItemID', hidden: true },
+                { label: "供应商ID", name: "SupplierID", hidden: true },
+                { label: "供应商编码", name: "SupplierCode", hidden: true },
+                { label: "供应商名称", name: "SupplierName", hidden: true },
+                { label: '物料编码', name: 'ItemCode', width: 80, align: 'left' },
+                { label: "物料名称", name: "ItemName", width: 280, align: 'left' },
+                { label: '生产厂家', name: 'Factory', width: 230, align: 'left' },
+                { label: "规格", name: "Spec", width: 100, align: 'left' },
+                { label: "批号", name: "Lot", width: 100, align: 'left' },
+                { label: "抽样数量", name: "SampleSumNum", width: 50, hidden: true, align: 'left' },
+                { label: "总数量", name: "QtySum", width: 50, align: 'left', sortable: false },
+                { label: "计量单位", name: "ItemUnitText", width: 60, align: 'left' },
+                {
+                    label: '失效日期', name: 'OverdueDate', width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) {
+                        if (cellvalue != null) return cellvalue.replace("00:00:00", "");
+                        else return "";
+                    } },
+            ],
+            //pager: "#gridPager2",
+            sortname: 'ItemCode asc',
+            viewrecords: true,
+            multiselect: true,
+            styleUI: 'Bootstrap',
+            rownumbers: false,
+            sortable: false,
+            unwritten: false,
+            loadComplete: function () {
+                //排除已存在右侧的数据
+                var $gridList_Right = $("#gridList_Right");
+                var dataListMini = $gridList_Big.getRowData();
+                var dataListRight = $gridList_Right.getRowData();
+                $.each(dataListMini, function (i, n) {
+                    $.each(dataListRight, function (j, m) {
+                        if (n.F_Id == m.ItemID + m.Lot) {
+                            $gridList_Big.delRowData(n.F_Id);
+                        }
+                    });
+                });
+            },
+            viewrecords: true,
+            rowNum: 999999
+        });
+    }
+
+
+    //确定按钮
+    function submitForm(fun) {
+        //if (!$('#form1').formValid()) {
+        //    return false;
+        //}
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        var rows = $("#gridList_Right").jqGrid("getRowData");
+        $.each(rows, function (i, n) {
+            $("#gridList_Right").jqGrid('saveRow', n.F_Id, null, "clientArray");
+        });
+        //还原后重新获取数据
+        rows = $("#gridList_Right").jqGrid("getRowData");
+        var isNumErr = false;
+        var isCntErr = false;
+        $.each(rows, function (i, n) {
+            var curRowNumErr = false;
+            var curRowCntErr = false;
+            if (n.IsAppearQA == "true") {
+                if (n.SampleSumCnt == "") {
+                    curRowCntErr = true;
+                }
+                if (!$.isNumeric(n.SampleSumCnt)) { //不是数字
+                    curRowCntErr = true;
+                }
+                var valNum = parseFloat(n.SampleSumCnt);
+                if (valNum <= 0) {  // 非正数
+                    curRowCntErr = true;
+                }
+            }
+            else {
+                if (n.SampleSumNum == "") {
+                    curRowNumErr = true;
+                }
+                if (!$.isNumeric(n.SampleSumNum)) { //不是数字
+                    curRowNumErr = true;
+                }
+                var valNum = parseFloat(n.SampleSumNum);
+                if (valNum <= 0) {  // 非正数
+                    curRowNumErr = true;
+                }
+            }
+
+            if (curRowNumErr) {
+                $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumNum]").attr("disabled", false);
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumCnt]").attr("disabled", true);
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumNum]").css("border-color", "red");
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumNum]").focus();
+                isNumErr = true;
+            }
+
+            if (curRowCntErr) {
+                $("#gridList_Right").jqGrid('editRow', n.F_Id)
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumNum]").attr("disabled", true);
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumCnt]").attr("disabled", false);
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumCnt]").css("border-color", "red");
+                $("#gridList_Right").find("#" + n.F_Id + ">td>input[name=SampleSumCnt]").focus();
+                isCntErr = true;
+            }
+        });
+
+        if (isNumErr) {
+            $.modalMsg("输入抽样数量无效", "warning");
+            return;
+        }
+
+        if (isCntErr) {
+            $.modalMsg("输入抽样标签个数无效", "warning");
+            return;
+        }
+
+        var jsonStr = JSON.stringify(rows);
+        postdata["qADetailEntityListStr"] = jsonStr;
+        $.submitForm({
+            url: "/PC_QAManage/QAGet/SubmitFormList?QAID=" + keyValue,
+            param: postdata,
+            success: function () {
+                //$("#gridList", window.parent.frames[2].document).trigger("reloadGrid");
+                fun();
+                $.loading(false);
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+
+
+
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-north" style="height:60%">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="物料编码 / 物料名称" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+        <div>
+
+            <div class="ui-layout" id="layoutChild" style="height: 348px; width: 100%;">
+                <div class="ui-layout-west" style="height:60%">
+                    <div id="kindTree"></div>
+                </div>
+                <div class="ui-layout-center" style="height:60%">
+                    <table id="gridList_Big"></table>
+                    <div id="gridPager2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-center" style="height:40%">
+        <div class="topPanel">
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <button id="toright" type="button" class="btn  btn-primary"><i class="fa fa-angle-down"></i></button>
+                            <button id="toleft" type="button" class="btn  btn-primary"><i class="fa fa-angle-up"></i></button>
+                            <div class="input-group">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="ui-layout-south" style="height:35%">
+        <table id="gridList_Right"></table>
+        <div id="gridPager3"></div>
+    </div>
+</div>

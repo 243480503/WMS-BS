@@ -1,0 +1,221 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+<script>
+    var locCountID = $.request("keyvalue");
+    $(function () {
+        gridList();
+    });
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_LocCountManage/LocCountRecord/GetGridJson?locCountID=" + locCountID,
+            height: $(window).height() - 126,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '货位编码', name: 'LocationCode', width: 120, align: 'left' },
+                { label: "货位状态", name: "LocState", width: 120, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.LocStateName; } },
+                { label: "禁用状态", name: "ForbiddenState", width: 120, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.ForbiddenStateName; } },
+                { label: '库存容器条码', name: 'BarCode', width: 200, align: 'left' },
+                {
+                    label: '容器类型', name: 'ContainerKind', width: 80, align: 'left',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.ContainerKind == "" || rowObject.ContainerKind == null) return "";
+                        else return rowObject.ContainerKindName;
+                    }
+                },
+                { label: "校对状态", name: "CountState", width: 100, align: 'left', formatter: function (cellvalue, options, rowObject) { return rowObject.CountStateName; } },
+                {
+                    label: '校对结果', name: 'CountResult', width: 120, align: 'left',
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.CountResult == "" || rowObject.CountResult == null) return "";
+                        else if (!(rowObject.CountResult == "Inner_SameBoxCode" || rowObject.CountResult == "Inner_Empty" || rowObject.CountResult == "Outer_Normal")) { /// 异常
+                            return '<span class=\"label label-danger\">' + rowObject.CountResultName + '</span>';
+                        }
+                        else {
+                            return '<span class=\"label label-success\">' + rowObject.CountResultName + '</span>';  //return rowObject.CountResultName;
+                        }
+                    }
+                },
+                { label: '实际容器条码', name: 'FactBarCode', width: 200, align: 'left' },
+                {
+                    label: '取消异常', name: 'CountState', width: 80, align: 'center',
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.CountState == "WaitConfirm" && rowObject.OrderState == "WaitConfirm") {
+                            detail = "<div onclick=\"btn_CancelLocCount(\'" + rowObject.F_Id + "\')\" title='取消异常' class='fa fa-mail-forward'></div>";
+                        }
+                        return detail;
+                    },
+                },
+                {
+                    label: '确认异常', name: 'CountState', width: 80, align: 'center', hidden: true,
+                    formatter: function (cellvalue, options, rowObject) {
+                        var detail = "";
+                        if (rowObject.CountState == "WaitConfirm" && rowObject.OrderState == "WaitConfirm") {
+                            detail = "<div onclick=\"btn_ConfirmLocCount(\'" + rowObject.F_Id + "\')\" title='确认异常' class='fa fa-hand-pointer-o'></div>";
+                        }
+                        return detail;
+                    },
+                },
+                { label: '备注', name: 'Remark', width: 100, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true,
+        });
+
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_add() {
+        $.modalFixHightOpen({
+            id: "Form",
+            title: "新增明细",
+            url: "/PC_LocCountManage/LocCountRecord/TransferForm?locCountID=" + locCountID,
+            width: "1400px",
+            height: "800px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm(function () {
+                    $("#gridList").trigger("reloadGrid");
+                });
+            }
+        });
+    }
+
+    // 确认处理异常
+    function btn_ConfirmLocCount(rowID) {
+        var keyValue = "";
+        if (rowID == "" || rowID == undefined) {
+            keyValue = $("#gridList").jqGridRowValue().F_Id;
+        }
+        else {
+            keyValue = rowID;
+        }
+
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        $.modalConfirm("确认处理异常？", function (r) {
+            if (r) {
+                var postdata = {};
+                if ($('[name=__RequestVerificationToken]').length > 0) {
+                    postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+                }
+                postdata["locCountRecID"] = keyValue;
+                $.ajax({
+                    url: "/PC_LocCountManage/LocCountRecord/ConfirmLocCountRec",
+                    data: postdata,
+                    dataType: "json",
+                    type: "POST",
+                    async: false,
+                    success: function (data) {
+                        $.checkLogin(data);
+                        if (data.state == "success") {
+                            $.modalMsg(data.message, data.state);
+                            $("#gridList").trigger("reloadGrid");
+                        }
+                        else {
+                            $.modalAlert(data.message, data.state);
+                        }
+                    }
+                });
+            }
+        })
+    }
+
+    function btn_CancelLocCount(rowID) {
+        var keyValue = "";
+        if (rowID == "" || rowID == undefined) {
+            keyValue = $("#gridList").jqGridRowValue().F_Id;
+        }
+        else {
+            keyValue = rowID;
+        }
+
+        if (keyValue == null) {
+            $.modalMsg("请选择数据", "warning");
+            return;
+        }
+
+        var postdata = {};
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        postdata["locCountRecID"] = keyValue;
+        $.ajax({
+            url: "/PC_LocCountManage/LocCountRecord/CancelLocCountRec",
+            data: postdata,
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                if (data.state == "success") {
+                    $.modalMsg(data.message, data.state);
+                    $("#gridList").trigger("reloadGrid");
+                }
+                else {
+                    $.modalAlert(data.message, data.state);
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="topPanel">
+    <div class="toolbar" >
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add-detail" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>明细维护</a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="物料名称 / 物料编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

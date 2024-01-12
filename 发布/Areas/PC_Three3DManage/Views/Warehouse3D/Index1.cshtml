@@ -1,0 +1,152 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script type="module" src="~/Content/js/three/build/three.js"></script>
+<script type="module" src="~/Content/js/three/build/three.module.js"></script>
+<script src="~/Content/js/three/examples/js/loaders/MTLLoader.js"></script>
+<script src="~/Content/js/three/examples/js/loaders/OBJLoader.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+    }
+</style>
+
+<script type="module">
+    /*
+                                                          |形状
+                                         |几何体(Geometry)|
+                                         |                |尺寸
+                                         |
+                          |网络模型(Mesh)|                |颜色
+                          |              |材质(Material)  |贴图
+                          |                               |透明度
+                          |
+            | 场景(Scene) |
+            |             |           |颜色
+            |             |光照(Light)|     |环境光
+            |                         |分类 |点光源
+            |                               |平行光
+            |
+            |
+            |
+            |              | 位置
+      Three | 相机(Camera) | 视线方向
+            |              |
+            |              |        | 透射投影(PerspectiveCamera)
+            |              |投影方式|
+            |                       | 正射投影(OrthographicCamera)
+            |
+            |
+            |
+            |                  | 渲染器创建(WebGLRenderer())
+            | 渲染器(Renderer) | 开始渲染（.render(scene,camera)）
+                               | domElement属性(canvas对象)
+
+    */
+
+    //创建场景对象Scene
+    var scene = new THREE.Scene();
+
+    $(document).ready(function () {
+
+
+        //创建辅助线
+        //InitGrid(scene);
+
+        // 创建网格模型
+        //var geometry = new THREE.BoxGeometry(100, 100, 100); //创建一个立方体几何对象Geometry
+        //var material = new THREE.MeshLambertMaterial({
+        //    color: 0xeeeeee
+        //}); //材质对象Material
+        //var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+        //scene.add(mesh); //网格模型添加到场景中
+
+        LoadSource();
+
+        //光源设置
+        //点光源
+        var point = new THREE.PointLight(0xffffff);
+        point.position.set(400, 200, 300); //点光源位置
+        scene.add(point); //点光源添加到场景中
+        //环境光
+        var ambient = new THREE.AmbientLight(0x444444);
+        scene.add(ambient);
+
+        //相机设置
+        var width = window.innerWidth; //窗口宽度
+        var height = window.innerHeight; //窗口高度
+        var k = width / height; //窗口宽高比
+        var s = 1000; //三维场景显示范围控制系数，系数越大，显示的范围越大
+        //创建相机对象
+        var camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 2000);
+        camera.position.set(200, 300, 200); //设置相机位置
+        camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
+
+        
+
+        //创建渲染器对象
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);//设置渲染区域尺寸
+        renderer.setClearColor(0xeeeeee, 1); //设置背景颜色
+        document.body.appendChild(renderer.domElement); //body元素中插入canvas对象
+        //执行渲染操作   指定场景、相机作为参数
+        renderer.render(scene, camera);
+    });
+
+    function InitGrid() {
+        const size = 6000;
+        const divisions = 60;
+
+        const gridHelper = new THREE.GridHelper(size, divisions);
+        scene.add(gridHelper);
+    }
+
+    function LoadSource() {
+        var loader = new window.THREE.FileLoader();
+
+
+        var InLineGroup = new THREE.Group();
+        var OutLineGroup = new THREE.Group();
+        var LocGroup = new THREE.Group();
+
+        loader.load("../../Content/js/three/obj/Line.obj", function (text) {
+            loader.load("../../Content/js/three/obj/Line.mtl", function (mtlStr) {
+                var materials = new THREE.MTLLoader().parse(mtlStr);
+                var object = new OBJLoader().setMaterials(materials).parse(text);
+                object.name = "test.obj";
+                object.children[0].material.color.set("#29b90e");
+                InLineGroup.add(object);
+                editor.execute(new AddObjectCommand(editor, object));
+            });
+        });
+
+        $.ajax({
+            url: "/PC_Three3DManage/Warehouse3D/GetDBData",
+            data: {},
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.each(data.LocationList, function (i, n) {
+
+                });
+                $.each(data.ContainerList, function (i, n) {
+
+                });
+                $.each(data.ContainerDetailList, function (i, n) {
+
+                });
+                $.each(data.EquList, function (i, n) {
+
+                });
+                $.each(data.TaskList, function (i, n) {
+
+                });
+            }
+        });
+    }
+    
+
+</script>

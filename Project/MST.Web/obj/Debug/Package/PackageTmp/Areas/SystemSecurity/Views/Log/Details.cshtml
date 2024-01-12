@@ -1,0 +1,69 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/SystemSecurity/Log/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('disabled', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#F_Type").bindSelect({
+            url: "/SystemManage/ItemsData/GetDicList?entityName=Sys_Log&fieldName=DbLogType",
+            id: "F_ItemCode",
+            text: "F_ItemName",
+            search: true
+        });
+    }
+
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">日志类型</th>
+                <td class="formValue">
+                    <select id="F_Type" name="F_Type" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">生成时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control required" placeholder="请输入生成时间" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">日志描述</th>
+                <td class="formValue" colspan="3" >
+                    <input id="F_Description" name="F_Description" type="text" class="form-control required" style="cursor: default;" placeholder="请输入消息" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">发送报文</th>
+                <td class="formValue" colspan="3" >
+                    <textarea id="F_Param" name="F_Param" class="form-control required" style="height: 120px; cursor: default;" placeholder="发送报文"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">接收报文</th>
+                <td class="formValue" colspan="3" >
+                    <textarea id="F_Msg" name="F_Msg" class="form-control required" style="height: 120px; cursor: default;" placeholder="接收报文"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

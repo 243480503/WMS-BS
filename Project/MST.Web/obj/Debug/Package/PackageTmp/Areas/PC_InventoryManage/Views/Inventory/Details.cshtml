@@ -1,0 +1,125 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $.ajax({
+            url: "/PC_InventoryManage/Inventory/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" type="text" class="form-control required"/>
+                </td>
+
+                <th class="formTitle">物料种类</th>
+                <td class="formValue">
+                    <input id="KindName" name="KindName" type="text"  class="form-control required"/>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">区域类型</th>
+                <td class="formValue">
+                    <input id="AreaName" name="AreaName" type="text" class="form-control required" />
+                </td>
+
+                <th class="formTitle">ERP仓库</th>
+                <td class="formValue">
+                    <input id="ERPWarehouseCode" name="ERPWarehouseCode" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器类型</th>
+                <td class="formValue">
+                    <input id="ContainerTypeName" name="ContainerTypeName" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">容器条码</th>
+                <td class="formValue">
+                    <input id="BarCode" name="BarCode" type="text" class="form-control required" placeholder="容器编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">货位编码</th>
+                <td class="formValue">
+                    <input id="LocationNo" name="LocationNo" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">贴标条码</th>
+                <td class="formValue">
+                    <input id="ItemBarCode" name="ItemBarCode" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">供应商</th>
+                <td class="formValue">
+                    <input id="SupplierName" name="SupplierName" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">批号</th>
+                <td class="formValue">
+                    <input id="Lot" name="Lot" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">库存状态</th>
+                <td class="formValue">
+                    <input id="StateName" name="StateName" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">实物数量</th>
+                <td class="formValue">
+                    <input id="Qty" name="Qty" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">待出库数量</th>
+                <td class="formValue">
+                    <input id="OutQty" name="OutQty" type="text" class="form-control required" />
+                </td>
+                <th class="formTitle">取样数量</th>
+                <td class="formValue">
+                    <input id="CheckQty" name="CheckQty" type="text" class="form-control required" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">生产时间</th>
+                <td class="formValue">
+                    <input id="ProductDate" name="ProductDate" type="text" onclick="WdatePicker()" class="Wdate" />
+                </td>
+                <th class="formTitle">过期时间</th>
+                <td class="formValue">
+                    <input id="OverdueDate" name="OverdueDate" type="text" onclick="WdatePicker()" class="Wdate" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsCheckFreeze" name="IsCheckFreeze" type="checkbox"><label for="IsCheckFreeze">质检冻结</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsCountFreeze" name="IsCountFreeze" type="checkbox"><label for="IsCountFreeze">盘点冻结</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsSpecial" name="IsSpecial" type="checkbox"><label for="IsSpecial">特殊物料</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

@@ -1,0 +1,495 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_RFForm.cshtml";
+}
+
+<script>
+    var parentName = unescape($.request("parentName"));
+    var curName = unescape($.request("curName"));
+    var refOrderCode = "";
+    var qARecordID = "";
+    var qAID = "";
+    var stationID = "";
+    var curBarCode = "";
+    var curContainerType = "";
+    var isScanBarCodeOK = false;
+    var isItemMark = "true";
+    var barCode = "";
+
+    $(function () {
+        //初始化标题
+        $(".title").text(curName);
+        //获取收货明细信息
+        $("#BarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                barCode = $("#BarCode").val();
+                if (barCode == "") {
+                    $.modalMsg("请先扫描容器条码", "warning");
+                    return;
+                }
+                GetOutDetailInfo(barCode, "");
+                $("#ItemBarCode").val("");
+            }
+        });
+
+        $("#BarCode").blur(function (e) {
+            // Tab键事件
+            if (!isScanBarCodeOK) {
+                if (barCode == "") {
+                    barCode = $("#BarCode").val();
+                }
+                if (barCode != "") {
+                    GetOutDetailInfo(barCode, "");
+                    $("#ItemBarCode").val("");
+                }
+            }
+        });
+
+        $("#BarCode").bind("input propertychange", function (e) {
+            Clear();
+            isScanBarCodeOK = false;
+        });
+
+
+        //在切换标签事件之前
+        $("#tab2").bind("show.bs.tab", function () {
+            if (barCode == "") {
+                $.modalMsg("请先扫描容器条码", "warning");
+                return false;
+            }
+
+            if (curContainerType == "Box") {
+                $.modalMsg("纸箱无还样明细", "warning");
+                return false;
+            }
+        });
+
+        //在切换标签事件时
+        $("#tab2").bind("shown.bs.tab", function () {
+
+            //gridList();
+
+            $("#tabB_BarCode").val(barCode);
+            barCode = $("#tabB_BarCode").val();
+
+            GetContainerKind(barCode);
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: { qAID: qAID, barCode: barCode }
+            //}).trigger('reloadGrid', { fromServer: true, page: 1 });
+            BindRFList();
+        });
+
+        $("#ItemBarCode").keypress(function (e) {
+            // 回车键事件
+            if (e.keyCode == 13) {
+                var barCode = $("#BarCode").val();
+                if (barCode == "") {
+                    $.modalMsg("请先扫描容器条码", "warning");
+                    return;
+                }
+                var itemBarCode = $("#ItemBarCode").val();
+                if (barCode == "") {
+                    $.modalMsg("请先扫描标签条码", "warning");
+                    return;
+                }
+
+                GetOutDetailInfo(barCode, itemBarCode);
+            }
+        });
+
+        $(".input-group-btn").bind("click", function () {
+            var barCode = $("#tabB_BarCode").val();
+            GetContainerKind(barCode);
+            //$("#gridList").jqGrid('setGridParam', {
+            //    datatype: 'json', postData: { QAID: qAID, barCode: barCode }
+            //}).trigger('reloadGrid', { fromServer: true, page: 1 });
+            BindRFList();
+        });
+
+        $("#BarCode").focus();
+    });
+
+    function Clear() {
+        $("#ContainerKindName").val("");
+        $("#RefOrderCode").val("");
+        $("#ItemCode").val("");
+        $("#ItemName").val("");
+        $("#CreateCompany").val("");
+        $("#ProductDate").val("");
+        $("#Lot").val("");
+        $("#ReadyQutAndOrderNeed").val("");
+        $("#PickedQty").val("");
+        $("#ItemBarCode").val("");
+        $("#itembarcodediv").hide();
+        curContainerType = "";
+        curBarCode = "";
+        qARecordID = "";
+        isItemMark = "true";
+    }
+
+    //function gridList() {
+    //    var $gridList = $("#gridList");
+    //    $gridList.dataGrid({
+    //        url: "/RF_QAManage/RFQA_Return/GetQARecordList",
+    //        shrinkToFit: true,
+    //        colModel: [
+    //            { label: "主键", name: "F_Id", hidden: true, key: true },
+    //            { label: '容器条码', name: 'BarCode', width: "30", align: 'left' },
+    //            { label: '标签条码', name: 'ItemBarCode', width: "40", align: 'left' },
+    //            { label: '物料编码', name: 'ItemCode', width: "30", align: 'left' },
+    //            { label: "还样数量", name: "ReturnQty", width: "30", align: 'left' },
+    //            { label: "批号", name: "Lot", width: "40", align: 'left' }
+    //        ],
+    //        datatype: "local",
+    //        unwritten: false
+    //    });
+    //}
+
+    function BindRFList() {
+        var barCode = $("#tabB_BarCode").val();
+        var $RFList = $("#RFList");
+        $RFList.RFBindList({
+            data: { QAID: qAID, barCode: barCode },
+            url: "/RF_QAManage/RFQA_Return/GetQARecordList",
+            colModel: [
+                { label: '标签条码', name: 'ItemBarCode', width: "40", align: 'left', br: true },
+                { label: '容器条码', name: 'BarCode', width: "30", align: 'left', br: true },
+                { label: '物料编码', name: 'ItemCode', width: "30", align: 'left' },
+                { label: "还样数量", name: "ReturnQty", width: "30", align: 'left', br: true },
+                { label: '规格', name: 'Spec', width: "20", align: 'left' },
+                { label: "批号", name: "Lot", width: "20", align: 'left', br: true },
+                { label: "计量单位", name: "ItemUnitText", width: "20", align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: "30", align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+            ],
+            delbtn: false
+        });
+    }
+
+    //获取容器种类，用来判断确定按钮是否隐藏
+    function GetContainerKind(barCode) {
+        var postdata = {};
+        postdata["barCode"] = barCode;
+        $.ajaxWMS({
+            url: "/RF_QAManage/RFQA_Pick/GetContainerKind",
+            data: postdata,
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data != null) {
+                    if (data.ContainerKind == "Box" || isItemMark == "false")//纸箱
+                    {
+                        $("#itembarcodediv").hide();
+                        //$("#PickedQty").val(data.PickedQty);
+                    }
+                    else { //料箱，料架
+                        $("#itembarcodediv").show();
+                        //if ($("#ItemBarCode").val() == null) $("#PickedQty").val("");
+                        //else $("#PickedQty").val(data.PickedQty);
+                    }
+
+                    if (data.ContainerKind == "Rack") //料架
+                    {
+                        $("#NF-RackIn").show();
+                    }
+                    else {
+                        $("#NF-RackIn").hide();
+                    }
+                }
+            }
+        });
+    }
+
+    //扫描容器条码，获取还样明细信息
+    function GetOutDetailInfo(barCode, itemBarCode) {
+        var postdata = {};
+        postdata["barCode"] = barCode;
+        postdata["itemBarCode"] = itemBarCode;
+        $.ajaxWMS({
+            url: "/RF_QAManage/RFQA_Return/GetDetailJson",
+            data: postdata,
+            dataType: "json",
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data.state == "error") {
+                    $.modalMsg(data.message, data.state);
+                    isScanBarCodeOK = false;
+                    if (isItemMark == "true") {
+                        $("#ItemBarCode").focus();
+                    }
+                }
+                else {
+                    data.OverdueDate = data.OverdueDate == null ? "" : data.OverdueDate.replace("00:00:00", "");
+                    $("#form1").formSerialize(data);
+                    $(".unitText").text(data.ItemUnitText);
+
+                    curContainerType = data.ContainerKind;
+                    curBarCode = data.BarCode;
+                    isItemMark = data.IsItemMark;
+                    if (data.ContainerKind == "Box" || isItemMark == "false")//纸箱
+                    {
+                        $("#itembarcodediv").hide();
+                        $("#PickedQty").val(data.PickedQty);
+                    }
+                    else {   //料箱，料架
+                        $("#itembarcodediv").show();
+                        if (itemBarCode == "") $("#PickedQty").val("");
+                        else $("#PickedQty").val(data.PickedQty);
+                    }
+
+                    if (data.ContainerKind == "Rack") //料架
+                    {
+                        $("#NF-RackIn").show();
+                    }
+                    else {
+                        $("#NF-RackIn").hide();
+                    }
+                    qARecordID = data.F_Id;
+                    stationID = data.StationID;
+                    qAID = data.QAID;
+                    isScanBarCodeOK = true;
+                    $("#BarCode").focus();
+                    if (isItemMark == "true") {
+                        $("#ItemBarCode").focus();
+                    }
+                }
+            }
+        });
+    }
+
+    //提交拣选信息
+    function btn_add() {
+        if ($("#BarCode").val() == null) {
+            $.modalMsg("请先扫描容器条码", "warning");
+            return;
+        }
+
+        if (curContainerType != "Box" && isItemMark == "true" && $("#ItemBarCode").val() == "") {
+            $.modalMsg("请先扫描标签条码", "warning");
+            return;
+        }
+
+        //纸箱直接提交
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        var data = $("#form1").formSerialize();
+        data["F_Id"] = qARecordID;
+        data["StationID"] = stationID;
+        $.submitForm({
+            url: "/RF_QAManage/RFQA_Return/SubmitBackRecordForm",
+            param: data,
+            success: function (data) {
+                if (data.state == "success") {
+                    if (data.data.NoPickTimes == 0) {
+                        Clear();
+                        $("#BarCode").val("");
+                        $("#ReadyQutAndOrderNeed").val("");
+                        $("#NoPickTimes").val("");
+                        $("#PickedQty").val("");
+                        $("#ItemBarCode").val("");
+                        $("#Factory").val("");
+                        $("#OverdueDate").val("");
+                        $("#ItemUnitText").val("");
+                        $("#Spec").val("");
+                        $.modalMsg("还样完毕", data.state);
+                        $("#BarCode").focus();
+                        isScanBarCodeOK = false;
+                    }
+                    else {
+                        var barCode = $("#BarCode").val();
+                        GetOutDetailInfo(barCode, "");
+                        $("#BarCode").val(barCode);
+                        $("#ItemBarCode").val("");
+                        $("#ReadyQutAndOrderNeed").val(data.data.ReadyQutAndOrderNeed);
+                        $("#NoPickTimes").val(data.data.NoPickTimes);
+                        if (isItemMark == "true") {
+                            $("#ItemBarCode").focus();
+                        }
+                    }
+                }
+                else {
+                    $.modalMsg(data.message, data.state);
+                }
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+                if (isItemMark == "true") {
+                    $("#ItemBarCode").focus();
+                }
+            }
+        })
+    }
+
+    //大件站台 点击按钮，申请入库
+    function RackBackIn() {
+        var barCode = $("#tabB_BarCode").val();
+        if (barCode == "") {
+            $.modalMsg("请先扫描容器条码", "warning");
+            return false;
+        }
+        $.ajaxWMS({
+            url: "/RF_QAManage/RFQA_Return/RackBackIn",
+            data: { barCode: barCode },
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                $.modalMsg(data.message, data.state);
+                if (data.state == "success") {
+                    //$("#gridList").trigger('reloadGrid', { fromServer: true, page: 1 });
+                    BindRFList();
+                }
+            }
+        });
+    }
+
+</script>
+
+<div class="RFtoolbar">
+    <div class="fa fa-chevron-left RFback"></div>
+    <div class="title"></div>
+    <div class="fa fa-sign-out RFLogout"></div>
+    <div class="fa fa-refresh RFRef"></div>
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active" style="width: 50%; "><a id="tab1" href="#tabA" data-toggle="tab">还样</a></li>
+    <li style="width: 50%;"><a id="tab2" href="#tabB" data-toggle="tab">已还</a></li>
+</ul>
+
+<div id="mytab-content" class="tab-content">
+    <div id="tabA" class="tab-pane active">
+        <form id="form1">
+            <div class="RF">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">容器条码:</th>
+                        <td class="formValue">
+                            <input id="BarCode" name="BarCode" type="text" class="form-control required" placeholder="容器条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">容器类型:</th>
+                        <td class="formValue">
+                            <input id="ContainerKindName" name="ContainerKindName" type="text" class="form-control required" disabled="disabled" placeholder="容器类型" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">出库单编码:</th>
+                        <td class="formValue">
+                            <input id="RefOrderCode" name="RefOrderCode" type="text" class="form-control" disabled="disabled" placeholder="出库单编码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">物料编码:</th>
+                        <td class="formValue">
+                            <input id="ItemCode" name="ItemCode" type="text" class="form-control" disabled="disabled" placeholder="物料编码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">物料名称:</th>
+                        <td class="formValue">
+                            <input id="ItemName" name="ItemName" type="text" class="form-control" disabled="disabled" placeholder="物料名称" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">生产厂家:</th>
+                        <td class="formValue">
+                            <input id="Factory" name="Factory" type="text" class="form-control" disabled="disabled" placeholder="生产厂家" />
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <th class="formTitle">失效日期:</th>
+                        <td class="formValue">
+                            <input id="OverdueDate" name="OverdueDate" type="text" disabled="disabled" class="form-control required" placeholder="失效日期" />
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <th class="formTitle">计量单位:</th>
+                        <td class="formValue">
+                            <input id="ItemUnitText" name="ItemUnitText" type="text" disabled="disabled" class="form-control required" placeholder="计量单位" />
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <th class="formTitle">规格:</th>
+                        <td class="formValue">
+                            <input id="Spec" name="Spec" type="text" disabled="disabled" class="form-control required" placeholder="规格" />
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <th class="formTitle">批号:</th>
+                        <td class="formValue">
+                            <input id="Lot" name="Lot" type="text" disabled="disabled" class="form-control required" placeholder="批号" />
+                        </td>
+                    </tr>
+                    @*<tr>
+                        <th class="formTitle">剩余次数:</th>
+                        <td class="formValue">
+                            <input id="NoPickTimes" name="NoPickTimes" type="text" disabled="disabled" class="form-control required" placeholder="剩余次数" />
+                        </td>
+                    </tr>*@
+                    <tr>
+                        <th class="formTitle">已还/应还:</th>
+                        <td class="formValue">
+                            <input id="ReadyQutAndOrderNeed" name="ReadyQutAndOrderNeed" type="text" style="width: 17rem; display: inline" disabled="disabled" class="form-control" placeholder="已出/总数" />
+                            <div class="unitText" style="display:inline"></div>
+                        </td>
+                    </tr>
+
+                    <tr id="itembarcodediv" style="display:none">
+                        <th class="formTitle">标签条码:</th>
+                        <td class="formValue">
+                            <input id="ItemBarCode" name="ItemBarCode" type="text" class="form-control required" placeholder="标签条码" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">本次应还:</th>
+                        <td class="formValue">
+                            <input id="PickedQty" name="PickedQty" type="text" disabled="disabled" style="width: 17rem; display: inline" class="form-control required" placeholder="本次应还" />
+                            <div class="unitText" style="display:inline"></div>
+                        </td>
+                    </tr>
+                </table>
+
+
+            </div>
+            <div class="btn-group RFboot" style="margin-top:3rem">
+                <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+                <!--纸箱和料箱 产生任务-->
+                <a id="NF-OK" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="btn_add()">确定</a>
+            </div>
+        </form>
+    </div>
+    <div id="tabB" class="tab-pane">
+        <div class="RF" style="padding-top:0rem;">
+            <table class="form savehistory">
+                <tr>
+                    <th class="formTitle">容器条码：</th>
+                    <td class="formValue input-group">
+                        <input type="text" id="tabB_BarCode" name="tabB_BarCode" style="width:13rem" class="form-control required" />
+
+                        <span class="input-group-btn">
+                            <button id="tabB_BarCode" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
+        <div id="RFList"></div>
+        <div class="btn-group RFboot" style="margin-top:3rem">
+            <a id="NF-Back" authorize="yes" class="btn btn-primary dropdown-text RFbtn">返回</a>
+            <!--料架 产生任务-->
+            <a id="NF-RackIn" authorize="yes" class="btn btn-primary dropdown-text RFbtn" onclick="RackBackIn()">入库</a>
+        </div>
+    </div>
+</div>

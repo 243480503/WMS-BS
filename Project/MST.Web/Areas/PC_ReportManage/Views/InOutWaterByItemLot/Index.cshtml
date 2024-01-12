@@ -1,0 +1,194 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script src="~/Content/js/datepicker/WdatePicker.js"></script>
+
+<style>
+    .tablediv {
+        margin: 30px 40px 0px 0px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-right {
+        padding-top: 8px;
+    }
+
+    .ui-sghref > .glyphicon.glyphicon-triangle-bottom {
+        padding-top: 8px;
+    }
+</style>
+
+<script>
+    $(function () {
+        gridList();
+    })
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PC_ReportManage/InOutWaterByItemLot/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: "主键", name: "F_Id", hidden: true, key: true },
+                { label: '物料编码', name: 'ItemCode', width: 100, align: 'left' },
+                { label: '物料名称', name: 'ItemName', width: 280, align: 'left' },
+                { label: '批号', name: 'Lot', width: 80, align: 'left' },
+                { label: '物料类型', name: 'KindName', width: 100, align: 'left' },
+                { label: '规格', name: 'Spec', width: 80, align: 'left' },
+                { label: '计量单位', name: 'ItemUnitText', width: 80, align: 'left' },
+                { label: '失效日期', name: 'OverdueDate', width: 100, align: 'left', formatter: "date", formatoptions: { newformat: 'Y-m-d' } },
+                { label: '总数量', name: 'SumQty', width: 80, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'ItemCode asc',
+            viewrecords: true,
+            rowNum: 999999,
+            footerrow: true,//设置属性，显示统计行
+            gridComplete: function () {
+                var rows = $gridList.jqGrid("getRowData");
+                var sumTotal = 0;
+                for (var i = 0; i < rows.length; i++) {
+                    sumTotal = parseInt(rows[i].SumQty) + sumTotal;
+                }
+                $gridList.jqGrid("footerData", "set", { ItemCode: "合计：", SumQty: sumTotal });
+            }
+        });
+
+        $("#btn_search").click(function () {
+            var begin = $("#txt_Begin").val();
+            var end = $("#txt_End").val();
+            var itemName = $("#txt_ItemName").val();
+            var lot = $("#txt_Lot").val();
+            var inOutTypeVal = $("#result_horizon a.active").attr('data-value');
+            var inOutType = "";
+            if (inOutTypeVal == "1") {
+                inOutType = "InType";
+            }
+            else {
+                inOutType = "OutType";
+            }
+
+            if (begin != null && end != null) {
+                if (new Date(begin) > new Date(end)) {
+                    $.modalMsg("开始时间应小于或等于结束时间", "error");
+                    return;
+                }
+            }
+
+            $gridList.jqGrid('setGridParam', {
+                postData: { begin: begin, end: end, lot: lot, itemName: itemName, inOutType: inOutType },
+            }).trigger('reloadGrid', { fromServer: true, page: 1 });
+        });
+
+        $("#result_horizon a.btn-default").click(function () {
+            $("#result_horizon a.btn-default").removeClass("active");
+            $(this).addClass("active");
+            $('#btn_search').trigger("click");
+        });
+    }
+
+    $(window).bind('resize', function () {
+        $("#gridList").setGridWidth($(window).width());
+        $("#gridList").setGridHeight($(window).height() - 126);
+    });
+
+    function btn_down() {
+
+        var begin = $("#txt_Begin").val();
+        var end = $("#txt_End").val();
+        var itemName = $("#txt_ItemName").val();
+        var lot = $("#txt_Lot").val();
+        var inOutTypeVal = $("#result_horizon a.active").attr('data-value');
+        var inOutType = "";
+        if (inOutTypeVal == "1") {
+            inOutType = "InType";
+        }
+        else {
+            inOutType = "OutType";
+        }
+
+        var postdata = {};
+        postdata.begin = begin;
+        postdata.end = end;
+        postdata.itemName = itemName;
+        postdata.lot = lot;
+        postdata.inOutType = inOutType;
+        if (postdata.begin != null && postdata.end != null) {
+            if (new Date(postdata.begin) > new Date(postdata.end)) {
+                $.modalMsg("开始时间应小于或等于结束时间", "error");
+                return;
+            }
+        }
+
+        if ($('[name=__RequestVerificationToken]').length > 0) {
+            postdata["__RequestVerificationToken"] = $('[name=__RequestVerificationToken]').val();
+        }
+        $.ajax({
+            url: "/PC_ReportManage/InOutWaterByItemLot/DownFile",
+            data: postdata,
+            dataType: "json",
+            type: "Get",
+            async: false,
+            success: function (data) {
+                $("body").append($("<iframe/>").css("display", "none").attr("src", data.Path));
+            }
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add-down"  class="btn btn-primary dropdown-text" onclick="btn_down()"><i class="fa fa-download"></i>下载</a>
+        </div>
+        @*<div class="operate">
+                <ul class="nav nav-pills">
+                    <li class="first">已选中<span>1</span>项</li>
+                </ul>
+                <a href="javascript:;" class="close"></a>
+            </div>*@
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td style="padding-left: 10px;">
+                    <div id="result_horizon" class="btn-group">
+                        <a class="btn btn-default  active" data-value="1">入库</a>
+                        <a class="btn btn-default" data-value="2">出库</a>
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <span>&nbsp;&nbsp;&nbsp;&nbsp;物料名称:</span>  <input id="txt_ItemName" type="text" class="form-control" placeholder="物料名称" style="width: 140px;float:none;">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <span>&nbsp;&nbsp;&nbsp;&nbsp;批号:</span>  <input id="txt_Lot" type="text" class="form-control" placeholder="批号" style="width: 140px; float: none;">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <span>&nbsp;&nbsp;&nbsp;&nbsp;开始时间:</span>  <input id="txt_Begin" type="text" class="form-control input-wdatepicker" onfocus="WdatePicker({ dateFmt: 'yyyy-MM-dd' })" placeholder="开始时间" style="width: 140px; float: none;">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <span>&nbsp;&nbsp;&nbsp;&nbsp;结束时间:</span>  <input id="txt_End" type="text" class="form-control input-wdatepicker" onfocus="WdatePicker({ dateFmt: 'yyyy-MM-dd' })" placeholder="结束时间" style="width: 140px; float: none;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    @*<div id="gridPager"></div>*@
+</div>

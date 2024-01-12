@@ -1,0 +1,639 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ML.Mkl.Components</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.ML.Trainers.ComputeLRTrainingStdThroughMkl.ComputeStandardDeviation(System.Double[],System.Int32[],System.Int32,System.Int32,Microsoft.ML.Runtime.IChannel,System.Single)">
+            <summary>
+            Computes the standart deviation matrix of each of the non-zero training weights, needed to calculate further the standart deviation,
+            p-value and z-Score.
+            </summary>
+            <param name="hessian"></param>
+            <param name="weightIndices"></param>
+            <param name="numSelectedParams"></param>
+            <param name="currentWeightsCount"></param>
+            <param name="ch">The <see cref="T:Microsoft.ML.Runtime.IChannel"/> used for messaging.</param>
+            <param name="l2Weight">The L2Weight used for training. (Supply the same one that got used during training.)</param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.OlsTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> for training a linear regression model using
+             <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares">ordinary least squares (OLS)</a> for estimating the parameters of the linear regression model.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [Ols](xref:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String))
+             or [Ols(Options)](xref:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.OlsTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-regression.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Regression |
+             | Is normalization required? | Yes |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML | Microsoft.ML.Mkl.Components |
+             | Exportable to ONNX | Yes |
+            
+             ### Training Algorithm Details
+             [Ordinary least squares (OLS)](https://en.wikipedia.org/wiki/Ordinary_least_squares) is a parameterized regression method.
+             It assumes that the conditional mean of the dependent variable follows a linear function of the dependent variables.
+             The regression parameters can be estimated by minimizing the squares of the difference between observed values and the predictions
+            
+             Check the See Also section for links to usage examples.
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String)"/>
+             <seealso cref="M:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.OlsTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.OlsTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.OlsTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.OlsTrainer"/> as used in
+            [Ols(Options)](xref:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.OlsTrainer.Options))
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.OlsTrainer.Options.L2Regularization">
+            <summary>
+            L2 regularization weight. Adding L2 regularization turns this algorithm into a form of ridge regression,
+            rather than, strictly speaking, ordinary least squares.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.OlsTrainer.Options.CalculateStatistics">
+            <summary>
+            Whether to calculate per parameter (e.g., the coefficient of the i-th input feature) significance statistics.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Trainers.OlsTrainer.Options)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.OlsTrainer"/>
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsTrainer.ProbClamp(System.Double)">
+            <summary>
+            In several calculations, we calculate probabilities or other quantities that should range
+            from 0 to 1, but because of numerical imprecision may, in entirely innocent circumstances,
+            land outside that range. This is a helper function to "reclamp" this to sane ranges.
+            </summary>
+            <param name="p">The quantity that should be clamped from 0 to 1</param>
+            <returns>Either p, or 0 or 1 if it was outside the range 0 to 1</returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsTrainer.Mkl.Pptrf(Microsoft.ML.Trainers.OlsTrainer.Mkl.Layout,Microsoft.ML.Trainers.OlsTrainer.Mkl.UpLo,System.Int32,System.Double[])">
+            <summary>
+            Cholesky factorization of a symmetric positive-definite double matrix, using packed storage.
+            The <c>pptrf</c> name comes from LAPACK, and means PositiveDefinitePackedTriangular(Cholesky)Factorize.
+            </summary>
+            <param name="layout">The storage order of this matrix</param>
+            <param name="uplo">Whether the passed in matrix stores the upper or lower triangular part of the matrix</param>
+            <param name="n">The order of the matrix</param>
+            <param name="ap">An array with at least n*(n+1)/2 entries, containing the packed upper/lower part of the matrix.
+            The triangular factorization is stored in this passed in matrix, when it returns. (U^T U or L L^T depending
+            on whether this was upper or lower.)</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsTrainer.Mkl.Pptrs(Microsoft.ML.Trainers.OlsTrainer.Mkl.Layout,Microsoft.ML.Trainers.OlsTrainer.Mkl.UpLo,System.Int32,System.Int32,System.Double[],System.Double[],System.Int32)">
+            <summary>
+            Solves a system of linear equations, using the Cholesky factorization of the <c>A</c> matrix,
+            typically returned from <c>Pptrf</c>.
+            The <c>pptrf</c> name comes from LAPACK, and means PositiveDefinitePackedTriangular(Cholesky)Solve.
+            </summary>
+            <param name="layout">The storage order of this matrix</param>
+            <param name="uplo">Whether the passed in matrix stores the upper or lower triangular part of the matrix</param>
+            <param name="n">The order of the matrix</param>
+            <param name="nrhs">The number of columns in the right hand side matrix</param>
+            <param name="ap">An array with at least n*(n+1)/2 entries, containing a Cholesky factorization
+            of the matrix in the linear equation.</param>
+            <param name="b">The right hand side</param>
+            <param name="ldb">The major index step size (typically for row major order, the number of columns,
+            or something larger)</param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsTrainer.Mkl.Pptri(Microsoft.ML.Trainers.OlsTrainer.Mkl.Layout,Microsoft.ML.Trainers.OlsTrainer.Mkl.UpLo,System.Int32,System.Double[])">
+            <summary>
+            Compute the inverse of a matrix, using the Cholesky factorization of the <c>A</c> matrix,
+            typically returned from <c>Pptrf</c>.
+            The <c>pptrf</c> name comes from LAPACK, and means PositiveDefinitePackedTriangular(Cholesky)Invert.
+            </summary>
+            <param name="layout">The storage order of this matrix</param>
+            <param name="uplo">Whether the passed in matrix stores the upper or lower triangular part of the matrix</param>
+            <param name="n">The order of the matrix</param>
+            <param name="ap">An array with at least n*(n+1)/2 entries, containing a Cholesky factorization
+            of the matrix in the linear equation. The inverse is returned in this array.</param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.OlsModelParameters">
+            <summary>
+            Model parameters for <see cref="T:Microsoft.ML.Trainers.OlsTrainer"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsModelParameters.GetVersionInfo">
+            <summary>
+            Version information to be saved in binary format
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.OlsModelParameters.RSquared">
+            <summary>
+            The coefficient of determination.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.OlsModelParameters.RSquaredAdjusted">
+            <summary>
+            The adjusted coefficient of determination. It is only possible to produce
+            an adjusted R-squared if there are more examples than parameters in the model
+            plus one. If this condition is not met, this value will be <c>NaN</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.OlsModelParameters.HasStatistics">
+            <summary>
+            Whether the model has per parameter statistics. This is false iff
+            <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.StandardErrors"/>, <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.TValues"/>, and <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.PValues"/>
+            are all null. A model may not have per parameter statistics because either
+            there were not more examples than parameters in the model, or because they
+            were explicitly suppressed in training by setting
+            <see cref="F:Microsoft.ML.Trainers.OlsTrainer.Options.CalculateStatistics"/>
+            to false.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.OlsModelParameters.StandardErrors">
+            <summary>
+            The standard error per model parameter, where the first corresponds to the bias,
+            and all subsequent correspond to each weight in turn. This is <c>null</c> if and
+            only if <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.HasStatistics"/> is <c>false</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.OlsModelParameters.TValues">
+            <summary>
+            t-Statistic values corresponding to each of the model standard errors. This is
+            <c>null</c> if and only if <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.HasStatistics"/> is <c>false</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ML.Trainers.OlsModelParameters.PValues">
+            <summary>
+            p-values corresponding to each of the model standard errors. This is <c>null</c>
+            if and only if <see cref="P:Microsoft.ML.Trainers.OlsModelParameters.HasStatistics"/> is <c>false</c>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.OlsModelParameters.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Data.VBuffer{System.Single}@,System.Single,System.Double[],System.Double[],System.Double[],System.Double,System.Double)">
+            <summary>
+            Constructs a new OLS regression model parameters from trained model.
+            </summary>
+            <param name="env">The Host environment.</param>
+            <param name="weights">The weights for the linear model. The i-th element of weights is the coefficient
+            of the i-th feature. Note that this will take ownership of the <see cref="T:Microsoft.ML.Data.VBuffer`1"/>.</param>
+            <param name="bias">The bias added to every output score.</param>
+            <param name="standardErrors">Optional: The statndard errors of the weights and bias.</param>
+            <param name="tValues">Optional: The t-statistics for the estimates of the weights and bias.</param>
+            <param name="pValues">Optional: The p-values of the weights and bias.</param>
+            <param name="rSquared">The coefficient of determination.</param>
+            <param name="rSquaredAdjusted">The adjusted coefficient of determination.</param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer">
+             <summary>
+             The <see cref="T:Microsoft.ML.IEstimator`1"/> to predict a target using a linear binary classification model trained with the symbolic stochastic gradient descent.
+             </summary>
+             <remarks>
+             <format type="text/markdown"><![CDATA[
+             To create this trainer, use [SymbolicStochasticGradientDescent](xref:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.Int32))
+             or [SymbolicStochasticGradientDescent(Options)](xref:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options)).
+            
+             [!include[io](~/../docs/samples/docs/api-reference/io-columns-binary-classification.md)]
+            
+             ### Trainer Characteristics
+             |  |  |
+             | -- | -- |
+             | Machine learning task | Binary classification |
+             | Is normalization required? | Yes |
+             | Is caching required? | No |
+             | Required NuGet in addition to Microsoft.ML |Microsoft.ML.Mkl.Components |
+             | Exportable to ONNX | Yes |
+            
+             ### Training Algorithm Details
+             The symbolic stochastic gradient descent is an algorithm that makes its predictions by finding a separating hyperplane.
+             For instance, with feature values $f0, f1,..., f_{D-1}$, the prediction is given by determining what side of the hyperplane the point falls into.
+             That is the same as the sign of the feature's weighted sum, i.e. $\sum_{i = 0}^{D-1} (w_i * f_i) + b$, where $w_0, w_1,..., w_{D-1}$
+             are the weights computed by the algorithm, and $b$ is the bias computed by the algorithm.
+            
+             While most symbolic stochastic gradient descent algorithms are inherently sequential - at each step, the processing of the current example depends on the parameters learned from previous examples.
+             This algorithm trains local models in separate threads and probabilistic model cobminer that allows the local models to be combined
+             to produce the same result as what a sequential symbolic stochastic gradient descent would have produced, in expectation.
+            
+             For more information see [Parallel Stochastic Gradient Descent with Sound Combiners](https://arxiv.org/abs/1705.08030).
+            
+             Check the See Also section for links to usage examples.
+             ]]>
+             </format>
+             </remarks>
+             <seealso cref="M:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.Int32)" />
+             <seealso cref="M:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options)"/>
+             <seealso cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options"/>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options">
+            <summary>
+            Options for the <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/> as used in
+            <see cref="M:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options)"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.NumberOfThreads">
+            <summary>
+            Degree of lock-free parallelism. Determinism not guaranteed if this is set to higher than 1.
+            The default value is the number of logical cores that are available on the system.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.NumberOfIterations">
+            <summary>
+            Number of passes over the data.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.Tolerance">
+            <summary>
+            Tolerance for difference in average loss in consecutive passes.
+            If the reduction on loss is smaller than the specified tolerance in one iteration, the training process will be terminated.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.LearningRate">
+            <summary>
+            Learning rate. A larger value can potentially reduce the training time but incur numerical instability and over-fitting.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.L2Regularization">
+            <summary>
+            L2 regularization.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.UpdateFrequency">
+            <summary>
+            The number of iterations each thread learns a local model until combining it with the
+            global model. Low value means more updated global model and high value means less cache traffic.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.MemorySize">
+            <summary>
+            The acceleration memory budget in MB.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.Shuffle">
+            <summary>
+            Set to <see langword="true" /> causes the data to shuffle.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options.PositiveInstanceWeight">
+            <summary>
+            Apply weight to the positive class, for imbalanced data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.PrepareDataFromTrainingExamples(Microsoft.ML.Runtime.IChannel,Microsoft.ML.Data.RoleMappedData,System.Int32@)">
+            <summary>
+            This method ensures that the data meets the requirements of this trainer and its
+            subclasses, injects necessary transforms, and throws if it couldn't meet them.
+            </summary>
+            <param name="ch">The channel</param>
+            <param name="examples">The training examples</param>
+            <param name="weightSetCount">Gets the length of weights and bias array. For binary classification and regression,
+            this is 1. For multi-class classification, this equals the number of classes on the label.</param>
+            <returns>A potentially modified version of <paramref name="examples"/></returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/>
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Fit(Microsoft.ML.IDataView,Microsoft.ML.Trainers.LinearModelParameters)">
+            <summary>
+            Continues the training of <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/> using an already trained <paramref name="modelParameters"/>
+            a <see cref="T:Microsoft.ML.Data.BinaryPredictionTransformer"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InstanceProperties">
+            <summary>
+            This struct holds the information about the size, label and isDense of each instance
+            to be able to pass it to the native code.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1">
+             <summary>
+             ArrayManager stores multiple arrays of type <typeparamref name="T"/> in a "very long" array whose size is specified by accelChunkSize.
+             Once one of the very long arrays is full, another one is allocated to store additional arrays. The required memory
+             for this buffering is limited by memorySize.
+            
+             Note that these very long arrays can be reused. This means that learning can be done in batches without the overhead associated
+             with allocation.
+            
+             The benefit of this way of storage is that only a handful of new calls will be needed
+             which saves time.
+             </summary>
+             <typeparam name="T">The type of arrays to be stored</typeparam>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.VeryLongArray">
+            <summary>
+            This structure is used for pinning very long arrays to stop GC from moving them.
+            The reason for this design is that when these arrays are passed to native code,
+            GC does not move the objects.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.#ctor(Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer,Microsoft.ML.Runtime.IChannel)">
+            <summary>
+            Constructor for initializing _storage and other indices.
+            </summary>
+            <param name="trainer"></param>
+            <param name="ch"></param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.CheckAndAllocate">
+            <summary>
+            </summary>
+            <returns>Returns if the allocation was successful</returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.FitsInCurArray(System.Int32)">
+            <summary>
+            This method checks if an array of size <paramref name="size"/> fits in _storage[_storageIndex][_indexInCurArray.._indexInCurArray+size-1].
+            </summary>
+            <param name="size">The size of the array to fit in the very long array _storage[_storageIndex] </param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.AddToStorage(System.ReadOnlySpan{`0})">
+            <summary>
+            Tries to add span <paramref name="instArray"/> to the storage without violating the restriction of memorySize.
+            </summary>
+            <param name="instArray">The span to be added</param>
+            <returns>Return if the allocation was successful</returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.ResetIndexing">
+            <summary>
+            This is a soft clear, meaning that it doesn't reallocate, only sets _storageIndex and
+            _indexInCurArray to 0.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.ArrayManager`1.GiveArrayOfSize(System.Int32,System.Nullable{System.Runtime.InteropServices.GCHandle}@,System.Int32@)">
+            <summary>
+            Gives an array of <paramref name="size"/>.
+            </summary>
+            <param name="size">The size of array to give</param>
+            <param name="outGcHandle"></param>
+            <param name="outArrayStartIndex"></param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InputDataManager">
+            <summary>
+            This class manages the buffering for instances
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InputDataManager.LoadAsMuchAsPossible">
+            <summary>
+            This method tries to load as much as possible from the cursor into the buffer until the memorySize is reached.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InputDataManager.GiveNextInstance(System.Nullable{Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InstanceProperties}@,System.Nullable{System.Runtime.InteropServices.GCHandle}@,System.Int32@,System.Nullable{System.Runtime.InteropServices.GCHandle}@,System.Int32@)">
+            <summary>
+            This method provides instances stored in the buffer in a sequential order. Note that method PrepareCursoring should be called before using this method.
+            </summary>
+            <param name="prop">The property of the given instance. It is set to null in case there are no more instance.</param>
+            <param name="indicesGcHandle"></param>
+            <param name="indicesStartIndex">The offset for the indices array.</param>
+            <param name="valuesGcHandle"></param>
+            <param name="valuesStartIndex">The offset for the values array.</param>
+            <returns>Retruns whether output is valid. Otherwise we have gone through the entire loaded instances.</returns>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Native.LearnAll(Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.InputDataManager,System.Boolean,System.Single@,System.Single,System.Single,System.Span{System.Single},System.Single@,System.Int32,System.Int32,System.Int32,System.Boolean,System.Int32@,System.Single,System.Boolean,System.Boolean,System.Runtime.InteropServices.GCHandle,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Native.ChannelCallBack)">
+            <summary>
+            This method puts all of the buffered instances in array of pointers to pass it to SymSGDNative.
+            </summary>
+            <param name="inputDataManager">The buffered data</param>
+            <param name="tuneLR">Specifies if SymSGD should tune alpha automatically</param>
+            <param name="lr">Initial learning rate</param>
+            <param name="l2Const"></param>
+            <param name="piw"></param>
+            <param name="weightVector">The storage for the weight vector</param>
+            <param name="bias">bias</param>
+            <param name="numFeatres">Number of features</param>
+            <param name="numPasses">Number of passes</param>
+            <param name="numThreads">Number of threads</param>
+            <param name="tuneNumLocIter">Specifies if SymSGD should tune numLocIter automatically</param>
+            <param name="numLocIter">Number of thread local iterations of SGD before combining with the global model</param>
+            <param name="tolerance">Tolerance for the amount of decrease in the total loss in consecutive passes</param>
+            <param name="needShuffle">Specifies if data needs to be shuffled</param>
+            <param name="shouldInitialize">Specifies if this is the first time to run SymSGD</param>
+            <param name="stateGCHandle"></param>
+            <param name="info"></param>
+        </member>
+        <member name="M:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Native.MapBackWeightVector(System.Span{System.Single},System.Runtime.InteropServices.GCHandle)">
+            <summary>
+            Maps back the dense feature to the correct position
+            </summary>
+            <param name="weightVector">The weight vector</param>
+            <param name="stateGCHandle"></param>
+        </member>
+        <member name="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.State">
+            <summary>
+            This is the state of a SymSGD learner that is shared between the managed and native code.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.MklComponentsCatalog">
+            <summary>
+            Collection of extension methods for <see cref="T:Microsoft.ML.RegressionCatalog.RegressionTrainers"/>,
+            <see cref="T:Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers"/>, and <see cref="T:Microsoft.ML.TransformsCatalog"/>
+            to create MKL (Math Kernel Library) trainer and transform components.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,System.String,System.String,System.String)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.OlsTrainer"/>, which predicts a target using a linear regression model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RegressionCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Single"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="exampleWeightColumnName">The name of the example weight column (optional).</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[OrdinaryLeastSquares](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Regression/OrdinaryLeastSquares.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.Ols(Microsoft.ML.RegressionCatalog.RegressionTrainers,Microsoft.ML.Trainers.OlsTrainer.Options)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.OlsTrainer"/> with advanced options, which predicts a target using a linear regression model.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.RegressionCatalog"/>.</param>
+            <param name="options">Algorithm advanced options. See <see cref="T:Microsoft.ML.Trainers.OlsTrainer.Options"/>.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[OrdinaryLeastSquares](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/Regression/OrdinaryLeastSquaresWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,System.String,System.String,System.Int32)">
+            <summary>
+            Create <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/>, which predicts a target using a linear binary classification model trained over boolean label data.
+            Stochastic gradient descent (SGD) is an iterative algorithm that optimizes a differentiable objective function.
+            The <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/> parallelizes SGD using <a href="https://www.microsoft.com/en-us/research/project/project-parade/#!symbolic-execution">symbolic execution</a>.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.BinaryClassificationCatalog"/>.</param>
+            <param name="labelColumnName">The name of the label column. The column data must be <see cref="T:System.Boolean"/>.</param>
+            <param name="featureColumnName">The name of the feature column. The column data must be a known-sized vector of <see cref="T:System.Single"/>.</param>
+            <param name="numberOfIterations">Number of training iterations.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[SymbolicSgdLogisticRegression](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/BinaryClassification/SymbolicSgdLogisticRegression.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.SymbolicSgdLogisticRegression(Microsoft.ML.BinaryClassificationCatalog.BinaryClassificationTrainers,Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options)">
+            <summary>
+            Create <see cref= "T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer" /> with advanced options, which predicts a target using a linear binary classification model trained over boolean label data.
+            Stochastic gradient descent (SGD) is an iterative algorithm that optimizes a differentiable objective function.
+            The <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer"/> parallelizes SGD using <a href="https://www.microsoft.com/en-us/research/project/project-parade/#!symbolic-execution">symbolic execution</a>.
+            </summary>
+            <param name="catalog">The <see cref="T:Microsoft.ML.BinaryClassificationCatalog"/>.</param>
+            <param name="options">Algorithm advanced options. See <see cref="T:Microsoft.ML.Trainers.SymbolicSgdLogisticRegressionBinaryTrainer.Options"/>.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[SymbolicSgdLogisticRegression](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Trainers/BinaryClassification/SymbolicSgdLogisticRegressionWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.VectorWhiten(Microsoft.ML.TransformsCatalog,System.String,System.String,Microsoft.ML.Transforms.WhiteningKind,System.Single,System.Int32,System.Int32)">
+            <summary>
+            Takes column filled with a vector of random variables with a known covariance matrix into a set of new variables whose covariance is the identity matrix,
+            meaning that they are uncorrelated and each have variance 1.
+            </summary>
+            <param name="catalog">The transform's catalog.</param>
+            <param name="outputColumnName">Name of the column resulting from the transformation of <paramref name="inputColumnName"/>.</param>
+            <param name="inputColumnName">Name of the column to transform. If set to <see langword="null"/>, the value of the <paramref name="outputColumnName"/> will be used as source.</param>
+            <param name="kind">Whitening kind (PCA/ZCA).</param>
+            <param name="epsilon">Whitening constant, prevents division by zero.</param>
+            <param name="maximumNumberOfRows">Maximum number of rows used to train the transform.</param>
+            <param name="rank">In case of PCA whitening, indicates the number of components to retain.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[VectorWhiten](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Transforms/Projection/VectorWhiten.cs)]
+            [!code-csharp[VectorWhiten](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Transforms/Projection/VectorWhitenWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="M:Microsoft.ML.MklComponentsCatalog.VectorWhiten(Microsoft.ML.TransformsCatalog,Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions[])">
+            <summary>
+            Takes columns filled with a vector of random variables with a known covariance matrix into a set of new variables whose
+            covariance is the identity matrix, meaning that they are uncorrelated and each have variance 1.
+            </summary>
+            <param name="catalog">The transform's catalog.</param>
+            <param name="columns">Describes the parameters of the whitening process for each column pair.</param>
+            <example>
+            <format type="text/markdown">
+            <![CDATA[
+            [!code-csharp[VectorWhiten](~/../docs/samples/docs/samples/Microsoft.ML.Samples/Dynamic/Transforms/Projection/VectorWhitenWithOptions.cs)]
+            ]]>
+            </format>
+            </example>
+        </member>
+        <member name="T:Microsoft.ML.Transforms.WhiteningKind">
+            <summary>
+            Which vector whitening technique to use. ZCA whitening ensures that the average covariance between whitened
+            and original variables is maximal. In contrast, PCA whitening lead to maximally compressed whitened variables, as
+            measured by squared covariance.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.WhiteningKind.PrincipalComponentAnalysis">
+            <summary> PCA whitening.</summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.WhiteningKind.ZeroPhaseComponentAnalysis">
+            <summary> ZCA whitening.</summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningTransformer.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.Single[][],System.Single[][],Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions[])">
+            <summary>
+            Initializes a new <see cref="T:Microsoft.ML.Transforms.VectorWhiteningTransformer"/> object.
+            </summary>
+            <param name="env">Host Environment.</param>
+            <param name="models">An array of whitening matrices where models[i] is learned from the i-th element of <paramref name="columns"/>.</param>
+            <param name="invModels">An array of inverse whitening matrices, the i-th element being the inverse matrix of models[i].</param>
+            <param name="columns">Describes the parameters of the whitening process for each column pair.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningTransformer.Mapper.GetOutputColumnsCore">
+            <summary>
+            For PCA, the transform equation is y=U^Tx, where "^T" denotes matrix transpose, x is an 1-D vector (i.e., the input column), and U=[u_1, ..., u_PcaNum]
+            is a n-by-PcaNum matrix. The symbol u_k is the k-th largest (in terms of the associated eigenvalue) eigenvector of (1/m)*\sum_{i=1}^m x_ix_i^T,
+            where x_i is the whitened column at the i-th row and we have m rows in the training data.
+            For ZCA, the transform equation is y = US^{-1/2}U^Tx, where U=[u_1, ..., u_n] (we retain all eigenvectors) and S is a diagonal matrix whose i-th
+            diagonal element is the eigenvalues of u_i. The first U^Tx rotates x to another linear space (bases are u_1, ..., u_n), then S^{-1/2} is applied
+            to ensure unit variance, and finally we rotate the scaled result back to the original space using U (note that UU^T is identity matrix so U is
+            the inverse rotation of U^T).
+            </summary>
+        </member>
+        <member name="T:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions">
+            <summary>
+            Describes how the transformer handles one column pair.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.Name">
+            <summary>
+            Name of the column resulting from the transformation of <see cref="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.InputColumnName"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.InputColumnName">
+            <summary>
+            Name of column to transform.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.Kind">
+            <summary>
+            Whitening kind (PCA/ZCA).
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.Epsilon">
+            <summary>
+            Whitening constant, prevents division by zero.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.MaximumNumberOfRows">
+            <summary>
+            Maximum number of rows used to train the transform.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.Rank">
+            <summary>
+            In case of PCA whitening, indicates the number of components to retain.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions.#ctor(System.String,System.String,Microsoft.ML.Transforms.WhiteningKind,System.Single,System.Int32,System.Int32)">
+            <summary>
+            Describes how the transformer handles one input-output column pair.
+            </summary>
+            <param name="name">Name of the column resulting from the transformation of <paramref name="inputColumnName"/>.</param>
+            <param name="inputColumnName">Name of column to transform. If set to <see langword="null"/>, the value of the <paramref name="name"/> will be used as source.</param>
+            <param name="kind">Whitening kind (PCA/ZCA).</param>
+            <param name="epsilon">Whitening constant, prevents division by zero.</param>
+            <param name="maximumNumberOfRows">Maximum number of rows used to train the transform.</param>
+            <param name="rank">In case of PCA whitening, indicates the number of components to retain.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningEstimator.#ctor(Microsoft.ML.Runtime.IHostEnvironment,Microsoft.ML.Transforms.VectorWhiteningEstimator.ColumnOptions[])">
+            <param name="env">The environment.</param>
+            <param name="columns">Describes the parameters of the whitening process for each column pair.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningEstimator.#ctor(Microsoft.ML.Runtime.IHostEnvironment,System.String,System.String,Microsoft.ML.Transforms.WhiteningKind,System.Single,System.Int32,System.Int32)">
+            <param name="env">The environment.</param>
+            <param name="outputColumnName">Name of the column resulting from the transformation of <paramref name="inputColumnName"/>.</param>
+            <param name="inputColumnName">Name of column to transform. If set to <see langword="null"/>, the value of the <paramref name="outputColumnName"/> will be used as source.</param>
+            <param name="kind">Whitening kind (PCA/ZCA).</param>
+            <param name="epsilon">Whitening constant, prevents division by zero when scaling the data by inverse of eigenvalues.</param>
+            <param name="maximumNumberOfRows">Maximum number of rows used to train the transform.</param>
+            <param name="rank">In case of PCA whitening, indicates the number of components to retain.</param>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningEstimator.Fit(Microsoft.ML.IDataView)">
+            <summary>
+            Trains and returns a <see cref="T:Microsoft.ML.Transforms.VectorWhiteningTransformer"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ML.Transforms.VectorWhiteningEstimator.GetOutputSchema(Microsoft.ML.SchemaShape)">
+            <summary>
+            Returns the <see cref="T:Microsoft.ML.SchemaShape"/> of the schema which will be produced by the transformer.
+            Used for schema propagation and verification in a pipeline.
+            </summary>
+        </member>
+    </members>
+</doc>

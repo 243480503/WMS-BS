@@ -1,0 +1,221 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+
+        $.ajax({
+            url: "/PC_BaseDataManage/Item/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                //$("#form1").formSerialize(data, [{ "id": "StoredAreaList", "key": "AreaID" }]);
+                if (data.StoredAreaList.length > 0) {
+                    data.StoredAreaList = data.StoredAreaList[0].AreaID;
+                }
+                if (data.InStationList.length > 0) {
+                    data.InStationList = data.InStationList[0].StationID;
+                }
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#ContainerType").select2({ disabled: "readonly" });
+                $("#InStationList").select2({ disabled: "readonly" });
+                $("#StoredAreaList").select2({ disabled: "readonly" });
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+
+    function initControl() {
+        $("#InStationList").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetStationDicList",
+            id: "F_Id",
+            text: "StationName"
+        });
+
+        $("#StoredAreaList").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetAreaDicList",
+            id: "F_Id",
+            text: "AreaName"
+        });
+
+        $("#ContainerType").bindSelect({
+            url: "/PC_BaseDataManage/Item/GetContainerDicList",
+            id: "ContainerTypeCode",
+            text: "ContainerTypeName",
+            search: true
+        });
+    }
+</script>
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">物料编码</th>
+                <td class="formValue">
+                    <input id="ItemCode" name="ItemCode" type="text" class="form-control required" placeholder="请输入物料编码" />
+                </td>
+                <th class="formTitle">物料名称</th>
+                <td class="formValue">
+                    <input id="ItemName" name="ItemName" type="text" class="form-control required" placeholder="请输入物料名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">物料种类</th>
+                <td class="formValue">
+                    <input id="KindName" name="KindName" type="text" readonly="readonly" class="form-control required" placeholder="请输入物料种类" />
+                </td>
+                <th class="formTitle">计量单位</th>
+                <td class="formValue">
+                    <input id="ItemUnitText" name="ItemUnitText" type="text" class="form-control required" placeholder="请输入计量单位" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">预警数量</th>
+                <td class="formValue">
+                    <input id="WarningQty" name="WarningQty" type="text" class="form-control" placeholder="请输入预警数量" />
+                </td>
+                <th class="formTitle">抽检比例(%)</th>
+                <td class="formValue">
+                    <input id="CheckPerc" name="CheckPerc" type="text" class="form-control" placeholder="请输入抽检比例" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">容器类型</th>
+                <td class="formValue">
+                    <select id="ContainerType" name="ContainerType" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">预警天数</th>
+                <td class="formValue">
+                    <input id="ValidityWarning" name="ValidityWarning" type="text" class="form-control required" placeholder="请输入有效期预警天数量" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">单位数量</th>
+                <td class="formValue">
+                    <input id="UnitQty" name="UnitQty" type="text" class="form-control required" placeholder="请输入数量" />
+                </td>
+                <th class="formTitle">规格</th>
+                <td class="formValue">
+                    <input id="Spec" name="Spec" type="text" class="form-control" placeholder="请输入规格" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">保留库存</th>
+                <td class="formValue">
+                    <input id="MinQty" name="MinQty" type="text" class="form-control required" placeholder="请输入保留库存" />
+                </td>
+                <th class="formTitle">最大库存</th>
+                <td class="formValue">
+                    <input id="MaxQty" name="MaxQty" type="text" class="form-control required" placeholder="请输入最大库存" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">有效期时长</th>
+                <td class="formValue">
+                    <input id="ValidityDayNum" name="ValidityDayNum" type="text" class="form-control" placeholder="请输入有效期时长" />
+                </td>
+                <th class="formTitle">时长单位</th>
+                <td class="formValue">
+                    <input id="ValidityUnitTypeName" name="ValidityUnitTypeName" type="text" class="form-control" placeholder="请输入有效期单位" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">生产厂家</th>
+                <td class="formValue">
+                    <input id="Factory" name="Factory" type="text" class="form-control" placeholder="请输入生产厂家" />
+                </td>
+            </tr>
+            <!-- 如果存放区域或入库站台未多个，可取消注释，并注释其它多余代码
+            <tr>
+                <th class="formTitle">存放区域</th>
+                <td class="formValue" colspan="3">
+                    <select name="StoredAreaList" id="StoredAreaList" type="select2" multiple="multiple" class="selectpicker form-control required">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">入库站台</th>
+                <td class="formValue" colspan="3">
+                    <select name="InStationList" id="InStationList" type="select2" multiple="multiple" class="selectpicker form-control required">
+                    </select>
+                </td>
+            </tr>
+             -->
+            <tr>
+                <th class="formTitle">存放区域</th>
+                <td class="formValue">
+                    <select name="StoredAreaList" id="StoredAreaList" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+                <th class="formTitle">入库站台</th>
+                <td class="formValue">
+                    <select name="InStationList" id="InStationList" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">选项</th>
+                <td class="formValue" colspan="3">
+                    <div class="ckbox">
+                        <input id="IsNeedCheck" name="IsNeedCheck" type="checkbox"><label for="IsNeedCheck">需质检</label>
+                    </div>
+                    <div class="ckbox" style="display:none;">
+                        <input id="IsBroken" name="IsBroken" type="checkbox"><label for="IsBroken">破坏性质检</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsSpecial" name="IsSpecial" type="checkbox"><label for="IsSpecial">关键物料</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsMustLot" name="IsMustLot" type="checkbox"><label for="IsMustLot">批号控制</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsDampproof" name="IsDampproof" type="checkbox"><label for="IsDampproof">防潮</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsPriority" name="IsPriority" type="checkbox"><label for="IsPriority">靠窗优先</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsItemMark" name="IsItemMark" type="checkbox"><label for="IsItemMark">需贴标</label>
+                    </div>
+                    <div class="ckbox">
+                        <input id="IsBase" name="IsBase" sysbasedata="yes" type="checkbox" checked="checked"><label for="IsBase">系统数据</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="CreatorUserName" name="CreatorUserName" type="text" class="form-control" />
+                </td>
+
+
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="ModifyUserName" name="ModifyUserName" type="text" class="form-control" />
+                </td>
+
+
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

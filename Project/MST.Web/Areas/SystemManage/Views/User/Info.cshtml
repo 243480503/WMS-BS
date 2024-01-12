@@ -1,0 +1,131 @@
+﻿@{
+    ViewBag.Title = "Info";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script src="~/Content/js/md5/jquery.md5.js"></script>
+<script>
+    $(function () {
+        $('.wrapper').height($(window).height() - 11);
+        $.ajax({
+            url: "/SystemManage/User/GetUserInfo",
+            data: {},
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $.checkLogin(data);
+                $("#form1").formSerialize(data);
+            }
+        });
+    });
+
+    function change() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        data = $("#form1").formSerialize();
+        if (data.OldPwd != "" || data.NewPwd != "" || data.NewPwdRep != "") { //需考虑密码
+            if (data.OldPwd == "") {
+                $.modalMsg("原密码不能为空", "error");
+                return;
+            }
+
+            if (data.NewPwd == "") {
+                $.modalMsg("新密码不能为空", "error");
+                return;
+            }
+
+            if (data.NewPwdRep == "") {
+                $.modalMsg("确认密码不能为空", "error");
+                return;
+            }
+
+            if (data.NewPwdRep != data.NewPwd) {
+                $.modalMsg("两次密码不一致", "error");
+                return;
+            }
+
+            if (data.NewPwdRep.length < 6) {
+                $.modalMsg("密码长度不足6位", "error");
+                return;
+            }
+
+            data.OldPwd = $.md5($.trim(data.OldPwd));
+        }
+        $.submitForm({
+            url: "/SystemManage/User/ChangeUserInfo",
+            param: data,
+            success: function () {
+                $("#OldPwd").val("");
+                $("#NewPwd").val("");
+                $("#NewPwdRep").val("");
+            },
+            error: function (data) {
+                $.modalMsg(data.message, data.state);
+            }
+        })
+    }
+</script>
+<form id="form1">
+    <div class="wrapper">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#a" data-toggle="tab">基本信息</a></li>
+            <li><a href="#b" data-toggle="tab">其它信息</a></li>
+        </ul>
+        <div class="tab-content" style="padding-top: 5px;">
+            <div id="a" class="tab-pane active" style="padding: 15px;">
+                <ul class="pop-list">
+                    <li>
+                        <label>账户</label>
+                        <input id="F_Account" name="F_Account" readonly="readonly" type="text" class="form-control" />
+                    </li>
+                    <li>
+                        <label>姓名</label>
+                        <input id="F_RealName" name="F_RealName" readonly="readonly" type="text" class="form-control" />
+                    </li>
+                    <li>
+                        <label>性别</label>
+                        <input id="GenderName" name="GenderName" readonly="readonly" type="text" class="form-control" />
+                    </li>
+
+                </ul>
+            </div>
+            <div id="b" class="tab-pane" style="padding: 15px;">
+                <ul class="pop-list">
+                    <li>
+                        <label>手机号码</label>
+                        <input id="F_MobilePhone" name="F_MobilePhone" type="text" class="form-control" />
+                    </li>
+                    <li>
+                        <label>电子邮箱</label>
+                        <input id="F_Email" name="F_Email" type="text" class="form-control" />
+                    </li>
+                    <li>
+                        <label>微信号</label>
+                        <input id="F_WeChat" name="F_WeChat" type="text" class="form-control" />
+                    </li>
+                    <li class="line">
+                        <h5><span>修改密码</span></h5>
+                    </li>
+                    <li>
+                        <label>旧密码</label>
+                        <input id="OldPwd" name="OldPwd" type="password" class="form-control" />
+                    </li>
+                    <li>
+                        <label>新密码</label>
+                        <input id="NewPwd" type="password" class="form-control" />
+                    </li>
+                    <li>
+                        <label>确认新密码</label>
+                        <input id="NewPwdRep" name="NewPwdRep" type="password" class="form-control" />
+                    </li>
+                    <li>
+                        <div style="padding-left: 115px;">
+                            <a class="btn btn-primary" onclick="change()"><i class="fa fa-save" style="margin-right:5px;"></i>确认修改</a>
+                        </div>
+
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</form>

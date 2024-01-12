@@ -1,0 +1,992 @@
+﻿<!DOCTYPE html>
+<!--侧视视图（使用时可直接去掉注释）-->
+<!--侧视视图代码-->
+
+<html style="background-color:#ffffff;" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link href="~/Content/js/locmonitor/style.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/echartsHome.css" rel="stylesheet" />
+    <script src="~/Content/js/locmonitor/doc/asset/js/jquery.min.js"></script>
+    <script src="~/Content/js/locmonitor/echarts.min.js"></script>
+    <script src="~/Content/js/select2/select2.min.js"></script>
+    <link href="~/Content/js/select2/select2.min.css" rel="stylesheet" />
+
+    <style>
+        option {
+            font-size:15px;
+        }
+    </style>
+</head>
+<body style="overflow-y: scroll; padding-top: 0px; background-color: #35597dfc">
+    <div class="rightinfo" style=" width:100%">
+        <div class="tools">
+            <ul class="toolbar" id="toolsdate">
+                <li>
+                    &nbsp;
+                    所属区域： <select id="DdlArea" style="font-size:15px;Width: 100px;height:28px; border: solid 1px #597998; background-color: #264e75; "></select>&nbsp;
+                    所属行： <select id="DdlLine" style="font-size: 15px; Width: 100px; height: 28px; border: solid 1px #597998; background-color: #264e75; " onchange="selectDpLineList(this);"></select>&nbsp;
+                    物料名称：<input id="itemName" type="text" style="font-size: 15px; Width: 100px; background-color: #264e75; height: 28px; border: solid 1px #597998 " /> &nbsp;
+                    物料编码：<input id="itemCode" type="text" style="font-size: 15px; Width: 100px; background-color: #264e75; height: 28px; border: solid 1px #597998 " />&nbsp;
+                    批号：<input id="lot" type="text" style="font-size: 15px; Width: 100px; background-color: #264e75; height: 28px; border: solid 1px #597998 " />&nbsp;
+                </li>
+            </ul>
+            <button id="btnselect" style="height: 31px; font-size: 13px; color: #d3dfea; border: solid 1px #597998 " class="scbtn">查询</button>
+            <span id="lineNum" style="margin-left:30px;font-size:20px;color:#d3dfea;"></span>
+        </div>
+        <div id="main" class="main"></div>
+        <div style="position:absolute;top:340px;left:50px;width:50px;height:150px;font-size:30px;color:#d3dfea;line-height:50px;text-align:center;">
+            出库口
+        </div>
+        <div style="position: absolute; top: 340px; right: 50px;  width: 50px; height: 150px; font-size: 30px; color: #d3dfea; line-height: 50px; text-align: center; ">
+            入库口
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            bindAreadrp();
+            bindlocationLinedrp();
+            bindecharsdata();
+
+            $("#DdlArea").bind("change", function (e) {
+                bindlocationLinedrp();
+                bindecharsdata();
+            });
+            $("#btnselect").bind('click', function (e) { bindecharsdata(); });
+        });
+
+        function bindAreadrp() {
+            $.ajax({
+                type: "post",
+                contentType: "application/json",
+                async: false,
+                url: "GetAreaAjax",
+                success: function (data) {
+                    var json = eval(data);
+                    $("#DdlArea").empty()
+                    $.each(json, function (index, item) {
+                        var equipmentnumber = json[index].AreaID;
+                        var description = json[index].NAME;
+
+                        $("<option value='" + equipmentnumber + "'>" + description + "</option>").appendTo("#DdlArea");
+                    });
+                    $('#DdlArea')[0].selectedIndex = 0;
+                }
+            });
+        }
+
+        function bindlocationLinedrp() {
+            var data = {};
+            data.areaID = $("#DdlArea").val();
+            $.ajax({
+                type: "post",
+                url: "GetLine",
+                dataType: 'json',
+                data: data,
+                success: function (data) {
+                    var json = eval(data);
+                    $("#DdlLine").empty()
+                    $.each(json, function (index, item) {
+                        var equipmentnumber = json[index].LOCATIONLINE;
+                        var description = json[index].NAME;
+                        $("<option value='" + equipmentnumber + "'>" + description + "</option>").appendTo("#DdlLine");
+                    });
+                    $('#DdlLine')[0].selectedIndex = 0;
+                    $("#lineNum").text($("#DdlLine option:selected").text());
+                }
+            });
+        }
+
+        var myChart;
+        var echartsWarp = document.getElementById('main');
+        var resizeWorldMapContainer = function () {//用于使chart自适应高度和宽度,通过窗体高宽计算容器高宽
+            echartsWarp.style.width = (window.innerWidth - 50) + 'px';
+            echartsWarp.style.height = (window.innerHeight - 80) + 'px';
+            console.log("画布宽：" + ((window.innerWidth - 250) / 32.5) + " 高：" + (window.innerHeight / 32.5));
+        };
+
+        function bindecharsdata() {
+            //设置echarts宽、高
+            resizeWorldMapContainer();
+            myChart = echarts.init(echartsWarp);
+            myChart.showLoading();
+            var itemName = $("#itemName").val();
+            var itemCode = $("#itemCode").val();
+            var lot = $("#lot").val();
+
+
+            //区域
+            var area = $("#DdlArea").val();
+            if (area == "0" || area == "") {
+                parent.layer.alert('请选择所属区域！');
+                return;
+            }
+            var linecurentindex = 0;
+            var locationlinecurentindex = $("#DdlLine").val();
+            if (locationlinecurentindex != 0 && locationlinecurentindex != null) {
+                linecurentindex = parseInt(locationlinecurentindex) - 1;
+            }
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: "SelectLocationInfo_Side",
+                data: { 'itemName': itemName, 'itemCode': itemCode, 'lot': lot, 'areaID': area },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.state == "success") {
+                        var result = data.data;
+
+                        var dataMap = {};
+                        dataMap.LocationStored = result.LocationStored;//已存储
+                        dataMap.LocationEmpty = result.LocationEmpty;
+                        dataMap.LocationIn = result.LocationIn;
+                        dataMap.LocationOut = result.LocationOut;
+
+                        var mapLayer = result.MapLayer;
+                        var mapLine = result.MapLine;
+                        var mapColumn = result.MapColumn;
+                        var timelinedata = [];
+                        for (var i = 1; i <= mapLine; i++) {
+                            timelinedata.push(i);
+                        }
+
+                        if ((itemName != "" || itemCode != "" || lot != "")) { //直接定位到有数据的行
+                            if (dataMap.LocationStored[0] != null) {
+                                var minLine = dataMap.LocationStored[0].MapLine;
+
+
+                                $.each(dataMap.LocationStored, function (i, n) {
+                                    minLine = minLine > n.MapLine ? n.MapLine : minLine;
+                                });
+                                $.each(dataMap.LocationIn, function (i, n) {
+                                    minLine = minLine > n.MapLine ? n.MapLine : minLine;
+                                });
+                                $.each(dataMap.LocationOut, function (i, n) {
+                                    minLine = minLine > n.MapLine ? n.MapLine : minLine;
+                                });
+                                linecurentindex = minLine - 1;
+                                $("#DdlLine").val(minLine);
+                                $("#lineNum").text($("#DdlLine option:selected").text());
+                            }
+                        }
+
+                        //tooltip内容
+                        var schema = [
+                            { name: 'LocCode', index: 0, text: '货位编码' },
+                            { name: 'BarCode', index: 1, text: '容器条码' },
+                            { name: 'ItemCode', index: 3, text: '物料编码' },
+                            { name: 'ItemName', index: 2, text: '物料名称' },
+                            { name: 'Lot', index: 4, text: '批号' },
+                            { name: 'Qty', index: 5, text: '数量' }
+                        ];
+
+                        var option = {
+                            baseOption: {
+                                grid: {
+                                    left: 100,
+                                    width: (window.innerWidth - 250),//mapColumn * 25 + 200,
+                                    containLabel: true
+                                },
+                                timeline: {
+                                    data: (function () {
+                                        var vardata = new Array();
+                                        for (var i = 0; i < timelinedata.length; i++) {
+                                            var linedata = new Array();
+                                            linedata = {
+                                                value: timelinedata[i],
+                                                tooltip: {
+                                                    formatter: '第' + (timelinedata[i]) + '行'
+                                                },
+                                                symbol: 'arrow'
+                                            };
+                                            vardata.push(linedata);
+                                        }
+                                        return vardata;
+                                    })(),
+                                    autoPlay: false,
+                                    currentIndex: linecurentindex,
+                                    inverse: false,
+                                    playInterval: 3000,
+                                    left: 200,
+                                    right: 200,
+                                    top: null,
+                                    bottom: 0,
+                                    width: (window.innerWidth - 450),
+                                    symbol: 'circle',
+                                    symbolSize: 10,
+                                    axisType: "category",
+                                    fontSize: 6,
+                                    lineStyle: {
+                                        color: "#91b3d4"
+                                    },
+                                    itemStyle: {
+                                        normal: {
+                                            color: "#91b3d4"
+                                        }
+                                    },
+                                    label: {
+                                        normal: {
+                                            textStyle: {
+                                                color: "#91b3d4"
+                                            }
+                                        }
+                                    },
+                                    controlStyle: {
+                                        normal: {
+                                            color: "#91b3d4",
+                                            borderColor: "#91b3d4"
+                                        }
+                                    }
+                                },
+                                legend: {
+                                    data: ['已存储', '空货位', '待入库', '待出库'],
+                                    itemWidth: 30,
+                                    itemHeight: 30,
+                                    orient: 'vertical',
+                                    left: 'left',
+                                    top: 80,
+                                    textStyle: {
+                                        fontSize: 12,
+                                        color: '#d3dfea'
+                                    }
+                                },
+                                series: [
+                                    {
+                                        name: '已存储', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/green.png', symbolSize: [(window.innerWidth - 250) / 43.3, window.innerHeight / 25.4]
+                                    },
+                                    {
+                                        name: '空货位', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/green_ban.png', symbolSize: [(window.innerWidth - 250) / 43.3, window.innerHeight / 25.4]
+                                    },
+                                    {
+                                        name: '待入库', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/test_monitor_r_3.png', symbolSize: [(window.innerWidth - 250) / 43.3, window.innerHeight / 25.4]
+                                    },
+                                    {
+                                        name: '待出库', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/test_monitor_c_3.png', symbolSize: [(window.innerWidth - 250) / 43.3, window.innerHeight / 25.4]
+                                    }
+                                ],
+                                xAxis: {
+                                    name: '列',
+                                    //tickWidth: { length: 30 },
+                                    barCategoryGap: '0',
+                                    axisLine: {
+                                        lineStyle: {
+                                            type: 'solid',
+                                            color: '#b7cfea',//左边线的颜色
+                                            width: '2',//坐标线的宽度
+                                        }
+                                    },
+                                    lineStyle: { width: mapColumn * 25 },
+                                    axisLabel: {
+                                        //X轴刻度配置
+                                        interval: 0 //0：表示全部显示不间隔；auto:表示自动根据刻度个数和宽度自动设置间隔个数
+                                    },
+                                    axisTick: { length: 5 },
+                                    interval: 50,
+                                    nameGap: 30,
+                                    nameTextStyle: {
+                                        color: '#b7cfea',
+                                        fontSize: 12
+                                    },
+                                    //position: 'top',
+                                    data: function () {
+                                        var list = [];
+                                        for (var i = 1; i <= mapColumn; i++) {
+                                            list.push(i);
+                                        }
+                                        return list;
+                                    }()
+                                },
+                                yAxis: {
+                                    name: '层',
+                                    axisLine: {
+                                        lineStyle: {
+                                            type: 'solid',
+                                            color: '#b7cfea',//左边线的颜色
+                                            width: '2'//坐标线的宽度
+                                        }
+                                    },
+                                    nameGap: 20,
+                                    nameTextStyle: {
+                                        color: '#b7cfea',
+                                        fontSize: 12
+                                    },
+                                    //inverse: true,
+                                    data: function () {
+                                        var list = [];
+                                        for (var i = 1; i <= mapLayer; i++) {
+                                            list.push(i);
+                                        }
+                                        return list;
+                                    }()
+                                },
+                                tooltip: {
+                                    trigger: 'item',
+                                    padding: 5,
+                                    backgroundColor: '#222',
+                                    borderColor: '#777',
+                                    borderWidth: 1,
+                                    formatter: function (obj) {
+                                        var value = obj.value;
+                                        if (value == undefined) {
+                                            return;
+                                        }
+                                        else {
+                                            var title = '第' + value[3] + '列   '
+                                                + '    第' + value[4] + '层' + '<br>'
+                                                + schema[0].text + '：' + value[5] + '<br>';
+                                            if (value[11] != "LocationEmpty") {
+                                                title = title + schema[1].text + '：' + value[6] + '<br>'
+                                                    + schema[2].text + '：' + value[7] + '<br>'
+                                                    + schema[3].text + '：' + value[8] + '<br>'
+                                                    + schema[4].text + '：' + value[9] + '<br>' + schema[5].text + '：' + value[10] + '<br>';
+                                            }
+                                            return title;
+                                        }
+
+                                    }
+                                },
+                            },
+                            options: (function () {
+                                var options = [];
+                                for (var i = 0; i < timelinedata.length; i++) {
+                                    options.push({
+                                        series: (function () {
+                                            var varSeries = new Array();
+                                            var series = new Array();
+
+                                            //Stored
+                                            if (dataMap.LocationStored != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationStored, function (k, n) {
+                                                    if (n.MapLine == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '已存储',
+                                                        data: curLoc.Loc
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+
+                                            //Empty
+                                            if (dataMap.LocationEmpty != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationEmpty, function (k, n) {
+                                                    if (n.MapLine == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '空货位',
+                                                        data: curLoc.Loc,
+                                                        itemStyle: {
+                                                            normal: {
+                                                                color: ['#ff9900'],
+                                                                label: { show: true },
+                                                                labelLine: { show: true }
+                                                            }
+                                                        }
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+
+                                            //In
+                                            if (dataMap.LocationIn != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationIn, function (k, n) {
+                                                    if (n.MapLine == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '待入库',
+                                                        data: curLoc.Loc
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+                                            //Out
+                                            if (dataMap.LocationOut != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationOut, function (k, n) {
+                                                    if (n.MapLine == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '待出库',
+                                                        data: curLoc.Loc
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+                                            return varSeries;
+                                        })()
+                                    });
+                                }
+                                return options;
+                            })()
+
+                        };
+                        myChart.clear();
+                        myChart.setOption(option);
+                        myChart.hideLoading();
+
+                        myChart.on("timelinechanged", function (par) {
+                            var curLine = timelinedata[par.currentIndex];
+                            $("#DdlLine").val(curLine);
+                            $("#lineNum").text($("#DdlLine option:selected").text());
+                        });
+                    }
+                },
+                error: function (errorMsg) {
+
+                    alert("没有满足条件的数据信息!");
+                }
+            });
+        }
+
+        //侧视图变更行
+        function selectDpLineList(dp) {
+
+            var sIndex = dp.selectedIndex;
+            var sText = dp.options[dp.selectedIndex].text;
+            var sValue = dp.value;
+
+            var changelinecurentindex = 0;
+            if (sValue != 0 && sValue != null) {
+                changelinecurentindex = parseInt(sValue) - 1;
+                $("#lineNum").text(sText);
+            }
+
+            if (myChart != undefined && myChart != null) {
+
+                myChart.dispatchAction({
+                    type: 'timelineChange',
+                    // 时间点的 index
+                    currentIndex: changelinecurentindex
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>
+
+<!--俯视视图（使用时可直接去掉注释）-->
+<!--俯视视图代码
+
+<html style="background-color:#ffffff;" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link href="~/Content/js/locmonitor/style.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/js/locmonitor/doc/asset/css/echartsHome.css" rel="stylesheet" />
+    <script src="~/Content/js/locmonitor/doc/asset/js/jquery.min.js"></script>
+    <script src="~/Content/js/locmonitor/echarts.min.js"></script>
+</head>
+<body style="overflow-y: scroll; padding-top: 0px; background-color: #35597dfc">
+    <div class="rightinfo" style=" width:100%">
+        <div class="tools">
+            <ul class="toolbar" id="toolsdate">
+                <li>
+                    &nbsp;
+                    所属区域： <select id="DdlArea" style="Width: 100px; border: solid 1px #597998; background-color: #264e75; "></select>&nbsp;
+                    所属层： <select id="DdlLayer" style="Width: 100px; border: solid 1px #597998; background-color: #264e75; " onchange="selectDpLineList(this);"></select>&nbsp;
+                    物料名称：<input id="itemName" type="text" style="Width: 100px; background-color: #264e75; height: 18px; border: solid 1px #597998 " /> &nbsp;
+                    物料编码：<input id="itemCode" type="text" style="Width: 100px; background-color: #264e75; height: 18px; border: solid 1px #597998 " />&nbsp;
+                    批号：<input id="lot" type="text" style="Width: 100px; background-color: #264e75; height: 18px; border: solid 1px #597998 " />&nbsp;
+                </li>
+            </ul>
+            <button id="btnselect" style="height: 31px; font-size: 13px; color: #d3dfea; border: solid 1px #597998 " class="scbtn">查询</button>
+        </div>
+        <div id="main" class="main"></div>
+    </div>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            bindAreadrp();
+            bindlocationLayerdrp();
+            bindecharsdata();
+
+            $("#DdlArea").bind("change", function (e) {
+                bindlocationLayerdrp();
+                bindecharsdata();
+            });
+            $("#btnselect").bind('click', function (e) { bindecharsdata(); });
+        });
+
+        function bindAreadrp() {
+            $.ajax({
+                type: "post",
+                contentType: "application/json",
+                async: false,
+                url: "GetAreaAjax",
+                success: function (data) {
+                    var json = eval(data);
+                    $("#DdlArea").empty()
+                    $.each(json, function (index, item) {
+                        var equipmentnumber = json[index].AreaID;
+                        var description = json[index].NAME;
+
+                        $("<option value='" + equipmentnumber + "'>" + description + "</option>").appendTo("#DdlArea");
+                    });
+                    $('#DdlArea')[0].selectedIndex = 0;
+                }
+            });
+        }
+
+
+        function bindlocationLayerdrp() {
+            var data = {};
+            data.areaID = $("#DdlArea").val();
+            $.ajax({
+                type: "post",
+                url: "GetLayer",
+                dataType: 'json',
+                data: data,
+                success: function (data) {
+                    var json = eval(data);
+                    $("#DdlLayer").empty()
+                    $.each(json, function (index, item) {
+                        var equipmentnumber = json[index].LOCATIONLINE;
+                        var description = json[index].NAME;
+                        $("<option value='" + equipmentnumber + "'>" + description + "</option>").appendTo("#DdlLayer");
+                    });
+                    $('#DdlLayer')[0].selectedIndex = 0;
+                }
+            });
+        }
+
+        var myChart;
+        var echartsWarp = document.getElementById('main');
+        var resizeWorldMapContainer = function () {//用于使chart自适应高度和宽度,通过窗体高宽计算容器高宽
+            echartsWarp.style.width = (window.innerWidth - 50) + 'px';
+            echartsWarp.style.height = (window.innerHeight - 80) + 'px';
+        };
+
+        function bindecharsdata() {
+            //设置echarts宽、高
+            resizeWorldMapContainer();
+            myChart = echarts.init(echartsWarp);
+            myChart.showLoading();
+            var itemName = $("#itemName").val();
+            var itemCode = $("#itemCode").val();
+            var lot = $("#lot").val();
+
+
+            //区域
+            var area = $("#DdlArea").val();
+            if (area == "0" || area == "") {
+                parent.layer.alert('请选择所属区域！');
+                return;
+            }
+            var linecurentindex = 0;
+            var locationlinecurentindex = $("#DdlLayer").val();
+            if (locationlinecurentindex != 0 && locationlinecurentindex != null) {
+                linecurentindex = parseInt(locationlinecurentindex) - 1;
+            }
+
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: "SelectLocationInfo_Down",
+                data: { 'itemName': itemName, 'itemCode': itemCode, 'lot': lot, 'areaID': area },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.state == "success") {
+                        var result = data.data;
+
+                        var dataMap = {};
+                        dataMap.LocationStored = result.LocationStored;//已存储
+                        dataMap.LocationEmpty = result.LocationEmpty;
+                        dataMap.LocationIn = result.LocationIn;
+                        dataMap.LocationOut = result.LocationOut;
+                        dataMap.Hallway = result.Hallway;
+
+                        var mapY = result.MapLine;
+                        var maxTimeLine = result.MapLayer;
+                        var mapColumn = result.MapColumn;
+                        var timelinedata = [];
+                        for (var i = 1; i <= maxTimeLine; i++) {
+                            timelinedata.push(i);
+                        }
+
+
+                        var option = {
+                            baseOption: {
+                                grid: {
+                                    left: 100,
+                                    width: (window.innerWidth - 250),//mapColumn * 25 + 200,
+                                    containLabel: true
+                                },
+                                timeline: {
+                                    data: (function () {
+                                        var vardata = new Array();
+                                        for (var i = 0; i < timelinedata.length; i++) {
+                                            var linedata = new Array();
+                                            linedata = {
+                                                value: timelinedata[i],
+                                                tooltip: {
+                                                    formatter: '第' + (timelinedata[i]) + '层'
+                                                },
+                                                symbol: 'arrow'
+                                            };
+                                            vardata.push(linedata);
+                                        }
+                                        return vardata;
+                                    })(),
+                                    autoPlay: false,
+                                    currentIndex: linecurentindex,
+                                    inverse: false,
+                                    playInterval: 3000,
+                                    left: 200,
+                                    right: 200,
+                                    top: null,
+                                    bottom: 0,
+                                    width: (window.innerWidth - 450),
+                                    symbol: 'circle',
+                                    symbolSize: 10,
+                                    axisType: "category",
+                                    fontSize: 6,
+                                    lineStyle: {
+                                        color: "#4d749a"
+                                    },
+                                    itemStyle: {
+                                        normal: {
+                                            color: "#4d749a"
+                                        }
+                                    },
+                                    label: {
+                                        normal: {
+                                            textStyle: {
+                                                color: "#4d749a"
+                                            }
+                                        }
+                                    },
+                                    controlStyle: {
+                                        normal: {
+                                            color: "#4d749a",
+                                            borderColor: "#4d749a"
+                                        }
+                                    }
+                                },
+                                legend: {
+                                    data: ['已存储', '空货位', '待入库', '待出库', '通道'],
+                                    itemWidth: 30,
+                                    itemHeight: 30,
+                                    orient: 'vertical',
+                                    left: 'left',
+                                    top: 80,
+                                    textStyle: {
+                                        fontSize: 12,
+                                        color: '#d3dfea'
+                                    }
+                                },
+                                series: [
+                                    {
+                                        name: '已存储', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/green.png', symbolSize: [35, 35]
+                                    },
+                                    {
+                                        name: '空货位', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/green_ban.png', symbolSize: [35, 35]
+                                    },
+                                    {
+                                        name: '待入库', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/test_monitor_r_3.png', symbolSize: [35, 35]
+                                    },
+                                    {
+                                        name: '待出库', type: 'scatter', stack: '数据项', symbol: 'image://../../Content/js/locmonitor/doc/asset/images/test_monitor_c_3.png', symbolSize: [35, 35]
+                                    },
+                                    {
+                                        name: '通道', type: 'scatter', stack: '数据项', symbol: 'rect', symbolSize: [34, 34],
+                                        hoverAnimation: false, //鼠标悬停不放大
+                                        itemStyle: {
+                                            normal: {
+                                                color: "#9972b5" //背景色
+                                            }
+                                        },
+                                        emphasis: {
+                                            itemStyle: {
+                                                color: '#9972b5',   //hover时改变颜色
+                                            }
+
+                                        }
+                                    }
+                                ],
+                                xAxis: {
+                                    name: '列',
+                                    //tickWidth: { length: 30 },
+                                    barCategoryGap: '0',
+                                    axisLine: {
+                                        lineStyle: {
+                                            type: 'solid',
+                                            color: '#b7cfea',//左边线的颜色
+                                            width: '2',//坐标线的宽度
+                                        },
+                                        show: true //隐藏或显示轴线
+                                    },
+                                    lineStyle: { width: mapColumn * 25 },
+                                    axisLabel: {
+                                        //X轴刻度配置
+                                        interval: 0, //0：表示全部显示不间隔；auto:表示自动根据刻度个数和宽度自动设置间隔个数
+                                        show: false //隐藏或显示轴线文字
+                                    },
+                                    axisTick: { length: 5 },
+                                    interval: 50,
+                                    nameGap: 30,
+                                    nameTextStyle: {
+                                        color: '#b7cfea',
+                                        fontSize: 12
+                                    },
+                                    //position: 'top',
+                                    data: function () {
+                                        var list = [];
+                                        for (var i = 1; i <= mapColumn + 10; i++) { //x轴增加10个单位（使布局更紧凑）
+                                            list.push(i);
+                                        }
+                                        return list;
+                                    }()
+                                },
+                                yAxis: {
+                                    name: '行',
+                                    axisLine: {
+                                        lineStyle: {
+                                            type: 'solid',
+                                            color: '#b7cfea',//左边线的颜色
+                                            width: '2'//坐标线的宽度
+                                        },
+                                        show: true //隐藏或显示轴线
+                                    },
+                                    axisLabel: {
+                                        show: false //隐藏或显示轴线文字
+                                    },
+                                    nameGap: 20,
+                                    nameTextStyle: {
+                                        color: '#b7cfea',
+                                        fontSize: 12
+                                    },
+                                    //inverse: true,
+                                    data: function () {
+                                        var list = [];
+                                        for (var i = 1; i <= mapY; i++) {
+                                            list.push(i);
+                                        }
+                                        return list;
+                                    }()
+                                },
+                                tooltip: {
+                                    trigger: 'item',
+                                    padding: 5,
+                                    backgroundColor: '#222',
+                                    borderColor: '#777',
+                                    borderWidth: 1,
+                                    formatter: function (obj) {
+                                        var value = obj.value;
+                                        if (value[11] == "Hallway") { //通道不展示
+                                            return;
+                                        }
+                                        var info = "";
+                                        if (value != undefined) {
+                                            //value 数组= [MapColNum,MapLine,MapLayer,Line,ColNum,Layer,LocationCode,BarCode,ItemCode,ItemName,Lot]
+                                            info = '第' + value[3] + '行' + value[4] + '列' + value[5] + '层' + '<br>'
+                                                + '货位编码：' + value[6] + '<br>'
+                                                + '容器条码：' + value[7] + '<br>'
+                                                + '物料编码：' + value[8] + '<br>'
+                                                + '物料名称：' + value[9] + '<br>'
+                                                + '批号：' + value[10] + '<br>';
+                                        };
+                                        return info;
+                                    }
+                                },
+                            },
+                            options: (function () {
+                                var options = [];
+                                for (var i = 0; i < timelinedata.length; i++) {
+                                    options.push({
+                                        series: (function () {
+                                            var varSeries = new Array();
+                                            var series = new Array();
+
+                                            //Stored
+                                            if (dataMap.LocationStored != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationStored, function (k, n) {
+                                                    if (n.MapLayer == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    //curLoc.Loc数组长度10，依次为 : MapColNum,MapLayer,MapLine,Line,ColNum,Layer,LocationCode,BarCode,ItemCode,ItemName,Lot
+                                                    var point = [];
+                                                    $.each(curLoc.Loc, function (i, n) {
+                                                        point.push([n.MapColNum, n.MapLine, n.MapLayer, n.Line, n.ColNum, n.Layer, n.LocationCode, n.BarCode, n.ItemCode, n.ItemName, n.Lot, "Loc"]);
+                                                    });
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '已存储',
+                                                        data: point
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+
+                                            //Empty
+                                            if (dataMap.LocationEmpty != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationEmpty, function (k, n) {
+                                                    if (n.MapLayer == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    //curLoc.Loc数组长度10，依次为 : MapColNum,MapLayer,MapLine,Line,ColNum,Layer,LocationCode,BarCode,ItemCode,ItemName,Lot
+                                                    var point = [];
+                                                    $.each(curLoc.Loc, function (i, n) {
+                                                        point.push([n.MapColNum, n.MapLine, n.MapLayer, n.Line, n.ColNum, n.Layer, n.LocationCode, n.BarCode, n.ItemCode, n.ItemName, n.Lot, "Loc"]);
+                                                    });
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '空货位',
+                                                        data: point,
+                                                        itemStyle: {
+                                                            normal: {
+                                                                color: ['#ff9900'],
+                                                                label: { show: true },
+                                                                labelLine: { show: true }
+                                                            }
+                                                        }
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+
+                                            //In
+                                            if (dataMap.LocationIn != null) {
+
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationIn, function (k, n) {
+                                                    if (n.MapLayer == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    //curLoc.Loc数组长度10，依次为 : MapColNum,MapLayer,MapLine,Line,ColNum,Layer,LocationCode,BarCode,ItemCode,ItemName,Lot
+                                                    var point = [];
+                                                    $.each(curLoc.Loc, function (i, n) {
+                                                        point.push([n.MapColNum, n.MapLine, n.MapLayer, n.Line, n.ColNum, n.Layer, n.LocationCode, n.BarCode, n.ItemCode, n.ItemName, n.Lot, "Loc"]);
+                                                    });
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '待入库',
+                                                        data: point
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+                                            //Out
+                                            if (dataMap.LocationOut != null) {
+                                                var curLoc = [];
+                                                $.each(dataMap.LocationOut, function (k, n) {
+                                                    if (n.MapLayer == (i + 1)) {
+                                                        curLoc = n;
+                                                    }
+                                                });
+                                                if (curLoc != []) {
+                                                    //curLoc.Loc数组长度10，依次为 : MapColNum,MapLayer,MapLine,Line,ColNum,Layer,LocationCode,BarCode,ItemCode,ItemName,Lot
+                                                    var point = [];
+                                                    $.each(curLoc.Loc, function (i, n) {
+                                                        point.push([n.MapColNum, n.MapLine, n.MapLayer, n.Line, n.ColNum, n.Layer, n.LocationCode, n.BarCode, n.ItemCode, n.ItemName, n.Lot, "Loc"]);
+                                                    });
+                                                    series = new Array();
+                                                    series = {
+                                                        name: '待出库',
+                                                        data: point
+                                                    };
+                                                    varSeries.push(series);
+                                                }
+                                            }
+
+                                            //通道
+                                            if (dataMap.Hallway != null) {
+
+                                                //curLoc.Loc数组长度10，依次为 : MapColNum,MapLayer,MapLine
+                                                var point = [];
+                                                $.each(dataMap.Hallway, function (i, n) {
+                                                    point.push([n.MapColNum, n.MapLine, i + 1, "", "", "", "", "", "", "", "", "Hallway"]); //
+                                                });
+                                                series = new Array();
+                                                series = {
+                                                    name: '通道',
+                                                    data: point
+                                                };
+                                                varSeries.push(series);
+
+                                            }
+
+                                            return varSeries;
+                                        })()
+                                    });
+                                }
+                                return options;
+                            })()
+
+                        };
+                        myChart.clear();
+                        myChart.setOption(option);
+                        myChart.hideLoading();
+
+                        myChart.on("timelinechanged", function (par) {
+                            var curLine = timelinedata[par.currentIndex];
+                            $("#DdlLayer").val(curLine);
+                        });
+                    }
+                },
+                error: function (errorMsg) {
+
+                    alert("没有满足条件的数据信息!");
+                }
+            });
+        }
+
+        //侧视图变更行
+        function selectDpLineList(dp) {
+
+            var sIndex = dp.selectedIndex;
+            var sText = dp.options[dp.selectedIndex].text;
+            var sValue = dp.value;
+
+            var changelinecurentindex = 0;
+            if (sValue != 0 && sValue != null) {
+                changelinecurentindex = parseInt(sValue) - 1;
+            }
+
+            if (myChart != undefined && myChart != null) {
+
+                myChart.dispatchAction({
+                    type: 'timelineChange',
+                    // 时间点的 index
+                    currentIndex: changelinecurentindex
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>
+-->
