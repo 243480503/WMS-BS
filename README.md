@@ -93,16 +93,8 @@
         
 # 八、相关截图
  
-     <img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%" ></img>
-     <br/><div style='text-align:center;'>登录页面</div><br/>
-
-     <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Index.jpg" width="60%" height="60%" ></img>
-     <br/><br/><div style='text-align:center;'>主页面</div><br/><br/>
-
-     <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg" width="60%" height="60%" ></img>
-     <br/><br/><div style='text-align:center;'>入库页面</div><br/><br/>
-     ![Image](https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg)
-     ![image](https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg)
+     <img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%" >
+     
 # 九、其它说明
  
     当前软件遵循MIT开源协议，您可对软件进行更改并使用。
