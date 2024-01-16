@@ -19,13 +19,13 @@
       Project ：包含整套C#源码，如果您是开发者，可下载该目录
       发布 ：已编译的文件，可直接部署到IIS站点，如果您不熟悉代码，可下载该目录    
       数据库：文件较大，采用分卷压缩。此数据库包含2年的使用数据（注：该数据库已脱敏）
-
+      
       三个目录压缩后下载大小为：1.22GB      
 
  四、软件环境
 
       开发工具：Microsoft Visual Studio Enterprise 2019 及以上
-      数据库  ：Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) 及以上
+      数据库  ：Microsoft SQL Server 2019 及以上
       运行环境：.Net Framework 4.8 及以上
       
  五、软件部署
@@ -66,38 +66,43 @@
      7、手持PDA的配置
 
          a>安装“PDA.apk”后，初次打开该程序时，会提示您填入“服务器IP”与“端口”，其中服务器IP即IIS站点IP，
-           如“192.168.1.36”（不可填写localhost），端口即之前IIS设置的3000
+           如“192.168.1.36”（不可填写localhost），端口即之前IIS设置的3000。卸载该apk后，再次安装需重新配置。
 
          b>点击保存后，若配置正确，则可看见手持的登录界面，登录界面用户名与密码，与PC端的用户名与密码相同。
 
- 六、功能简述
-    
-     1、入库管理
-     2、出库管理
-     3、任务管理
-     4、质检管理
-     5、盘点管理
-     6、仓库管理
-     7、基础数据
-     8、数据统计
-     9、系统安全
-     10、系统管理
-     11、消息管理
-     12、电子看板
-
- 七、相关截图
-     <br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%">登录页面</img>
-     <br/><div style='text-align:center;'>登录页面</div>
- 八、系统配置
+ 六、系统配置
      
-    1、若想更改数据库地址与端口，请前往 /Configs/database.config进行修改
+    1、若想更改数据库地址与端口，请前往文件目录 /Configs/database.config 进行修改
     
-    2、若想更改软件名称、图标、联系方式等信息，请前往 /Configs/system.config进行修改
+    2、若想更改软件名称、图标、联系方式、站点链接 等信息，请前往文件目录 /Configs/system.config 进行修改
+    
+ 七、接口配置
+     
+     1、ERP/MES 接口配置
+        以admin账号登录，进入主页面，点击“系统管理”-“数据字典”-“业务配置”-“接口”-“ERP”，将“值”中的内容改为ERP/MES的接口地址即可，此处更改需重启IIS后生效。
+      
+     2、WCS接口配置
+        以admin账号登录，进入主页面，点击“系统管理”-“数据字典”-“业务配置”-“接口”-“WCS”，将“值”中的内容改为WCS的接口地址即可，此处更改需重启IIS后生效。
+
+     注：此处ERP/MES接口，和WCS接口，均为外部接口，考虑到部分用户暂时没有外部接口可用，将“值”配置为“”或“http://”，
+         程序会默认调用外部接口都是成功的，即便接口不存在。这样做的目的是让整个流程可以走通。
+        
+ 八、相关截图
+ 
+     <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%" />
+     <br/><br/><div style='text-align:center;'>登录页面</div><br/><br/>
+
+     <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Index.jpg" width="60%" height="60%" />
+     <br/><br/><div style='text-align:center;'>主页面</div><br/><br/>
+
+     <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg" width="60%" height="60%" />
+     <br/><br/><div style='text-align:center;'>入库页面</div><br/><br/>
+
 
  九、其它说明
  
     当前软件遵循MIT开源协议，您可对软件进行更改并使用。
     
-    若需反馈bug，或有其它疑问，可联系18718690940（微信同号），或加入技术交流QQ群795702839。
+    若需反馈bug，或有其它疑问，或有定制需求，均可联系18718690940（微信同号），或加入技术交流QQ群795702839。
 
     
