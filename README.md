@@ -1,6 +1,4 @@
-# WMS-BS
-
- 一、软件介绍：
+ #一、软件介绍：
  
      崇令仓储相关系统，均由C#语言编写，当前文档针对WMS-BS版本进行说明，其它相关开源软件下载或说明可访问：
      
@@ -9,12 +7,12 @@
      WCS-WPF(独立WCS桌面版)：https://github.com/243480503/WCS-WPF
      WMS与WCS二合一(同时包含WMS与WCS的网页版)：https://github.com/243480503/WMS-WCS
      
- 二、适用场景
+ #二、适用场景
      
      WMS-BS包含手持PDA相关功能，适用于利用智能设备进行作业的仓库，主要实现出库、入库、质检、盘点、报表 等功能。
      仓储智能设备包含但不限于：输送线、机械手、堆垛机、AGV、穿梭车 等
  
- 三、目录文件说明
+ #三、目录文件说明
     
       Project ：包含整套C#源码，如果您是开发者，可下载该目录
       发布 ：已编译的文件，可直接部署到IIS站点，如果您不熟悉代码，可下载该目录    
@@ -22,13 +20,13 @@
       
       三个目录压缩后下载大小为：1.22GB      
 
- 四、软件环境
+ #四、软件环境
 
       开发工具：Microsoft Visual Studio Enterprise 2019 及以上
       数据库  ：Microsoft SQL Server 2019 及以上
       运行环境：.Net Framework 4.8 及以上
       
- 五、软件部署
+ #五、软件部署
 
       下载压缩包解压后，存在Project、发布、数据库 三个文件夹，以下内容只针对  （发布+数据库） 方案，
       如果您选择 （Project+数据库） 方案，则默认您已具备一定的开发能力，可跳过该步骤。
@@ -73,13 +71,13 @@
 
          b>点击保存后，若配置正确，则可看见手持的登录界面，登录界面用户名与密码，与PC端的用户名与密码相同。
 
- 六、系统配置
+ #六、系统配置
      
     1、若想更改数据库地址与端口，请前往文件目录 /Configs/database.config 进行修改
     
     2、若想更改软件名称、图标、联系方式、站点链接 等信息，请前往文件目录 /Configs/system.config 进行修改
     
- 七、接口配置
+ #七、接口配置
      
      1、ERP/MES 接口配置
         以admin账号登录，进入主页面，点击“系统管理”-“数据字典”-“业务配置”-“接口”-“ERP”，将“值”中
@@ -93,7 +91,7 @@
          可将“值”配置为“”或“http://”，程序会默认调用外部接口都是成功的，即便接口不存在。
          这样做的目的是让整个流程可以走通。
         
- 八、相关截图
+ #八、相关截图
  
      <br/><br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%" ></img>
      <br/><br/><div style='text-align:center;'>登录页面</div><br/><br/>
@@ -105,7 +103,7 @@
      <br/><br/><div style='text-align:center;'>入库页面</div><br/><br/>
      ![Image](https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg)
      ![image](https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_InBound.jpg)
- 九、其它说明
+ #九、其它说明
  
     当前软件遵循MIT开源协议，您可对软件进行更改并使用。
     
