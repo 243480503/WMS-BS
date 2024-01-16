@@ -86,8 +86,8 @@
      12、电子看板
 
  七、相关截图
-     <img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%">登录页面</img>
-     <div style='text-align:center;font-size:14px;'>登录页面</div>
+     <br/><img src="https://github.com/243480503/WMS-BS/blob/main/%E7%9B%B8%E5%85%B3%E6%88%AA%E5%9B%BE/PC_Logo.jpg" width="60%" height="60%">登录页面</img>
+     <br/><div style='text-align:center;'>登录页面</div>
  八、系统配置
      
     1、若想更改数据库地址与端口，请前往 /Configs/database.config进行修改
